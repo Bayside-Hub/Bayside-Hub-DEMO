@@ -1,0 +1,255 @@
+/* eslint-disable @next/next/no-img-element */
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { PrimaryButton } from "@/components/cards";
+import { clubs } from "@/lib/data";
+import { getClubBySlug } from "@/lib/clubs";
+import { getCurrentUser } from "@/lib/auth";
+import {
+  getClubInterestInfo,
+  getClubMembershipInfo,
+  leaveClub,
+  requestClubMembership,
+  toggleClubInterest,
+} from "../actions";
+import PendingSubmitButton from "@/components/pending-submit-button";
+import type { Metadata } from "next";
+
+export function generateStaticParams() {
+  return clubs.map((club) => ({ slug: club.slug }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const club = await getClubBySlug(slug);
+  return club ? { title: club.name, description: club.description } : { title: "Club not found" };
+}
+
+export default async function ClubDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const club = await getClubBySlug(slug);
+  if (!club) notFound();
+  const user = await getCurrentUser();
+  const isApprovedCharter = club.officers.length === 0;
+  const interest = await getClubInterestInfo(club.slug);
+  const membership = await getClubMembershipInfo(club.id);
+  const commitmentLabel = club.commitment > 0
+    ? `About ${club.commitment} hour${club.commitment === 1 ? "" : "s"}/week`
+    : "Flexible commitment";
+
+  return (
+    <div className="mx-auto w-full max-w-6xl px-6 py-8">
+      <nav aria-label="Breadcrumb" className="mb-8 text-sm text-muted">
+        <Link href="/clubs" className="font-medium text-powder hover:text-cream">
+          Activities &amp; Clubs
+        </Link>
+        <span aria-hidden className="mx-2">/</span>
+        <span className="text-ink">{club.name}</span>
+      </nav>
+
+      <section className="relative">
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-orange">{club.category}</p>
+        <h1 className="mt-2 font-display text-5xl font-semibold uppercase leading-[1.05] tracking-wide text-cream sm:text-7xl lg:text-[84px]">
+          {club.name}
+        </h1>
+        <p className="mt-6 max-w-4xl text-lg font-semibold leading-8 text-cream lg:text-2xl lg:leading-[30px]">
+          {club.description}
+        </p>
+        <div className="mt-6 flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full border border-line px-3 py-1.5 text-cream/85">{club.meetingDays.join(", ")}</span>
+          <span className="rounded-full border border-line px-3 py-1.5 text-cream/85">{club.meetingTime}</span>
+          <span className="rounded-full border border-line px-3 py-1.5 text-cream/85">{club.location}</span>
+          {club.communityService && (
+            <span className="rounded-full bg-orange/90 px-3 py-1.5 font-semibold text-black">
+              Community Service
+            </span>
+          )}
+        </div>
+        <div className="mt-8">
+          {user ? (
+            <PrimaryButton href="/calendar">See Meeting Dates</PrimaryButton>
+          ) : (
+            <PrimaryButton href={`/login?next=${encodeURIComponent(`/clubs/${club.slug}`)}`}>Sign in to Join</PrimaryButton>
+          )}
+          {membership.available && user && club.id && (
+            <form action={membership.status === "active" || membership.status === "pending" ? leaveClub : requestClubMembership} className="mt-3">
+              <input type="hidden" name="club_id" value={club.id} />
+              <input type="hidden" name="slug" value={club.slug} />
+              <PendingSubmitButton
+                pendingLabel="Saving…"
+                className="inline-flex h-10 items-center rounded-[22px] bg-orange px-6 text-sm font-semibold text-black transition-colors hover:bg-peach"
+              >
+                {membership.status === "active"
+                  ? "Leave club"
+                  : membership.status === "pending"
+                    ? "Cancel join request"
+                    : club.joinPolicy === "instant"
+                      ? "Join club"
+                      : "Request to join"}
+              </PendingSubmitButton>
+            </form>
+          )}
+          {interest.available && user && (
+            <form action={toggleClubInterest} className="mt-3">
+              <input type="hidden" name="slug" value={club.slug} />
+              <PendingSubmitButton
+                pendingLabel="Saving…"
+                className={`inline-flex h-10 items-center gap-2 rounded-[22px] border px-6 text-sm font-semibold transition-colors ${
+                  interest.joined
+                    ? "border-cream bg-cream/15 text-cream"
+                    : "border-line text-cream/85 hover:bg-cream/10 hover:text-cream"
+                }`}
+              >
+                {interest.joined ? "★ Interested" : "☆ I'm interested"}
+                <span className="text-xs text-muted">({interest.count})</span>
+              </PendingSubmitButton>
+            </form>
+          )}
+          {user && membership.status === "active" ? (
+            <p role="status" className="mt-3 max-w-md rounded-control bg-powder/15 px-4 py-3 text-sm font-medium text-powder">
+              You&apos;ve joined this club. Meeting details are below and the club now appears in your profile.
+            </p>
+          ) : user && membership.status === "pending" ? (
+            <p role="status" className="mt-3 max-w-md rounded-control bg-orange/15 px-4 py-3 text-sm font-medium text-orange">
+              Your join request is waiting for club approval. You can track it from your profile.
+            </p>
+          ) : null}
+          <p className="mt-3 text-xs text-muted">
+            {user
+              ? club.joinPolicy === "instant"
+                ? "Open membership · joining is instant. You can also drop by a meeting first."
+                : "Membership requires club approval. You can still drop by a meeting first."
+              : `${club.joinPolicy === "instant" ? "Open membership · join instantly" : "Approval required"}. Sign in with your NYC student account to continue.`}
+          </p>
+        </div>
+      </section>
+
+      {(club.advisors?.length || club.contactEmail || club.googleClassroomCode) && (
+        <section className="mt-8 grid gap-4 sm:grid-cols-3">
+          {club.advisors?.length ? (
+            <div className="card-gradient rounded-[10px] p-5">
+              <h2 className="font-display text-lg font-bold uppercase text-cream">Advisors</h2>
+              {club.advisors.map((advisor) => <p key={`${advisor.name}-${advisor.email ?? ""}`} className="mt-2 text-sm text-cream/75">{advisor.name}{advisor.email ? ` · ${advisor.email}` : ""}</p>)}
+            </div>
+          ) : null}
+          {club.contactEmail && (
+            <div className="card-gradient rounded-[10px] p-5">
+              <h2 className="font-display text-lg font-bold uppercase text-cream">Contact</h2>
+              <a href={`mailto:${club.contactEmail}`} className="mt-2 block break-all text-sm text-powder hover:text-cream">{club.contactEmail}</a>
+            </div>
+          )}
+          {club.googleClassroomCode && (
+            <div className="card-gradient rounded-[10px] p-5">
+              <h2 className="font-display text-lg font-bold uppercase text-cream">Google Classroom</h2>
+              <p className="mt-2 font-mono text-sm text-cream/75">{club.googleClassroomCode}</p>
+            </div>
+          )}
+        </section>
+      )}
+
+      {club.announcements?.length ? (
+        <section className="mt-12">
+          <h2 className="font-display text-3xl font-semibold uppercase tracking-wide text-cream">Club announcements</h2>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            {club.announcements.map((announcement) => (
+              <article key={announcement.id} className="card-gradient rounded-[10px] p-5">
+                <h3 className="font-display text-lg font-bold uppercase text-cream">{announcement.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-cream/75">{announcement.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {club.media?.some((item) => item.type === "image") ? (
+        <section className="mt-12" aria-labelledby="club-gallery-title">
+          <h2 id="club-gallery-title" className="font-display text-3xl font-semibold uppercase tracking-wide text-cream">Photo gallery</h2>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {club.media.filter((item) => item.type === "image").map((item) => (
+              <figure key={item.id} className="overflow-hidden rounded-[10px] border border-line bg-card">
+                <img src={item.path} alt={item.alt ?? ""} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                {item.title ? <figcaption className="px-4 py-3 text-sm font-semibold text-ink">{item.title}</figcaption> : null}
+              </figure>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="mt-12 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <div className="card-gradient rounded-[10px] p-6">
+          <h2 className="font-display text-xl font-bold uppercase text-cream">Meeting Details</h2>
+          <dl className="mt-4 space-y-3 text-sm">
+            <div className="flex gap-3">
+              <dt className="w-24 shrink-0 font-semibold text-cream">Date:</dt>
+              <dd className="text-cream/75">{club.meetingDate}</dd>
+            </div>
+            <div className="flex gap-3">
+              <dt className="w-24 shrink-0 font-semibold text-cream">Time:</dt>
+              <dd className="text-cream/75">{club.meetingTime}</dd>
+            </div>
+            <div className="flex gap-3">
+              <dt className="w-24 shrink-0 font-semibold text-cream">Location:</dt>
+              <dd className="text-cream/75">{club.location}</dd>
+            </div>
+            <div className="flex gap-3">
+              <dt className="w-24 shrink-0 font-semibold text-cream">Description:</dt>
+              <dd className="leading-6 text-cream/75">{club.description}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <aside className="card-gradient rounded-[10px] p-6">
+          <h2 className="font-display text-xl font-bold uppercase text-cream">About</h2>
+          <p className="mt-3 text-sm leading-6 text-cream/75">
+            {club.name} welcomes all students. Meetings are open — come by to
+            see what we&apos;re about, no commitment required. Join our Remind
+            channel or ask an officer for details.
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-cream/75">
+            <li>• Open to all grades</li>
+            <li>• {commitmentLabel}</li>
+            <li>• Advisors: see officer board</li>
+          </ul>
+        </aside>
+      </section>
+
+      <section className="mt-14">
+        <h2 className="font-display text-3xl font-semibold uppercase tracking-wide text-cream sm:text-4xl">
+          Meet the Board!
+        </h2>
+        {isApprovedCharter ? (
+          <p className="mt-3 text-sm text-muted">
+            This club was just chartered — the officer roster will be posted soon.
+            Come to a meeting to meet the founding board!
+          </p>
+        ) : (
+          <>
+            <p className="mt-2 text-sm text-muted">Our officers for the 2025–2026 school year.</p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              {club.officers.map((o) => (
+                <div
+                  key={o.role}
+                  className="card-gradient flex flex-col items-center rounded-t-[48px] rounded-b-[10px] p-5 text-center"
+                >
+                  <div className="mt-2 flex h-20 w-20 items-center justify-center rounded-full bg-cream shadow-[0_4px_30px_-8px_rgba(252,241,221,0.7)]">
+                    <span className="font-display text-xl font-extrabold text-navy">
+                      {o.name.split(" ").map((w) => w[0]).join("")}
+                    </span>
+                  </div>
+                  <p className="mt-4 font-display text-sm font-bold uppercase tracking-wide text-cream">{o.name}</p>
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-orange">
+                    {o.role}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </section>
+    </div>
+  );
+}

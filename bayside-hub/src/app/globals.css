@@ -1,26 +1,131 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --navy: #2945a8;
+  --peach: #ffcc7a;
+  --orange: #ff8e68;
+  --coral-deep: #de7b6e;
+  --azure: #4772aa;
+  --sky: #589aef;
+  --powder: #97bff4;
+  --steel: #828d9d;
+  --cream: #fcf1dd;
+  --sidebar-bg: #0a0a0a;
+  --sidebar-surface: #262626;
+  --content-bg: #d9d9d9;
+  --home-bg: #889caa;
+  --ink: #1a1a1a;
+  --muted: #595959;
+  --card-bg: #ffffff;
+  --ring: #e2e2e2;
+  --line: rgba(0, 0, 0, 0.1);
+}
+
+/* Dark scope — hub content pages (Figma: black canvas, cream text, deep-blue gradient cards) */
+.theme-dark {
+  --content-bg: #000000;
+  --card-bg: #0b1226;
+  --home-bg: #000000;
+  --ink: #fcf1dd;
+  --muted: rgba(252, 241, 221, 0.62);
+  --ring: rgba(252, 241, 221, 0.28);
+  --line: rgba(252, 241, 221, 0.16);
+}
+
+/* Light scope — admin area (Figma Admin-H: #D9D9D9 canvas + white cards) */
+.theme-light {
+  --content-bg: #d9d9d9;
+  --card-bg: #ffffff;
+  --ink: #1a1a1a;
+  --muted: #595959;
+  --ring: #e2e2e2;
+  --line: rgba(0, 0, 0, 0.1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-navy: var(--navy);
+  --color-navy-dark: #1e3279;
+  --color-peach: var(--peach);
+  --color-orange: var(--orange);
+  --color-coral-deep: var(--coral-deep);
+  --color-azure: var(--azure);
+  --color-sky: var(--sky);
+  --color-powder: var(--powder);
+  --color-steel: var(--steel);
+  --color-cream: var(--cream);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-surface: var(--sidebar-surface);
+  --color-content-bg: var(--content-bg);
+  --color-home-bg: var(--home-bg);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-card: var(--card-bg);
+  --color-line: var(--line);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-montserrat), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-brand: var(--font-lexend), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Design system — radius scale (from Figma Home/Sidebar specs) */
+  --radius-focus: 4px; /* focus-visible ring corners */
+  --radius-control: 8px; /* inputs, small chips, tags */
+  --radius-light: 12px; /* compact grouped surfaces, dropdown rows */
+  --radius-card: 16px; /* cards, dashboard tiles, search popover */
+  --radius-panel: 24px; /* hero/featured panels, login card */
+  --radius-nav: 8.75px; /* sidebar icon rows (Figma exact) */
+
+  /* Design system — spacing (Figma exact for sidebar) */
+  --spacing-nav: 7px; /* sidebar icon row gap */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--content-bg);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Figma signature card: black → deep navy gradient with a soft white glow */
+.card-gradient {
+  background: linear-gradient(180deg, #000000 0%, #0e1839 73%, #1b2e71 87%, #2945a8 100%);
+  box-shadow: 0 4px 39px -22px rgba(255, 255, 255, 0.9);
+}
+
+/* Figma login backdrop: layered midnight-blue gradient */
+.login-gradient {
+  background: linear-gradient(180deg, #141d40 33%, #1b2548 51%, #0b1127 59%, #10102b 70%);
+}
+
+/* Cream glow used on the profile name banner */
+.glow-cream {
+  box-shadow: -2.4px 2.4px 9.5px -2.4px #fcf1dd;
+}
+
+/* Figma home hero blobs: azure / sky / coral blurred orbs */
+.hero-blobs {
+  background:
+    radial-gradient(closest-side, rgba(71, 114, 170, 0.95), transparent 70%),
+    radial-gradient(closest-side, rgba(88, 154, 239, 0.95), transparent 70%),
+    radial-gradient(closest-side, rgba(255, 142, 104, 0.95), transparent 70%);
+  filter: blur(90px);
+  opacity: 0.4;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+  border-radius: var(--radius-focus);
+}
+
+.theme-dark a:focus-visible,
+.theme-dark button:focus-visible,
+.theme-dark input:focus-visible,
+.theme-dark summary:focus-visible {
+  outline-color: var(--powder);
 }
