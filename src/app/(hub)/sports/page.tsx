@@ -11,17 +11,18 @@ export default async function SportsPage() {
   const events = await getEvents();
   const items = events.filter((e) => e.category === "sports" && isEventUpcoming(e));
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <header className="mb-8">
-        <h1 className="font-display text-5xl font-semibold uppercase leading-[1.05] tracking-wide text-cream sm:text-7xl lg:text-[84px]">
+    <div className="mx-auto w-full max-w-[1700px] px-6 py-10 lg:px-12 lg:py-16">
+      <header className="mb-12 max-w-[1050px]">
+        <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-orange">Athletics</p>
+        <h1 className="font-display text-[clamp(3.5rem,9vw,6.6rem)] font-semibold uppercase leading-none tracking-[-0.04em] text-cream">
           Sports
         </h1>
-        <p className="mt-4 max-w-3xl text-lg font-semibold leading-8 text-cream lg:text-2xl lg:leading-[30px]">
+        <p className="mt-6 max-w-[953px] text-lg font-semibold leading-8 text-cream lg:text-2xl lg:leading-[30px]">
           View all sport tryout and meeting dates.
         </p>
       </header>
       {items.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-7 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {items.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}

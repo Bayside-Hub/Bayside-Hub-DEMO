@@ -42,8 +42,8 @@ export default async function ClubDetailPage({
     : "Flexible commitment";
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <nav aria-label="Breadcrumb" className="mb-8 text-sm text-muted">
+    <div className="club-detail-backdrop mx-auto min-h-full w-full max-w-[1920px] px-5 py-8 text-cream sm:px-8 lg:px-12">
+      <nav aria-label="Breadcrumb" className="mb-6 text-xs text-[#dcd0be]/70">
         <Link href="/clubs" className="font-medium text-powder hover:text-cream">
           Activities &amp; Clubs
         </Link>
@@ -51,29 +51,28 @@ export default async function ClubDetailPage({
         <span className="text-ink">{club.name}</span>
       </nav>
 
-      <section className="relative">
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-orange">{club.category}</p>
-        <h1 className="mt-2 font-display text-5xl font-semibold uppercase leading-[1.05] tracking-wide text-cream sm:text-7xl lg:text-[84px]">
-          {club.name}
-        </h1>
-        <p className="mt-6 max-w-4xl text-lg font-semibold leading-8 text-cream lg:text-2xl lg:leading-[30px]">
-          {club.description}
-        </p>
-        <div className="mt-6 flex flex-wrap gap-2 text-xs">
-          <span className="rounded-full border border-line px-3 py-1.5 text-cream/85">{club.meetingDays.join(", ")}</span>
-          <span className="rounded-full border border-line px-3 py-1.5 text-cream/85">{club.meetingTime}</span>
-          <span className="rounded-full border border-line px-3 py-1.5 text-cream/85">{club.location}</span>
+      <section className="grid min-h-[360px] gap-8 overflow-hidden rounded-[22px] border border-[#97b4de] bg-[#f0ebe5]/95 p-6 text-[#2a2829] lg:grid-cols-[210px_minmax(0,1fr)_280px] lg:items-center lg:p-10">
+        <div className="mx-auto flex size-[170px] flex-col items-center justify-center rounded-full border border-[#2a2829] bg-[#97b4de]"><span className="text-6xl font-bold text-[#263a99]">{club.name[0]}</span><span className="mt-2 text-[10px] font-bold uppercase">{club.name}</span></div>
+        <div>
+          <p className="text-sm">{club.category} · {club.meetingDate}</p>
+          <h1 className="mt-2 font-display text-5xl font-bold uppercase leading-none sm:text-6xl">{club.name}</h1>
+          <p className="mt-4 max-w-4xl text-sm font-medium leading-6">{club.description}</p>
+          <div className="mt-5 flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full border border-[#2a2829] px-3 py-1.5">{club.meetingDays.join(", ")}</span>
+          <span className="rounded-full border border-[#2a2829] px-3 py-1.5">{club.meetingTime}</span>
+          <span className="rounded-full border border-[#2a2829] px-3 py-1.5">{club.location}</span>
           {club.communityService && (
-            <span className="rounded-full bg-orange/90 px-3 py-1.5 font-semibold text-black">
+            <span className="rounded-full bg-[#f78660] px-3 py-1.5 font-semibold text-black">
               Community Service
             </span>
           )}
+          </div>
         </div>
-        <div className="mt-8">
+        <div>
           {user ? (
-            <PrimaryButton href="/calendar">See Meeting Dates</PrimaryButton>
+            <PrimaryButton href="/calendar" className="w-full bg-[#97b4de]">Meeting dates →</PrimaryButton>
           ) : (
-            <PrimaryButton href={`/login?next=${encodeURIComponent(`/clubs/${club.slug}`)}`}>Sign in to Join</PrimaryButton>
+            <PrimaryButton href={`/login?next=${encodeURIComponent(`/clubs/${club.slug}`)}`} className="w-full bg-[#97b4de]">Sign in to Join</PrimaryButton>
           )}
           {membership.available && user && club.id && (
             <form action={membership.status === "active" || membership.status === "pending" ? leaveClub : requestClubMembership} className="mt-3">
@@ -81,7 +80,7 @@ export default async function ClubDetailPage({
               <input type="hidden" name="slug" value={club.slug} />
               <PendingSubmitButton
                 pendingLabel="Saving…"
-                className="inline-flex h-10 items-center rounded-[22px] bg-orange px-6 text-sm font-semibold text-black transition-colors hover:bg-peach"
+                className="inline-flex h-10 w-full items-center justify-center rounded-[22px] bg-[#f78660] px-6 text-sm font-semibold text-black hover:bg-[#ff9b78]"
               >
                 {membership.status === "active"
                   ? "Leave club"
@@ -98,10 +97,10 @@ export default async function ClubDetailPage({
               <input type="hidden" name="slug" value={club.slug} />
               <PendingSubmitButton
                 pendingLabel="Saving…"
-                className={`inline-flex h-10 items-center gap-2 rounded-[22px] border px-6 text-sm font-semibold transition-colors ${
+                  className={`inline-flex h-10 w-full items-center justify-center gap-2 rounded-[22px] border border-[#2a2829] bg-white px-6 text-sm font-semibold ${
                   interest.joined
-                    ? "border-cream bg-cream/15 text-cream"
-                    : "border-line text-cream/85 hover:bg-cream/10 hover:text-cream"
+                    ? "text-[#263a99]"
+                    : "text-[#2a2829]"
                 }`}
               >
                 {interest.joined ? "★ Interested" : "☆ I'm interested"}
@@ -110,15 +109,15 @@ export default async function ClubDetailPage({
             </form>
           )}
           {user && membership.status === "active" ? (
-            <p role="status" className="mt-3 max-w-md rounded-control bg-powder/15 px-4 py-3 text-sm font-medium text-powder">
+            <p role="status" className="mt-3 rounded-control bg-[#97b4de]/25 px-4 py-3 text-xs font-medium text-[#263a99]">
               You&apos;ve joined this club. Meeting details are below and the club now appears in your profile.
             </p>
           ) : user && membership.status === "pending" ? (
-            <p role="status" className="mt-3 max-w-md rounded-control bg-orange/15 px-4 py-3 text-sm font-medium text-orange">
+            <p role="status" className="mt-3 rounded-control bg-[#f78660]/20 px-4 py-3 text-xs font-medium text-[#2a2829]">
               Your join request is waiting for club approval. You can track it from your profile.
             </p>
           ) : null}
-          <p className="mt-3 text-xs text-muted">
+          <p className="mt-3 text-xs text-[#2a2829]/70">
             {user
               ? club.joinPolicy === "instant"
                 ? "Open membership · joining is instant. You can also drop by a meeting first."
@@ -217,39 +216,39 @@ export default async function ClubDetailPage({
         </aside>
       </section>
 
-      <section className="mt-14">
-        <h2 className="font-display text-3xl font-semibold uppercase tracking-wide text-cream sm:text-4xl">
-          Meet the Board!
+      <section className="mt-10 overflow-hidden rounded-[20px] bg-[#f0ebe5]/95 p-6 text-[#2a2829] lg:p-10">
+        <div className="text-center"><p className="text-xs font-bold uppercase tracking-[0.24em] text-[#263a99]">Club leadership</p><h2 className="mt-2 font-display text-3xl font-semibold uppercase tracking-wide text-[#2a2829] sm:text-5xl">
+          Meet the board!
         </h2>
+        </div>
         {isApprovedCharter ? (
-          <p className="mt-3 text-sm text-muted">
+          <p className="mt-5 text-center text-sm text-[#2a2829]/70">
             This club was just chartered — the officer roster will be posted soon.
             Come to a meeting to meet the founding board!
           </p>
         ) : (
           <>
             <p className="mt-2 text-sm text-muted">Our officers for the 2025–2026 school year.</p>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {club.officers.map((o) => (
                 <div
                   key={o.role}
-                  className="card-gradient flex flex-col items-center rounded-t-[48px] rounded-b-[10px] p-5 text-center"
+                  className="relative flex min-h-[285px] flex-col items-center overflow-hidden rounded-[18px] border border-[#2a2829] bg-white p-5 text-center"
                 >
-                  <div className="mt-2 flex h-20 w-20 items-center justify-center rounded-full bg-cream shadow-[0_4px_30px_-8px_rgba(252,241,221,0.7)]">
-                    <span className="font-display text-xl font-extrabold text-navy">
+                  <span className="rounded-full bg-[#263a99] px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-[#f0ebe5]">{o.role}</span>
+                  <p className="mt-4 font-display text-sm font-bold uppercase tracking-wide text-[#2a2829]">{o.name}</p>
+                  <div className="absolute -bottom-20 flex size-[210px] items-start justify-center rounded-full bg-[#dcd0be] pt-12 shadow-[0_4px_30px_-8px_rgba(252,241,221,0.7)]">
+                    <span className="font-display text-xl font-extrabold text-[#263a99]">
                       {o.name.split(" ").map((w) => w[0]).join("")}
                     </span>
                   </div>
-                  <p className="mt-4 font-display text-sm font-bold uppercase tracking-wide text-cream">{o.name}</p>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-orange">
-                    {o.role}
-                  </p>
                 </div>
               ))}
             </div>
           </>
         )}
       </section>
+      <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium text-[#f0ebe5]"><span>CLUB PROFILE</span><span className="h-px flex-1 bg-[#f0ebe5]" /><span className="text-[#dcd0be]">{club.name.toUpperCase()}</span></footer>
     </div>
   );
 }

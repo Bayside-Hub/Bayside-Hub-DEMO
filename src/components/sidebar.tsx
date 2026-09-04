@@ -12,7 +12,6 @@ import {
   SupportIcon,
   InfoIcon,
   AdminIcon,
-  GearIcon,
   UserIcon,
 } from "./icons";
 import type { Role } from "@/lib/supabase/types";
@@ -98,23 +97,25 @@ function NavIconRow({
   const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
 
   return (
-    <div className="group relative w-[35px] hover:w-full">
+    <div className="group relative w-[35px] shrink-0">
       <Link
         href={item.href}
         aria-label={item.label}
         title={item.label}
         aria-current={active ? "page" : undefined}
-        className={`flex h-[35px] w-full items-center justify-center gap-3 rounded-nav px-[7px] transition-colors group-hover:justify-start ${
+        className={`flex h-[35px] w-full items-center justify-center rounded-nav px-[7px] transition-colors ${
           active
             ? "bg-sidebar-surface text-cream"
             : "text-cream/80 hover:bg-sidebar-surface/60 hover:text-cream"
         }`}
       >
         <Icon className="h-5 w-5 shrink-0" />
-        <span className="hidden min-w-0 flex-1 truncate text-left text-sm font-medium group-hover:inline">
+      </Link>
+      {!item.sub && (
+        <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 hidden -translate-y-1/2 whitespace-nowrap rounded-lg border border-line bg-[#101426] px-3 py-2 text-xs font-semibold text-cream shadow-xl group-hover:block group-focus-within:block">
           {item.label}
         </span>
-      </Link>
+      )}
       {item.sub && (
         <div className="pointer-events-none absolute left-full top-0 z-50 ml-2 hidden min-w-52 rounded-light border border-line bg-card p-1.5 shadow-xl group-focus-within:pointer-events-auto group-hover:pointer-events-auto group-hover:block group-focus-within:block">
           <p className="px-3 pb-1 pt-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
@@ -150,37 +151,27 @@ export default function Sidebar({
   const pathname = usePathname();
 
   return (
-    <div className="group/sidebar z-40 flex h-full w-14 shrink-0 flex-col items-center gap-nav overflow-y-auto overflow-x-hidden border-r border-sidebar-surface bg-sidebar-bg px-3.5 py-4 transition-[width] duration-200 ease-out hover:w-[279px] hover:items-stretch">
+    <aside aria-label="Primary navigation" className="z-40 flex h-full w-16 shrink-0 flex-col items-center gap-nav overflow-visible border-r border-white/10 bg-sidebar-bg/95 px-3.5 py-4 shadow-[12px_0_40px_-32px_rgba(151,191,244,.8)] backdrop-blur-xl">
       <Link
         href="/"
         aria-label="Bayside Hub home"
-        className="mb-1 flex h-[42px] w-[35px] shrink-0 items-center justify-center pb-[7px] group-hover/sidebar:w-full group-hover/sidebar:justify-start group-hover/sidebar:px-[7px]"
+        title="Bayside Hub"
+        className="mb-1 flex h-[42px] w-[35px] shrink-0 items-center justify-center pb-[7px]"
       >
         <LogoMark className="h-[22px] w-[25px] shrink-0 text-cream" />
-        <span className="ml-3 hidden whitespace-nowrap font-brand text-lg font-semibold text-cream group-hover/sidebar:inline">
-          Bayside Hub
-        </span>
       </Link>
 
       {mainNavItems.map((item) => (
         <NavIconRow key={item.href} item={item} pathname={pathname} role={role} />
       ))}
 
-      <div className="mx-auto h-px w-[27px] shrink-0 bg-sidebar-surface group-hover/sidebar:mx-0 group-hover/sidebar:w-full" aria-hidden />
+      <div className="mx-auto h-px w-[27px] shrink-0 bg-sidebar-surface" aria-hidden />
 
       {adminNavItems.map((item) => (
         <NavIconRow key={item.href} item={item} pathname={pathname} role={role} />
       ))}
 
-      <div className="mt-auto flex w-[35px] flex-col items-center gap-nav group-hover/sidebar:w-full">
-        <button
-          type="button"
-          aria-label="Settings"
-          title="Settings"
-          className="flex h-[35px] w-[35px] items-center justify-center rounded-nav text-[#A1A1A1] transition-colors hover:bg-sidebar-surface/60 hover:text-cream"
-        >
-          <GearIcon className="h-4 w-4" />
-        </button>
+      <div className="mt-auto flex w-[35px] flex-col items-center gap-nav">
         <Link
           href="/profile"
           aria-label="Profile"
@@ -190,6 +181,6 @@ export default function Sidebar({
           <UserIcon className="h-4 w-4" />
         </Link>
       </div>
-    </div>
+    </aside>
   );
 }

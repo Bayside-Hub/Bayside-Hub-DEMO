@@ -63,6 +63,8 @@ calendar, and opportunities — built with Next.js, Tailwind CSS, and Supabase.
      calendar data, applications, meetings, and support queues
    - `supabase/club_governance.sql` — club-specific board permissions, advisor
      assignment controls, public photo storage, annual compliance, and audit history
+   - `supabase/release_security_hardening.sql` — removes the obsolete privileged
+     view and restricts API execution of internal database functions
 
 4. Enable Google OAuth:
 

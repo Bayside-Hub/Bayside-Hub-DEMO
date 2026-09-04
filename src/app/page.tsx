@@ -6,7 +6,7 @@ import {
   SectionHeader,
 } from "@/components/cards";
 import Link from "next/link";
-import HomeNav from "@/components/home-nav";
+import HubShell from "@/components/hub-shell";
 import { getAnnouncements } from "@/lib/announcements";
 import { getAllClubs } from "@/lib/clubs";
 import { isEventUpcoming } from "@/lib/data";
@@ -27,8 +27,8 @@ export default async function Home() {
   const [featured] = announcements;
   const upcomingEvents = events.filter((event) => isEventUpcoming(event));
   return (
-    <div className="theme-dark min-h-full bg-content-bg">
-      <HomeNav user={user} />
+    <HubShell>
+      <div className="min-h-full bg-content-bg">
 
       <section className="relative overflow-hidden bg-black">
         <div className="hero-blobs pointer-events-none absolute inset-0" aria-hidden>
@@ -185,7 +185,8 @@ export default async function Home() {
           </div>
         </section>
       </main>
-    </div>
+      </div>
+    </HubShell>
   );
 }
 

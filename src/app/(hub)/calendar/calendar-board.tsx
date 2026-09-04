@@ -82,7 +82,7 @@ export default function CalendarBoard({ events }: { events: EventItem[] }) {
     today.getFullYear() === cursor.year && today.getMonth() === cursor.month;
 
   return (
-    <section className="card-gradient overflow-hidden rounded-panel">
+    <section className="overflow-hidden rounded-[18px] bg-black">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-3">
         <div className="flex flex-wrap gap-2" role="group" aria-label="Calendar layers">
           {(["all", "school", "club", "sports"] as const).map((value) => (

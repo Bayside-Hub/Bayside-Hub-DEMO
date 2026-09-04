@@ -1,4 +1,4 @@
-import { EventCard, SectionHeader } from "@/components/cards";
+import { EventCard } from "@/components/cards";
 import { isEventUpcoming, type EventItem } from "@/lib/data";
 import { getEvents } from "@/lib/events";
 import type { Metadata } from "next";
@@ -9,10 +9,14 @@ export const metadata: Metadata = {
 
 function EventSection({ title, subtitle, items }: { title: string; subtitle: string; items: EventItem[] }) {
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <SectionHeader title={title} subtitle={subtitle} />
+    <div className="mx-auto w-full max-w-[1700px] px-6 py-10 lg:px-12 lg:py-16">
+      <header className="mb-12 max-w-[1050px]">
+        <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-powder">Bayside High School</p>
+        <h1 className="font-display text-[clamp(3.5rem,9vw,6.6rem)] font-semibold uppercase leading-none tracking-[-0.04em] text-cream">{title}</h1>
+        <p className="mt-6 max-w-[953px] text-base font-semibold leading-7 text-cream/90 sm:text-xl sm:leading-8">{subtitle}</p>
+      </header>
       {items.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-7 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {items.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}
@@ -34,7 +38,7 @@ export default async function EventsPage() {
   return (
     <EventSection
       title="Events"
-      subtitle="View all upcoming events."
+      subtitle="Each year Bayside holds engaging events where students take part in creating, designing, and performing. We hope to see you there!"
       items={upcoming.slice(0, 30)}
     />
   );

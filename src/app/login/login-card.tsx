@@ -2,22 +2,19 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { LogoMark } from "@/components/icons";
 import { createBrowserClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { safeNextPath } from "@/lib/navigation";
 
 export function LoginCardSkeleton() {
   return (
-    <div className="flex flex-col items-center text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-card bg-navy">
-        <LogoMark className="h-8 w-9 text-cream" />
-      </div>
-      <h1 className="mt-4 text-2xl font-bold text-ink">Bayside Hub</h1>
-      <p className="mt-1 text-sm text-muted">
+    <div>
+      <p className="text-3xl font-bold text-[#4285f4]">Bayside Hub</p>
+      <h1 className="mt-12 text-5xl font-bold text-black">Log In</h1>
+      <p className="mt-3 text-sm text-[#5f6368]">
         Sign in with your NYC student account to get started.
       </p>
-      <div className="mt-8 h-11 w-full animate-pulse rounded-full bg-black/5" />
+      <div className="mt-12 h-11 w-full animate-pulse rounded-full bg-[#c0dbea]" />
     </div>
   );
 }
@@ -28,8 +25,10 @@ export default function LoginCard() {
   const error = searchParams.get("error");
   const configured = isSupabaseConfigured();
   const [pending, setPending] = useState(false);
+  const [oauthMessage, setOauthMessage] = useState<string | null>(null);
 
   async function signIn() {
+    setOauthMessage(null);
     setPending(true);
     const supabase = createBrowserClient();
     const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -39,7 +38,7 @@ export default function LoginCard() {
       },
     });
     if (oauthError) {
-      console.error("OAuth sign-in failed:", oauthError.message);
+      setOauthMessage("Google sign-in could not start. Please try again or contact support.");
       setPending(false);
       return;
     }
@@ -47,14 +46,11 @@ export default function LoginCard() {
   }
 
   return (
-    <div className="flex flex-col items-center text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-card bg-navy">
-        <LogoMark className="h-8 w-9 text-cream" />
-      </div>
-      <h1 className="mt-4 text-2xl font-bold text-ink">Bayside Hub</h1>
-      <p className="mt-1 text-sm text-muted">
-        Sign in with your NYC student account to get started.
-      </p>
+    <div>
+      <p className="text-3xl font-bold text-[#4285f4]">Bayside Hub</p>
+      <p className="mt-5 text-base text-black">Welcome back!</p>
+      <h1 className="mt-5 text-5xl font-bold text-black sm:text-6xl">Log In</h1>
+      <p className="mt-4 text-sm leading-6 text-[#5f6368]">Use Google to continue securely with your NYC student or school account.</p>
 
       {error === "auth" && (
         <p className="mt-4 rounded-light bg-orange/10 px-3 py-2 text-xs font-medium text-orange">
@@ -66,13 +62,19 @@ export default function LoginCard() {
           This Google account is not from an approved school domain.
         </p>
       )}
+      {oauthMessage && (
+        <p className="mt-4 rounded-light bg-orange/10 px-3 py-2 text-xs font-medium text-orange" role="alert">
+          {oauthMessage}
+        </p>
+      )}
 
-      <div className="mt-8 flex w-full flex-col gap-3">
+      <div className="mt-10 flex w-full flex-col gap-3">
+        <p className="text-center text-sm text-[#6096b4]">continue with</p>
         <button
           type="button"
           onClick={signIn}
           disabled={!configured || pending}
-          className="flex h-11 w-full items-center justify-center gap-3 rounded-full border border-black/10 bg-content-bg text-sm font-semibold text-ink transition-colors hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy disabled:cursor-not-allowed disabled:opacity-60"
+          className="mx-auto flex h-12 w-full max-w-[260px] items-center justify-center gap-3 rounded-full border border-[#6096b4] bg-white text-sm font-semibold text-[#3c4043] transition-colors hover:bg-[#c0dbea]/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4285f4] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <svg viewBox="0 0 20 20" className="h-5 w-5" aria-hidden>
             <path fill="#4285F4" d="M19 10.2c0-.7-.06-1.4-.18-2H10v3.8h5.06a4.6 4.6 0 0 1-2 3v2.5h3.24C18.12 15.8 19 13.2 19 10.2Z" />
@@ -98,7 +100,7 @@ export default function LoginCard() {
           </p>
         )}
 
-        <p className="text-center text-xs text-muted">
+        <p className="mt-5 text-center text-xs text-[#5f6368]">
           Use your @nycstudents.net account. Advisors sign in with their school account.
         </p>
       </div>

@@ -29,8 +29,8 @@ export default async function EventDetailPage({
   const rsvp = await getEventRsvpInfo(event.id);
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <article className="rounded-panel border border-line bg-card p-8 shadow-sm">
+    <div className="mx-auto w-full max-w-5xl px-6 py-8 lg:py-12">
+      <article className="relative overflow-hidden rounded-[26px] border border-[#97b4de] bg-[#f0ebe5] p-8 text-[#2a2829] shadow-sm sm:p-12">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded-full bg-navy px-3 py-1 font-semibold capitalize text-cream">
             {event.category === "spirit-week" ? "Spirit Week" : event.category}
@@ -39,22 +39,22 @@ export default async function EventDetailPage({
             {event.price}
           </span>
         </div>
-        <h1 className="mt-4 font-display text-4xl font-bold uppercase tracking-tight text-ink">{event.title}</h1>
+        <h1 className="mt-5 font-display text-5xl font-bold uppercase tracking-tight sm:text-7xl">{event.title}</h1>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Date</dt>
-            <dd className="mt-0.5 font-medium text-ink">{event.date}</dd>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-[#263a99]">Date</dt>
+            <dd className="mt-0.5 font-medium">{event.date}</dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Time</dt>
-            <dd className="mt-0.5 font-medium text-ink">{event.time}</dd>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-[#263a99]">Time</dt>
+            <dd className="mt-0.5 font-medium">{event.time}</dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Location</dt>
-            <dd className="mt-0.5 font-medium text-ink">{event.location}</dd>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-[#263a99]">Location</dt>
+            <dd className="mt-0.5 font-medium">{event.location}</dd>
           </div>
         </dl>
-        <p className="mt-6 leading-8 text-muted">{event.description}</p>
+        <p className="mt-6 max-w-3xl leading-8 text-[#2a2829]/75">{event.description}</p>
 
         {rsvp.available && (
           <div className="mt-6 border-t border-line pt-6">
@@ -65,8 +65,8 @@ export default async function EventDetailPage({
                   pendingLabel="Saving RSVP…"
                   className={`inline-flex h-10 items-center gap-2 rounded-[22px] border px-6 text-sm font-semibold transition-colors ${
                     rsvp.joined
-                      ? "border-cream bg-cream/15 text-cream"
-                      : "border-line text-cream/85 hover:bg-cream/10 hover:text-cream"
+                      ? "border-[#263a99] bg-[#97b4de]/30 text-[#263a99]"
+                      : "border-[#2a2829] text-[#2a2829] hover:bg-white"
                   }`}
                 >
                   {rsvp.joined ? "✓ I'm going" : "Count me in"}

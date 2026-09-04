@@ -20,7 +20,7 @@ export default function Topbar({ user }: { user: SessionUser | null }) {
 
   return (
     <header
-      className={`flex h-14 shrink-0 items-center justify-between gap-4 border-b border-line bg-content-bg px-4 sm:px-6 ${
+      className={`flex h-16 shrink-0 items-center justify-between gap-4 border-b border-line bg-content-bg px-4 sm:px-6 ${
         isAdmin ? "theme-light" : ""
       }`}
     >

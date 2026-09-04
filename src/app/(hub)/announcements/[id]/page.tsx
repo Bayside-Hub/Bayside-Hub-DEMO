@@ -22,15 +22,15 @@ export default async function AnnouncementDetailPage({
   const versions = await getAnnouncementVersions(id);
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <article className="rounded-panel border border-line bg-card p-8 shadow-sm">
+    <div className="mx-auto w-full max-w-5xl px-6 py-8 lg:py-12">
+      <article className="rounded-[22px] border border-[#97b4de] bg-[#f0ebe5] p-8 text-[#2a2829] shadow-sm sm:p-12">
         <div className="flex items-center gap-3 text-xs">
           <span className="rounded-full bg-navy px-3 py-1 font-semibold text-cream">{a.tag}</span>
-          <time className="text-muted">{a.date}</time>
+          <time className="text-[#2a2829]/60">{a.date}</time>
         </div>
-        <h1 className="mt-4 font-display text-4xl font-bold uppercase tracking-tight text-ink">{a.title}</h1>
-        <p className="mt-4 leading-8 text-muted">{a.excerpt}</p>
-        <p className="mt-4 leading-8 text-muted">
+        <h1 className="mt-5 font-display text-5xl font-bold uppercase tracking-tight sm:text-7xl">{a.title}</h1>
+        <p className="mt-5 leading-8 text-[#2a2829]/75">{a.excerpt}</p>
+        <p className="mt-4 leading-8 text-[#2a2829]/75">
           Full details are shared by the SO office each morning. This
           announcement was published through Bayside Hub so nothing slips past
           you — check back daily for updates.

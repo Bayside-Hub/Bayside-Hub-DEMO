@@ -41,6 +41,7 @@ create trigger on_auth_user_created
 create or replace function public.handle_profile_updated()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   new.updated_at = now();

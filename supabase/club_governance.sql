@@ -98,10 +98,14 @@ declare
   target_club_id uuid;
   target_id uuid;
 begin
-  target_club_id := case
-    when tg_table_name = 'clubs' then coalesce(new.id, old.id)
-    else coalesce(new.club_id, old.club_id)
-  end;
+  -- Trigger records have the shape of their source table. Using a CASE
+  -- expression here still tries to resolve both record fields, so `clubs`
+  -- updates fail because that table has no `club_id` column.
+  if tg_table_name = 'clubs' then
+    target_club_id := coalesce(new.id, old.id);
+  else
+    target_club_id := coalesce(new.club_id, old.club_id);
+  end if;
   target_id := coalesce(new.id, old.id);
 
   insert into public.club_audit_log (

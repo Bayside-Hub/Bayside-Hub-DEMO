@@ -66,7 +66,7 @@
   --font-display: var(--font-montserrat), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-brand: var(--font-lexend), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 
-  /* Design system — radius scale (from Figma Home/Sidebar specs) */
+  /* Design system — radius scale (from the Figma navigation and card specs) */
   --radius-focus: 4px; /* focus-visible ring corners */
   --radius-control: 8px; /* inputs, small chips, tags */
   --radius-light: 12px; /* compact grouped surfaces, dropdown rows */
@@ -82,12 +82,23 @@ body {
   background: var(--content-bg);
   color: var(--ink);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
+
+::selection { background: var(--powder); color: #111111; }
+
+* { scrollbar-color: rgba(151, 191, 244, 0.45) transparent; scrollbar-width: thin; }
 
 /* Figma signature card: black → deep navy gradient with a soft white glow */
 .card-gradient {
-  background: linear-gradient(180deg, #000000 0%, #0e1839 73%, #1b2e71 87%, #2945a8 100%);
-  box-shadow: 0 4px 39px -22px rgba(255, 255, 255, 0.9);
+  background: linear-gradient(165deg, #05070d 0%, #0b1330 67%, #172b70 88%, #2945a8 100%);
+  box-shadow: 0 18px 50px -34px rgba(151, 191, 244, 0.8);
+}
+
+@media (hover: hover) {
+  .card-gradient { transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease; }
+  .card-gradient:hover { border-color: rgba(151, 191, 244, 0.36); box-shadow: 0 24px 60px -34px rgba(151, 191, 244, 0.95); }
 }
 
 /* Figma login backdrop: layered midnight-blue gradient */
@@ -95,9 +106,51 @@ body {
   background: linear-gradient(180deg, #141d40 33%, #1b2548 51%, #0b1127 59%, #10102b 70%);
 }
 
+@keyframes login-orb-intro {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.35); }
+  55% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  100% { opacity: 0.75; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes login-card-intro {
+  from { opacity: 0; transform: translateY(22px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes login-copy-intro {
+  from { opacity: 0; transform: translateX(-28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.login-intro-orb { animation: login-orb-intro 900ms cubic-bezier(.2,.8,.2,1) both; }
+.login-intro-card { animation: login-card-intro 600ms 260ms ease-out both; }
+.login-intro-copy { animation: login-copy-intro 700ms 180ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .login-intro-orb,
+  .login-intro-card { animation: none; }
+  .login-intro-copy { animation: none; }
+}
+
 /* Cream glow used on the profile name banner */
 .glow-cream {
   box-shadow: -2.4px 2.4px 9.5px -2.4px #fcf1dd;
+}
+
+/* Figma Profile 777:16: exported mesh behind the warm neutral dashboard. */
+.profile-backdrop {
+  background-color: #2a2829;
+  background-image: url("/profile/mesh-gradient.svg");
+  background-position: center 8%;
+  background-repeat: no-repeat;
+  background-size: min(1100px, 90vw) auto;
+}
+
+.club-detail-backdrop {
+  background-image: url("/profile/mesh-gradient.svg");
+  background-position: center 10%;
+  background-repeat: no-repeat;
+  background-size: min(1100px, 90vw) auto;
 }
 
 /* Figma home hero blobs: azure / sky / coral blurred orbs */

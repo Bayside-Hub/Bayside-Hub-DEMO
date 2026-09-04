@@ -42,7 +42,7 @@ export function AnnouncementCard({ a }: { a: Announcement }) {
       <h3 className="mt-3 text-lg font-semibold text-cream">{a.title}</h3>
       <p className="mt-1.5 line-clamp-3 text-sm leading-6 text-cream/70">{a.excerpt}</p>
       <div className="mt-4">
-        <PrimaryButton href="/announcements" className="h-9 px-5 text-xs">
+        <PrimaryButton href={`/announcements/${a.id}`} className="h-9 px-5 text-xs">
           Full Announcement
         </PrimaryButton>
       </div>
@@ -91,35 +91,17 @@ export function EventCard({ event }: { event: EventItem }) {
   return (
     <Link
       href={`/events/${event.id}`}
-      className="card-gradient flex flex-col rounded-[10px] p-5 transition-transform duration-200 hover:-translate-y-1"
+      className="card-gradient group relative flex min-h-[360px] flex-col overflow-hidden rounded-[34px_34px_10px_10px] border border-line p-7 text-center transition-transform duration-200 hover:-translate-y-1"
     >
-      <div className={`mb-3 inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold ${chip}`}>
+      <p className="line-clamp-2 text-xs font-semibold leading-5 text-cream/85">{event.description}</p>
+      <div className={`mx-auto mt-3 inline-flex w-fit rounded-full px-4 py-1 text-xs font-semibold ${chip}`}>
         {event.category === "sports" ? "Sports" : event.category === "spirit-week" ? "Spirit Week" : "Events"}
       </div>
-      <h3 className="font-display text-lg font-bold uppercase leading-snug text-cream">{event.title}</h3>
-      <dl className="mt-3 space-y-1.5 text-sm text-cream/70">
-        <div className="flex gap-2">
-          <dt className="w-20 shrink-0 font-semibold text-cream">Date:</dt>
-          <dd>{event.date}</dd>
-        </div>
-        <div className="flex gap-2">
-          <dt className="w-20 shrink-0 font-semibold text-cream">Time:</dt>
-          <dd>{event.time}</dd>
-        </div>
-        <div className="flex gap-2">
-          <dt className="w-20 shrink-0 font-semibold text-cream">Location:</dt>
-          <dd>{event.location}</dd>
-        </div>
-        <div className="flex gap-2">
-          <dt className="w-20 shrink-0 font-semibold text-cream">Price:</dt>
-          <dd>{event.price}</dd>
-        </div>
-        <div className="flex gap-2">
-          <dt className="w-20 shrink-0 font-semibold text-cream">Description:</dt>
-          <dd className="line-clamp-2">{event.description}</dd>
-        </div>
-      </dl>
-      <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-powder">
+      <h3 className="mt-3 font-display text-xl font-bold uppercase leading-snug text-cream">{event.title}</h3>
+      <p className="mt-2 text-xs font-semibold uppercase leading-5 text-cream">{event.date} · {event.location} · {event.time}</p>
+      <p className="mt-1 text-sm text-cream/75">{event.price}</p>
+      <div className="pointer-events-none absolute -bottom-32 left-1/2 size-64 -translate-x-1/2 rounded-full bg-cream transition-transform group-hover:-translate-y-2" aria-hidden />
+      <span className="relative mt-auto inline-flex items-center justify-center gap-1.5 pt-24 text-xs font-bold uppercase tracking-wider text-navy">
         View details
         <ArrowRightIcon className="h-3.5 w-3.5" />
       </span>

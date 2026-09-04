@@ -36,6 +36,7 @@ export const clubCategories = [
   "Other",
 ];
 
+// Public fallback content never includes people; board names come only from Supabase.
 export const clubs: Club[] = [
   {
     slug: "key-club",
@@ -50,13 +51,7 @@ export const clubs: Club[] = [
     commitment: 3,
     communityService: true,
     stem: false,
-    officers: [
-      { role: "President", name: "JOHN DOE" },
-      { role: "Vice President", name: "JANE SMITH" },
-      { role: "Secretary", name: "ALEX JONES" },
-      { role: "Treasurer", name: "SAM WILSON" },
-      { role: "Editor", name: "CHRIS LEE" },
-    ],
+    officers: [],
   },
   {
     slug: "crochet-club",
@@ -71,13 +66,7 @@ export const clubs: Club[] = [
     commitment: 2,
     communityService: false,
     stem: false,
-    officers: [
-      { role: "President", name: "JOHN DOE" },
-      { role: "Vice President", name: "JANE SMITH" },
-      { role: "Secretary", name: "ALEX JONES" },
-      { role: "Treasurer", name: "SAM WILSON" },
-      { role: "Editor", name: "CHRIS LEE" },
-    ],
+    officers: [],
   },
   {
     slug: "robotics",
@@ -92,13 +81,7 @@ export const clubs: Club[] = [
     commitment: 4,
     communityService: false,
     stem: true,
-    officers: [
-      { role: "President", name: "JOHN DOE" },
-      { role: "Vice President", name: "JANE SMITH" },
-      { role: "Secretary", name: "ALEX JONES" },
-      { role: "Treasurer", name: "SAM WILSON" },
-      { role: "Editor", name: "CHRIS LEE" },
-    ],
+    officers: [],
   },
   {
     slug: "debate-team",
@@ -113,13 +96,7 @@ export const clubs: Club[] = [
     commitment: 3,
     communityService: false,
     stem: false,
-    officers: [
-      { role: "President", name: "JOHN DOE" },
-      { role: "Vice President", name: "JANE SMITH" },
-      { role: "Secretary", name: "ALEX JONES" },
-      { role: "Treasurer", name: "SAM WILSON" },
-      { role: "Editor", name: "CHRIS LEE" },
-    ],
+    officers: [],
   },
   {
     slug: "school-newspaper",
@@ -134,13 +111,7 @@ export const clubs: Club[] = [
     commitment: 3,
     communityService: false,
     stem: false,
-    officers: [
-      { role: "President", name: "JOHN DOE" },
-      { role: "Vice President", name: "JANE SMITH" },
-      { role: "Secretary", name: "ALEX JONES" },
-      { role: "Treasurer", name: "SAM WILSON" },
-      { role: "Editor", name: "CHRIS LEE" },
-    ],
+    officers: [],
   },
   {
     slug: "environmental",
@@ -155,13 +126,7 @@ export const clubs: Club[] = [
     commitment: 2,
     communityService: true,
     stem: false,
-    officers: [
-      { role: "President", name: "JOHN DOE" },
-      { role: "Vice President", name: "JANE SMITH" },
-      { role: "Secretary", name: "ALEX JONES" },
-      { role: "Treasurer", name: "SAM WILSON" },
-      { role: "Editor", name: "CHRIS LEE" },
-    ],
+    officers: [],
   },
   {
     slug: "health-occupations",
@@ -176,13 +141,7 @@ export const clubs: Club[] = [
     commitment: 2,
     communityService: true,
     stem: true,
-    officers: [
-      { role: "President", name: "JOHN DOE" },
-      { role: "Vice President", name: "JANE SMITH" },
-      { role: "Secretary", name: "ALEX JONES" },
-      { role: "Treasurer", name: "SAM WILSON" },
-      { role: "Editor", name: "CHRIS LEE" },
-    ],
+    officers: [],
   },
   {
     slug: "art-club",
@@ -197,13 +156,7 @@ export const clubs: Club[] = [
     commitment: 3,
     communityService: false,
     stem: false,
-    officers: [
-      { role: "President", name: "JOHN DOE" },
-      { role: "Vice President", name: "JANE SMITH" },
-      { role: "Secretary", name: "ALEX JONES" },
-      { role: "Treasurer", name: "SAM WILSON" },
-      { role: "Editor", name: "CHRIS LEE" },
-    ],
+    officers: [],
   },
 ];
 
