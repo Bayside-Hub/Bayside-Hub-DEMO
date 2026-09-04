@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import { getEvents } from "@/lib/events";
+
+export const metadata: Metadata = { title: "Spirit Week" };
 
 const days = [
   { day: "Monday", name: "Pajama Day", color: "bg-navy text-cream" },

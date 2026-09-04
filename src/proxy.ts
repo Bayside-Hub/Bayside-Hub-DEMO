@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { isAllowedEmail } from "@/lib/email-access";
+import { safeNextPath } from "@/lib/navigation";
 
 function redirectWithSession(url: URL, sessionResponse: NextResponse) {
   // Preserve refreshed auth cookies when turning the response into a redirect.
@@ -36,9 +37,8 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isLogin && allowedUser) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    return redirectWithSession(url, response);
+    const next = safeNextPath(request.nextUrl.searchParams.get("next"), "/");
+    return redirectWithSession(new URL(next, request.url), response);
   }
 
   return response;

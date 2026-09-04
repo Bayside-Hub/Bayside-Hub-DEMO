@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import LoginCard, { LoginCardSkeleton } from "./login-card";
+
+export const metadata: Metadata = { title: "Sign In" };
 
 export default function LoginPage() {
   return (

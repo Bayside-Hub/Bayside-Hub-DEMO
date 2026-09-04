@@ -1,5 +1,5 @@
-/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { PrimaryButton } from "@/components/cards";
 import { clubs } from "@/lib/data";
@@ -170,7 +170,14 @@ export default async function ClubDetailPage({
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {club.media.filter((item) => item.type === "image").map((item) => (
               <figure key={item.id} className="overflow-hidden rounded-[10px] border border-line bg-card">
-                <img src={item.path} alt={item.alt ?? ""} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                <Image
+                  src={item.path}
+                  alt={item.alt ?? ""}
+                  width={640}
+                  height={480}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="aspect-[4/3] w-full object-cover"
+                />
                 {item.title ? <figcaption className="px-4 py-3 text-sm font-semibold text-ink">{item.title}</figcaption> : null}
               </figure>
             ))}

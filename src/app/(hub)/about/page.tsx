@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { LogoMark } from "@/components/icons";
 import { PageHeader } from "@/components/ui";
+
+export const metadata: Metadata = { title: "About Us" };
 
 export default function AboutPage() {
   return (

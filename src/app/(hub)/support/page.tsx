@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui";
 import { supportTopics } from "@/lib/data";
@@ -5,6 +6,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
 import SupportRequestForm from "./request-form";
+
+export const metadata: Metadata = { title: "Support" };
 
 export default async function SupportPage() {
   const user = await getCurrentUser();
