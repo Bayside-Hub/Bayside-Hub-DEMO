@@ -58,6 +58,7 @@ export type Database = {
       club_memberships: TableDefinition<ClubMembershipRow>;
       club_media: TableDefinition<ClubMediaRow>;
       club_announcements: TableDefinition<ClubAnnouncementRow>;
+      club_messages: TableDefinition<ClubMessageRow>;
       announcement_versions: TableDefinition<AnnouncementVersionRow>;
       events: TableDefinition<EventRow>;
       opportunities: TableDefinition<OpportunityRow>;
@@ -84,6 +85,14 @@ export type Database = {
       event_rsvp_count: {
         Args: { p_event_id: string };
         Returns: bigint;
+      };
+      can_access_club_chat: {
+        Args: { p_club_id: string };
+        Returns: boolean;
+      };
+      get_club_chat_messages: {
+        Args: { p_club_id: string; p_limit?: number };
+        Returns: ClubChatMessage[];
       };
     };
     Enums: Record<string, never>;
@@ -225,6 +234,21 @@ export type ClubAnnouncementRow = {
   published_by: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type ClubMessageRow = {
+  id: string;
+  club_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ClubChatMessage = ClubMessageRow & {
+  author_name: string;
+  author_avatar_url: string | null;
+  can_delete: boolean;
 };
 
 export type AnnouncementVersionRow = {

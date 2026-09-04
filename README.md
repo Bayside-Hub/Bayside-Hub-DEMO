@@ -8,7 +8,8 @@ calendar, and opportunities — built with Next.js, Tailwind CSS, and Supabase.
 - **Google sign-in** via Supabase Auth (NYC student accounts)
 - **Announcements** — published by staff, featured on the home page, with archive and version history
 - **Activities & Clubs** — browsable club directory with filters, detail pages,
-  Club 101 recommendations, membership requests, and a student club-application flow
+  Club 101 recommendations, membership requests, manager announcements, private
+  member chat, and a student club-application flow
 - **Calendar** — layered month view of school events, sports, and recurring club meetings
 - **Student dashboard** — signed-in students see joined clubs, pending requests,
   applications, and open support requests on the home page
@@ -65,6 +66,8 @@ calendar, and opportunities — built with Next.js, Tailwind CSS, and Supabase.
      assignment controls, public photo storage, annual compliance, and audit history
    - `supabase/release_security_hardening.sql` — removes the obsolete privileged
      view and restricts API execution of internal database functions
+   - `supabase/club_communication.sql` — member-only Club chat, safe author
+     display fields, RLS moderation rules, and Realtime publication
 
 4. Enable Google OAuth:
 

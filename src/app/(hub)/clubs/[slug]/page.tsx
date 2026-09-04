@@ -7,6 +7,7 @@ import { getClubBySlug } from "@/lib/clubs";
 import { getCurrentUser } from "@/lib/auth";
 import {
   getClubInterestInfo,
+  getClubCommunication,
   getClubMembershipInfo,
   leaveClub,
   requestClubMembership,
@@ -14,6 +15,11 @@ import {
 } from "../actions";
 import PendingSubmitButton from "@/components/pending-submit-button";
 import type { Metadata } from "next";
+import ClubChat from "./club-chat";
+
+// Membership controls and private chat depend on the request's auth cookies.
+// Never reuse a build-time guest version of a Club page for signed-in users.
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
   return clubs.map((club) => ({ slug: club.slug }));
@@ -37,6 +43,7 @@ export default async function ClubDetailPage({
   const isApprovedCharter = club.officers.length === 0;
   const interest = await getClubInterestInfo(club.slug);
   const membership = await getClubMembershipInfo(club.id);
+  const communication = await getClubCommunication(club.id);
   const commitmentLabel = club.commitment > 0
     ? `About ${club.commitment} hour${club.commitment === 1 ? "" : "s"}/week`
     : "Flexible commitment";
@@ -150,17 +157,35 @@ export default async function ClubDetailPage({
         </section>
       )}
 
-      {club.announcements?.length ? (
-        <section className="mt-12">
-          <h2 className="font-display text-3xl font-semibold uppercase tracking-wide text-cream">Club announcements</h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      <section className="mt-12" aria-labelledby="club-stream-title">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-powder">Class stream</p>
+        <h2 id="club-stream-title" className="mt-1 font-display text-3xl font-semibold uppercase tracking-wide text-cream">Club announcements</h2>
+        <p className="mt-2 max-w-2xl text-sm text-cream/60">Official updates from the Club board and Advisor.</p>
+        {club.announcements?.length ? (
+          <div className="mt-5 space-y-4">
             {club.announcements.map((announcement) => (
-              <article key={announcement.id} className="card-gradient rounded-[10px] p-5">
-                <h3 className="font-display text-lg font-bold uppercase text-cream">{announcement.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-cream/75">{announcement.body}</p>
+              <article key={announcement.id} className="card-gradient rounded-[14px] border border-white/10 p-5 sm:p-6">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <h3 className="font-display text-lg font-bold uppercase text-cream">{announcement.title}</h3>
+                  <time dateTime={announcement.date} className="text-xs text-cream/45">
+                    {new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(announcement.date))}
+                  </time>
+                </div>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-cream/75">{announcement.body}</p>
               </article>
             ))}
           </div>
+        ) : (
+          <p className="mt-5 rounded-[14px] border border-dashed border-white/15 px-5 py-8 text-center text-sm text-cream/50">No Club announcements yet.</p>
+        )}
+      </section>
+
+      {communication.available && club.id ? (
+        <ClubChat clubId={club.id} slug={club.slug} messages={communication.messages} />
+      ) : user && club.id ? (
+        <section className="mt-12 rounded-[18px] border border-dashed border-white/15 p-6 text-center">
+          <h2 className="font-display text-xl font-semibold uppercase text-cream">Member chat</h2>
+          <p className="mt-2 text-sm text-cream/55">Join this Club and receive approval to access its private conversation.</p>
         </section>
       ) : null}
 

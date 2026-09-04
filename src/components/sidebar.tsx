@@ -101,7 +101,10 @@ function NavIconRow({
       <Link
         href={item.href}
         aria-label={item.label}
-        title={item.label}
+        // Items with a flyout already have a visible label. A native title
+        // tooltip would overlap that menu (especially at high browser zoom).
+        title={item.sub ? undefined : item.label}
+        aria-haspopup={item.sub ? "menu" : undefined}
         aria-current={active ? "page" : undefined}
         className={`flex h-[35px] w-full items-center justify-center rounded-nav px-[7px] transition-colors ${
           active
@@ -117,7 +120,10 @@ function NavIconRow({
         </span>
       )}
       {item.sub && (
-        <div className="pointer-events-none absolute left-full top-0 z-50 ml-2 hidden min-w-52 rounded-light border border-line bg-card p-1.5 shadow-xl group-focus-within:pointer-events-auto group-hover:pointer-events-auto group-hover:block group-focus-within:block">
+        <div
+          role="menu"
+          className="pointer-events-none absolute left-full top-0 z-50 ml-2 hidden max-h-[calc(100vh-2rem)] w-64 max-w-[calc(100vw-5rem)] overflow-y-auto rounded-light border border-line bg-card p-1.5 shadow-xl group-focus-within:pointer-events-auto group-hover:pointer-events-auto group-hover:block group-focus-within:block"
+        >
           <p className="px-3 pb-1 pt-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
             {item.label}
           </p>
@@ -128,8 +134,9 @@ function NavIconRow({
               <Link
                 key={s.href}
                 href={s.href}
+                role="menuitem"
                 aria-current={subActive ? "page" : undefined}
-                className={`block rounded-control px-3 py-2 text-sm font-medium transition-colors ${
+                className={`block rounded-control px-3 py-2 text-sm font-medium leading-5 transition-colors ${
                   subActive ? "bg-navy text-cream" : "text-ink hover:bg-content-bg"
                 }`}
               >

@@ -6,6 +6,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getCurrentUser } from "@/lib/auth";
 import { clubCategories } from "@/lib/data";
 import { getClubBySlug } from "@/lib/clubs";
+import type { ClubChatMessage } from "@/lib/supabase/types";
 
 export type ActionState = { ok: boolean; message: string } | null;
 
@@ -179,4 +180,77 @@ export async function leaveClub(formData: FormData): Promise<void> {
     .eq("profile_id", user.id);
   revalidatePath(`/clubs/${slug}`);
   revalidatePath("/profile");
+}
+
+export type ClubCommunicationState = {
+  available: boolean;
+  messages: ClubChatMessage[];
+};
+
+/** Load member-only chat through a safe RPC that never returns profile emails. */
+export async function getClubCommunication(clubId?: string): Promise<ClubCommunicationState> {
+  const user = await getCurrentUser();
+  if (!clubId || !user || !isSupabaseConfigured()) {
+    return { available: false, messages: [] };
+  }
+
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.rpc("get_club_chat_messages", {
+    p_club_id: clubId,
+    p_limit: 100,
+  });
+  if (error) return { available: false, messages: [] };
+  return { available: true, messages: data ?? [] };
+}
+
+export type ClubMessageActionState = {
+  ok: boolean;
+  message: string;
+} | null;
+
+/** Post a chat message; RLS independently verifies Club access and authorship. */
+export async function postClubMessage(
+  _previous: ClubMessageActionState,
+  formData: FormData,
+): Promise<ClubMessageActionState> {
+  const user = await getCurrentUser();
+  const clubId = String(formData.get("club_id") ?? "").trim();
+  const slug = String(formData.get("slug") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+
+  if (!user) return { ok: false, message: "Sign in to send a message." };
+  if (!clubId || !slug || !isSupabaseConfigured()) {
+    return { ok: false, message: "Club chat is not available yet." };
+  }
+  if (body.length < 1 || body.length > 2000) {
+    return { ok: false, message: "Messages must be between 1 and 2,000 characters." };
+  }
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("club_messages").insert({
+    club_id: clubId,
+    author_id: user.id,
+    body,
+  });
+  if (error) return { ok: false, message: "Message not sent. Check your Club membership and try again." };
+
+  revalidatePath(`/clubs/${slug}`);
+  return { ok: true, message: "Message sent." };
+}
+
+/** Messages are immutable; authors and Club managers may remove them. */
+export async function deleteClubMessage(formData: FormData): Promise<void> {
+  const user = await getCurrentUser();
+  const clubId = String(formData.get("club_id") ?? "").trim();
+  const messageId = String(formData.get("message_id") ?? "").trim();
+  const slug = String(formData.get("slug") ?? "").trim();
+  if (!user || !clubId || !messageId || !slug || !isSupabaseConfigured()) return;
+
+  const supabase = await createServerClient();
+  await supabase
+    .from("club_messages")
+    .delete()
+    .eq("id", messageId)
+    .eq("club_id", clubId);
+  revalidatePath(`/clubs/${slug}`);
 }
