@@ -10,3 +10,6 @@ export function safeNextPath(value: string | null | undefined, fallback = "/") {
 
   return value;
 }
+
+/** Convert a completed form POST into a GET navigation at its destination. */
+export const POST_FORM_REDIRECT_STATUS = 303;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
-import { safeNextPath } from "@/lib/navigation";
+import { POST_FORM_REDIRECT_STATUS, safeNextPath } from "@/lib/navigation";
 
 export async function POST(request: Request) {
   const supabase = await createServerClient();
@@ -10,5 +10,8 @@ export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
   const next = safeNextPath(searchParams.get("next"), "/login");
 
-  return NextResponse.redirect(new URL(next, request.url));
+  return NextResponse.redirect(
+    new URL(next, request.url),
+    POST_FORM_REDIRECT_STATUS,
+  );
 }
