@@ -29,7 +29,7 @@ export default function Topbar({ user }: { user: SessionUser | null }) {
         <Link
           href="/"
           aria-label="Bayside Hub home"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-cream transition-colors hover:bg-cream/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-powder md:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-cream transition-colors hover:bg-cream/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-powder lg:hidden"
         >
           <LogoMark className="h-5 w-6" />
         </Link>

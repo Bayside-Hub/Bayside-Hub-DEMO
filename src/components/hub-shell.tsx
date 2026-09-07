@@ -22,7 +22,7 @@ export default async function HubShell({ children }: { children: ReactNode }) {
         >
           Skip to content
         </a>
-        <div className="hidden md:block">
+        <div className="hidden lg:block">
           <Sidebar role={user?.role ?? "student"} />
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
