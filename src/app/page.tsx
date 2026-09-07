@@ -28,9 +28,9 @@ export default async function Home() {
   const upcomingEvents = events.filter((event) => isEventUpcoming(event));
   return (
     <HubShell>
-      <div className="min-h-full bg-content-bg">
+      <div className="min-h-full bg-transparent">
 
-      <section className="relative overflow-hidden bg-black">
+      <section className="relative overflow-hidden bg-transparent">
         <div className="hero-blobs pointer-events-none absolute inset-0" aria-hidden>
           <div
             className="absolute left-[8%] top-[18%] h-[300px] w-[520px]"

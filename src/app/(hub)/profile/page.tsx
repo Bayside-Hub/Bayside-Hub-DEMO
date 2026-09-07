@@ -88,7 +88,7 @@ export default async function ProfilePage() {
   const roleLabel = user.role === "student" ? "Student account" : `${user.role} account`;
 
   return (
-    <div className="profile-backdrop fixed inset-0 z-50 overflow-y-auto bg-[#2a2829] font-sans text-[#2a2829]">
+    <div className="profile-backdrop fixed inset-0 z-50 overflow-y-auto bg-black font-sans text-[#2a2829]">
       <div className="mx-auto flex min-h-full w-full max-w-[1920px] flex-col px-4 py-5 sm:px-8 lg:px-[3.125%]">
         <nav className="flex items-center justify-between" aria-label="Profile navigation"><Link href="/" className="text-xs font-bold text-[#97b4de] hover:text-[#f0ebe5]">&lt; DASHBOARD</Link><div className="flex size-10 items-center justify-center rounded-full bg-[#263a99] text-[10px] font-medium text-[#f0ebe5]">{initials(user.name)}</div></nav>
 

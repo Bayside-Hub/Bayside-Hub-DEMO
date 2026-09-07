@@ -24,7 +24,7 @@ export default async function HubShell({ children }: { children: ReactNode }) {
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar user={user} />
-        <main id="main-content" className="min-h-0 flex-1 overflow-y-auto">
+        <main id="main-content" className="hub-unified-backdrop min-h-0 flex-1 overflow-y-auto">
           {children}
         </main>
       </div>

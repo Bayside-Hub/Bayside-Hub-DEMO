@@ -35,7 +35,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
   const visibleTopics = query ? supportTopics.filter((topic) => searchable(`${topic.title} ${topic.description}`, query)) : supportTopics;
 
   return (
-    <div className="support-backdrop relative min-h-full overflow-hidden bg-[#2a2829] px-5 py-8 text-[#f0ebe5] sm:px-8 lg:px-12">
+    <div className="support-backdrop relative min-h-full overflow-hidden bg-black px-5 py-8 text-[#f0ebe5] sm:px-8 lg:px-12">
       <div className="relative mx-auto w-full max-w-[1812px]">
         <header className="flex min-h-[300px] flex-col items-center justify-center py-10 text-center">
           <h1 className="text-4xl font-bold sm:text-5xl lg:text-[52px]">We are here to help!</h1>

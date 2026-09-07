@@ -137,37 +137,19 @@ body {
   box-shadow: -2.4px 2.4px 9.5px -2.4px #fcf1dd;
 }
 
-/* Figma Profile 777:16: exported mesh behind the warm neutral dashboard. */
-.profile-backdrop {
-  background-color: #2a2829;
-  background-image: url("/profile/mesh-gradient.svg");
-  background-position: center 8%;
-  background-repeat: no-repeat;
-  background-size: min(1100px, 90vw) auto;
-}
-
-.club-detail-backdrop {
-  background-image: url("/profile/mesh-gradient.svg");
-  background-position: center 10%;
-  background-repeat: no-repeat;
-  background-size: min(1100px, 90vw) auto;
-}
-
-/* Figma Opportunities screens reuse the same soft mesh over a black canvas. */
-.opportunity-backdrop {
-  background-image: url("/profile/mesh-gradient.svg");
-  background-position: center 2%;
-  background-repeat: no-repeat;
-  background-size: min(1100px, 90vw) auto;
-}
-
-/* Figma Support page uses the mesh more softly over a warm charcoal canvas. */
+/* Shared Figma canvas: one mesh treatment across public Hub experiences. */
+.hub-unified-backdrop,
+.profile-backdrop,
+.club-detail-backdrop,
+.opportunity-backdrop,
 .support-backdrop {
+  background-color: #000000;
   background-image: url("/profile/mesh-gradient.svg");
-  background-position: center -4rem;
+  background-position: center top;
   background-repeat: no-repeat;
-  background-size: min(1100px, 90vw) auto;
+  background-size: min(1200px, 100vw) auto;
 }
+
 
 /* Figma home hero blobs: azure / sky / coral blurred orbs */
 .hero-blobs {
