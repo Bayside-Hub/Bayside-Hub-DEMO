@@ -150,6 +150,41 @@ body {
   background-size: min(1200px, 100vw) auto;
 }
 
+/* A restrained parallax drift gives long pages depth without moving content. */
+@keyframes hub-backdrop-parallax {
+  from { background-position: center 0; }
+  to { background-position: center -140px; }
+}
+
+@supports (animation-timeline: scroll()) {
+  .hub-unified-backdrop {
+    animation: hub-backdrop-parallax linear both;
+    animation-timeline: scroll(self block);
+  }
+
+  .club-detail-backdrop,
+  .opportunity-backdrop,
+  .support-backdrop {
+    animation: hub-backdrop-parallax linear both;
+    animation-timeline: scroll(nearest block);
+  }
+
+  .profile-backdrop {
+    animation: hub-backdrop-parallax linear both;
+    animation-timeline: scroll(self block);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-unified-backdrop,
+  .profile-backdrop,
+  .club-detail-backdrop,
+  .opportunity-backdrop,
+  .support-backdrop {
+    animation: none;
+  }
+}
+
 
 /* Figma home hero blobs: azure / sky / coral blurred orbs */
 .hero-blobs {
