@@ -282,7 +282,7 @@ export type EventRow = {
 export type OpportunityRow = {
   id: string;
   title: string;
-  category: "election" | "community_service" | "internship" | "pre_college" | "discount";
+  category: "election" | "community_service" | "internship" | "pre_college" | "scholarship" | "discount";
   description: string;
   eligibility: string | null;
   application_link: string | null;

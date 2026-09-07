@@ -197,7 +197,7 @@ export async function setSupportRequestStatus(_prev: ActionState, formData: Form
   return { ok: true, message: "Request updated." };
 }
 
-const opportunityCategories = ["election", "community_service", "internship", "pre_college", "discount"] as const;
+const opportunityCategories = ["election", "community_service", "internship", "pre_college", "scholarship", "discount"] as const;
 const opportunityStatuses = ["draft", "in_review", "published", "expired", "archived"] as const;
 
 export async function createOpportunity(_prev: ActionState, formData: FormData): Promise<ActionState> {

@@ -298,7 +298,7 @@ create table if not exists public.opportunities (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   category text not null
-    check (category in ('election', 'community_service', 'internship', 'pre_college', 'discount')),
+    check (category in ('election', 'community_service', 'internship', 'pre_college', 'scholarship', 'discount')),
   description text not null,
   eligibility text,
   application_link text,

@@ -153,6 +153,22 @@ body {
   background-size: min(1100px, 90vw) auto;
 }
 
+/* Figma Opportunities screens reuse the same soft mesh over a black canvas. */
+.opportunity-backdrop {
+  background-image: url("/profile/mesh-gradient.svg");
+  background-position: center 2%;
+  background-repeat: no-repeat;
+  background-size: min(1100px, 90vw) auto;
+}
+
+/* Figma Support page uses the mesh more softly over a warm charcoal canvas. */
+.support-backdrop {
+  background-image: url("/profile/mesh-gradient.svg");
+  background-position: center -4rem;
+  background-repeat: no-repeat;
+  background-size: min(1100px, 90vw) auto;
+}
+
 /* Figma home hero blobs: azure / sky / coral blurred orbs */
 .hero-blobs {
   background:

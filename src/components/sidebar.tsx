@@ -45,10 +45,11 @@ export const mainNavItems: NavItem[] = [
     icon: OpportunitiesIcon,
     sub: [
       { href: "/opportunities", label: "All Opportunities" },
-      { href: "/opportunities#elections", label: "Elections" },
-      { href: "/opportunities#internships", label: "Internships" },
-      { href: "/opportunities#college-prep", label: "College Prep" },
-      { href: "/opportunities#community-service", label: "Community Service" },
+      { href: "/opportunities/all?type=Elections", label: "Elections" },
+      { href: "/opportunities/internships", label: "Internships" },
+      { href: "/opportunities/scholarships", label: "Scholarships" },
+      { href: "/opportunities/pre-college", label: "College Prep" },
+      { href: "/opportunities/community-service", label: "Community Service" },
     ],
   },
   {

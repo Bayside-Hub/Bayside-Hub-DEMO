@@ -16,26 +16,26 @@ export default function SupportRequestForm() {
   const [state, action, pending] = useActionState(submitSupportRequest, null);
   return (
     <form action={action} className="mt-5 grid gap-4">
-      <label className="grid gap-1.5 text-sm font-semibold text-cream">
+      <label className="grid gap-1.5 text-sm font-semibold text-[#2a2829]">
         Request type
-        <select name="request_type" className="h-11 rounded-control border border-line bg-content-bg px-3 text-ink" defaultValue="technical">
+        <select name="request_type" className="h-11 rounded-control border border-[#2a2829]/15 bg-[#f0ebe5] px-3 text-[#2a2829]" defaultValue="technical">
           {options.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
       </label>
-      <label className="grid gap-1.5 text-sm font-semibold text-cream">
+      <label className="grid gap-1.5 text-sm font-semibold text-[#2a2829]">
         Subject
-        <input name="subject" required minLength={3} maxLength={120} className="h-11 rounded-control border border-line bg-content-bg px-3 text-ink" />
+        <input name="subject" required minLength={3} maxLength={120} className="h-11 rounded-control border border-[#2a2829]/15 bg-[#f0ebe5] px-3 text-[#2a2829]" />
       </label>
-      <label className="grid gap-1.5 text-sm font-semibold text-cream">
+      <label className="grid gap-1.5 text-sm font-semibold text-[#2a2829]">
         Details
-        <textarea name="details" required minLength={10} maxLength={4000} rows={5} className="rounded-control border border-line bg-content-bg px-3 py-2 text-ink" />
+        <textarea name="details" required minLength={10} maxLength={4000} rows={5} className="rounded-control border border-[#2a2829]/15 bg-[#f0ebe5] px-3 py-2 text-[#2a2829]" />
       </label>
-      <label className="grid gap-1.5 text-sm font-semibold text-cream">
-        Requested date/time <span className="font-normal text-cream/60">(optional, for room requests)</span>
-        <input type="datetime-local" name="requested_for" className="h-11 rounded-control border border-line bg-content-bg px-3 text-ink" />
+      <label className="grid gap-1.5 text-sm font-semibold text-[#2a2829]">
+        Requested date/time <span className="font-normal text-[#6f6a6b]">(optional, for room requests)</span>
+        <input type="datetime-local" name="requested_for" className="h-11 rounded-control border border-[#2a2829]/15 bg-[#f0ebe5] px-3 text-[#2a2829]" />
       </label>
       {state && <p role={state.ok ? "status" : "alert"} className={`rounded-control px-3 py-2 text-sm ${state.ok ? "bg-powder/15 text-powder" : "bg-orange/15 text-orange"}`}>{state.message}</p>}
-      <button type="submit" disabled={pending} className="inline-flex h-11 items-center justify-center rounded-[22px] bg-cream px-6 text-sm font-bold text-black hover:bg-white disabled:opacity-50">
+      <button type="submit" disabled={pending} className="inline-flex h-11 items-center justify-center rounded-[8px] bg-[#263a99] px-6 text-sm font-bold text-[#f0ebe5] hover:bg-[#1e3279] disabled:opacity-50">
         {pending ? "Submitting…" : "Submit request"}
       </button>
     </form>

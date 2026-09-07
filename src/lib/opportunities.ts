@@ -10,6 +10,7 @@ const labels: Record<OpportunityRow["category"], string> = {
   community_service: "Community Service",
   internship: "Internships",
   pre_college: "College Prep",
+  scholarship: "Scholarships",
   discount: "Student Discounts",
 };
 

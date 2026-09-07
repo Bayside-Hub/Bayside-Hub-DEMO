@@ -68,6 +68,8 @@ calendar, and opportunities — built with Next.js, Tailwind CSS, and Supabase.
      view and restricts API execution of internal database functions
    - `supabase/club_communication.sql` — member-only Club chat, safe author
      display fields, RLS moderation rules, and Realtime publication
+   - `supabase/opportunity_scholarships.sql` — enables Scholarship as an
+     opportunity category on existing databases
 
 4. Enable Google OAuth:
 

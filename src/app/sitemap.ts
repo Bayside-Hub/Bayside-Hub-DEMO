@@ -12,7 +12,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getOpportunities(),
   ]);
   const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const paths = ["", "/announcements", "/clubs", "/calendar", "/events", "/sports", "/opportunities", "/support", "/about"];
+  const paths = [
+    "",
+    "/announcements",
+    "/clubs",
+    "/calendar",
+    "/events",
+    "/sports",
+    "/opportunities",
+    "/opportunities/all",
+    "/opportunities/internships",
+    "/opportunities/scholarships",
+    "/opportunities/pre-college",
+    "/opportunities/community-service",
+    "/support",
+    "/about",
+  ];
   const details = [
     ...announcements.map((item) => `/announcements/${item.id}`),
     ...clubs.map((item) => `/clubs/${item.slug}`),
