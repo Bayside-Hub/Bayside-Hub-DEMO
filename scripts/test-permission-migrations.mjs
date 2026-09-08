@@ -77,6 +77,29 @@ try {
     await denied(() => db.query("insert into school_announcement_submissions(club_id,author_id,title,body) values($1,$2,'Demo','Demo body')", [clubA, ids.student]), "ordinary members cannot submit school announcements");
     await denied(() => db.query("select * from get_club_chat_messages($1)", [clubB]), "non-member cannot read another club's chat");
   });
+  // Meeting and post edits/deletes use the same RLS boundary as the UI actions.
+  const meetingA = await value("insert into club_meetings(club_id,day_of_week,location) values($1,2,'Room A') returning id", [clubA]);
+  const meetingB = await value("insert into club_meetings(club_id,day_of_week,location) values($1,3,'Room B') returning id", [clubB]);
+  const postA = await value("insert into club_announcements(club_id,title,body,published_by) values($1,'Club test','Original post',$2) returning id", [clubA, ids.board]);
+  const postB = await value("insert into club_announcements(club_id,title,body,published_by) values($1,'Other club','Unchanged post',$2) returning id", [clubB, ids.admin]);
+  await asUser(ids.board, async () => {
+    await equal((await db.query("update club_meetings set location='Updated room' where id=$1 and club_id=$2 returning id", [meetingA, clubA])).rows.length, 1, "Board edits own club meeting");
+    await equal((await db.query("update club_meetings set location='Forbidden' where id=$1 returning id", [meetingB])).rows.length, 0, "Board cannot edit another club meeting");
+    await equal((await db.query("delete from club_meetings where id=$1 returning id", [meetingB])).rows.length, 0, "Board cannot delete another club meeting");
+    await equal((await db.query("update club_announcements set body='Edited post',published=false where id=$1 and club_id=$2 returning id", [postA, clubA])).rows.length, 1, "Board edits and hides own club post");
+    await equal((await db.query("update club_announcements set body='Forbidden' where id=$1 returning id", [postB])).rows.length, 0, "Board cannot edit another club post");
+    await equal((await db.query("delete from club_announcements where id=$1 returning id", [postB])).rows.length, 0, "Board cannot delete another club post");
+  });
+  await asUser(ids.student, async () => {
+    await equal((await db.query("select id from club_announcements where id=$1", [postA])).rows.length, 0, "hidden post is not visible to ordinary members");
+    await equal((await db.query("delete from club_meetings where id=$1 returning id", [meetingA])).rows.length, 0, "Student cannot delete meeting");
+  });
+  await asUser(ids.board, async () => {
+    await equal((await db.query("delete from club_meetings where id=$1 and club_id=$2 returning id", [meetingA, clubA])).rows.length, 1, "Board deletes own club meeting");
+    await equal((await db.query("delete from club_announcements where id=$1 and club_id=$2 returning id", [postA, clubA])).rows.length, 1, "Board deletes own club post");
+  });
+  await equal(await value("select count(*)::int from club_audit_log where entity_id=$1 and action='delete' and before_data->>'location'='Updated room' and actor_id=$2", [meetingA, ids.board]), 1, "deleted meeting retains audit before-image and actor");
+  await equal(await value("select count(*)::int from club_audit_log where entity_id=$1 and action='delete' and before_data->>'body'='Edited post' and actor_id=$2", [postA, ids.board]), 1, "deleted post retains audit before-image and actor");
   let submission;
   await asUser(ids.board, async () => {
     await denied(() => db.query("update clubs set status='archived' where id=$1", [clubA]), "Board cannot change club publication through direct API");

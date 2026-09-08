@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
-import { isValidOptionalTime, parseOptionalDateOnly } from "@/lib/input-validation";
+import { parseOptionalDateOnly } from "@/lib/input-validation";
+import { parseMeetingInput, parseClubPostInput } from "@/lib/club-content-input";
 import { MAX_IMAGE_UPLOAD_BYTES } from "@/lib/upload-limits";
 
 const denied = { ok: false, message: "You no longer have permission for this club. Refresh or contact your advisor." };
@@ -79,19 +80,11 @@ export async function addClubMeeting(formData: FormData) {
   const clubId = String(formData.get("club_id") ?? "");
   const context = await managerContext(clubId);
   if (!context) return denied;
-  const day = Number(formData.get("day_of_week"));
-  if (!Number.isInteger(day) || day < 1 || day > 7) return invalid;
-  const startTime = String(formData.get("start_time") ?? "");
-  const endTime = String(formData.get("end_time") ?? "");
-  if (!isValidOptionalTime(startTime) || !isValidOptionalTime(endTime)) return invalid;
-  if (startTime && endTime && endTime <= startTime) return invalid;
+  const meeting = parseMeetingInput(formData);
+  if (!meeting) return invalid;
   const { error } = await context.supabase.from("club_meetings").insert({
     club_id: clubId,
-    day_of_week: day,
-    start_time: startTime || null,
-    end_time: endTime || null,
-    location: String(formData.get("location") ?? "").trim() || null,
-    recurrence_note: String(formData.get("recurrence_note") ?? "").trim() || null,
+    ...meeting,
   });
   if (error) return failed;
   revalidatePath(`/clubs/manage/${clubId}`);
@@ -104,13 +97,11 @@ export async function publishClubAnnouncement(formData: FormData) {
   const clubId = String(formData.get("club_id") ?? "");
   const context = await managerContext(clubId);
   if (!context) return denied;
-  const title = String(formData.get("title") ?? "").trim();
-  const body = String(formData.get("body") ?? "").trim();
-  if (title.length < 3 || title.length > 120 || body.length < 3 || body.length > 4000) return invalid;
+  const post = parseClubPostInput(formData);
+  if (!post) return invalid;
   const { error } = await context.supabase.from("club_announcements").insert({
     club_id: clubId,
-    title,
-    body,
+    ...post,
     published_by: context.user.id,
   });
   if (error) return failed;
@@ -118,6 +109,50 @@ export async function publishClubAnnouncement(formData: FormData) {
   revalidatePath("/clubs", "layout");
   return { ok: true, message: "Published to this club. School-wide announcements require a separate review submission." };
 }
+
+/** Pair record id with club id on every write; form fields alone never grant access. */
+export async function editClubMeeting(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context) return denied;
+  const meeting = parseMeetingInput(formData);
+  if (!meeting) return invalid;
+  const { data, error } = await context.supabase.from("club_meetings").update(meeting)
+    .eq("id", String(formData.get("record_id") ?? "")).eq("club_id", clubId).select("id").maybeSingle();
+  if (error || !data) return { ok: false, message: "Meeting not updated. It may have been removed or your access changed." };
+  revalidatePath("/clubs", "layout");
+  revalidatePath("/calendar");
+  return saved;
+}
+
+export async function editClubPost(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context) return denied;
+  const post = parseClubPostInput(formData);
+  if (!post) return invalid;
+  const { data, error } = await context.supabase.from("club_announcements").update({ ...post, published: formData.get("published") === "on", updated_at: new Date().toISOString() })
+    .eq("id", String(formData.get("record_id") ?? "")).eq("club_id", clubId).select("id").maybeSingle();
+  if (error || !data) return { ok: false, message: "Post not updated. It may have been removed or your access changed." };
+  revalidatePath("/clubs", "layout");
+  return saved;
+}
+
+async function deleteClubContent(formData: FormData, table: "club_meetings" | "club_announcements") {
+  const clubId = String(formData.get("club_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context) return denied;
+  if (formData.get("confirm") !== "yes") return { ok: false, message: "Confirm deletion before continuing." };
+  const { data, error } = await context.supabase.from(table).delete()
+    .eq("id", String(formData.get("record_id") ?? "")).eq("club_id", clubId).select("id").maybeSingle();
+  if (error || !data) return { ok: false, message: "Nothing was deleted. The record may no longer exist or your access changed." };
+  revalidatePath("/clubs", "layout");
+  if (table === "club_meetings") revalidatePath("/calendar");
+  return { ok: true, message: "Deleted. This does not delete other club content." };
+}
+
+export async function deleteClubMeeting(formData: FormData) { return deleteClubContent(formData, "club_meetings"); }
+export async function deleteClubPost(formData: FormData) { return deleteClubContent(formData, "club_announcements"); }
 
 export async function reviewClubMembership(formData: FormData) {
   const clubId = String(formData.get("club_id") ?? "");

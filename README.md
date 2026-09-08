@@ -19,7 +19,7 @@ verified scope. The new database files must be applied before using the new
 administration features, even if Vercel automatically deploys the GitHub commit.
 
 Remaining work: real five-role end-to-end tests after migration, password recovery
-email delivery verification, searchable audit UI, broader site-content settings, and school review of legal
+email delivery verification, audit full-text search/export, broader site-content settings, and school review of legal
 notices and data retention. The site should remain in closed beta until these
 checks and the existing release checklist are complete.
 

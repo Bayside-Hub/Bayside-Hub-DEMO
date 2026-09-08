@@ -1,4 +1,5 @@
 import ActionFeedbackForm from "@/components/action-feedback-form";
+import Link from "next/link";
 import {
   addClubAdvisor,
   addClubOfficer,
@@ -35,6 +36,7 @@ export default function ClubGovernancePanel({
 }) {
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-2">
+      <Link href={`/clubs/manage/${clubId}/content`} className="rounded-xl border border-line bg-card p-5 font-semibold text-ink lg:col-span-2">Edit or remove existing meetings & club posts →</Link>
       {["staff", "admin"].includes(role) && <section className="card-gradient rounded-[10px] p-6 lg:col-span-2"><h2 className="text-xl font-bold text-cream">Publication status</h2><p className="mt-2 text-sm text-cream/70">Publishing makes the club visible in the public directory. Draft or archived clubs stay out of the directory; existing public photo URLs are not made private.</p><ActionFeedbackForm action={updateClubPublication} className="mt-4 grid gap-3"><input type="hidden" name="club_id" value={clubId} /><label className="text-sm text-cream">Status<select name="status" defaultValue={clubStatus} className={input}><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label><button className="min-h-11 justify-self-start rounded-full bg-cream px-5 font-semibold text-navy">Save publication status</button></ActionFeedbackForm></section>}
       <section className="card-gradient rounded-[10px] p-6">
         <h2 className="font-display text-xl font-bold uppercase text-cream">Board &amp; advisors</h2>
