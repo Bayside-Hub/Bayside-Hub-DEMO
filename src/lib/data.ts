@@ -407,11 +407,6 @@ export const supportTopics = [
   },
 ];
 
-export const weeklyReport = {
-  weekly: ["Applications received", "New club charters", "Events approved", "Service hours logged"],
-  monthly: ["Member growth", "Event attendance", "Funding disbursed"],
-  quarterly: ["Club participation rate", "Attendance trends", "Top 10 clubs by engagement"],
-};
 /** URL-safe slug from a club/application name, e.g. "Chess Society!" -> "chess-society" */
 export function slugify(name: string): string {
   return name

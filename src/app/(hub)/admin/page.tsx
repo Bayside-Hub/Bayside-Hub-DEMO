@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/ui";
-import { weeklyReport } from "@/lib/data";
 import { requireStaff } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
 
 export default async function AdminPage() {
-  await requireStaff();
+  const user = await requireStaff();
   const configured = isSupabaseConfigured();
   const supabase = configured ? await createServerClient() : null;
   const [pendingResult, usersResult, approvedResult, pendingCountResult, announcementsResult, supportResult] = supabase
@@ -28,11 +27,11 @@ export default async function AdminPage() {
         ),
       })) ?? [];
   const dashboards = [
-    { title: "Members", value: usersResult.count ?? 0 },
-    { title: "Approved Clubs", value: approvedResult.count ?? 0 },
-    { title: "Pending Reviews", value: pendingCountResult.count ?? 0 },
-    { title: "Published Announcements", value: announcementsResult.count ?? 0 },
-    { title: "Open Support Requests", value: supportResult.count ?? 0 },
+    { title: "Members", value: usersResult.count },
+    { title: "Approved Club Applications", value: approvedResult.count },
+    { title: "Pending Club Applications", value: pendingCountResult.count },
+    { title: "Published Announcements", value: announcementsResult.count },
+    { title: "Open Support Requests", value: supportResult.count },
   ];
 
   return (
@@ -46,49 +45,19 @@ export default async function AdminPage() {
         {dashboards.map((d) => (
           <div key={d.title} className="rounded-card border border-black/5 bg-card p-5 shadow-sm">
             <p className="text-sm font-medium text-muted">{d.title}</p>
-            <p className="mt-2 text-2xl font-bold text-ink">{d.value}</p>
-            <p className="mt-1 text-xs font-semibold text-muted">Live database count</p>
+            <p className="mt-2 text-2xl font-bold text-ink">{d.value ?? "Unavailable"}</p>
+            <p className="mt-1 text-xs font-semibold text-muted">{d.value == null ? "Check database access" : "Live database count"}</p>
           </div>
         ))}
       </section>
 
       <section className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="rounded-card border border-black/5 bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-ink">Report Summaries</h2>
+          <h2 className="text-lg font-bold text-ink">Administration checklist</h2>
           <div className="mt-4 space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold text-navy">Weekly Reports</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-muted">
-                {weeklyReport.weekly.map((w) => (
-                  <li key={w} className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-navy" aria-hidden />
-                    {w}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-[#8a6a10]">Monthly Insights</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-muted">
-                {weeklyReport.monthly.map((w) => (
-                  <li key={w} className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-orange" aria-hidden />
-                    {w}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-[#C2410C]">Quarterly Analysis</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-muted">
-                {weeklyReport.quarterly.map((w) => (
-                  <li key={w} className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-peach" aria-hidden />
-                    {w}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <p className="text-sm text-muted">Review pending club applications and support requests. Assign each advisor to the correct club; board positions belong to individual clubs, not a site-wide role.</p>
+            <p className="text-sm text-muted">Club leadership submits school announcements for administrator review. Club posts and chat remain separate from that approval queue.</p>
+            <Link href="/admin/reports" className="inline-flex rounded-full bg-navy px-4 py-2 text-sm text-cream">Open live reports</Link>
           </div>
         </div>
 
@@ -128,8 +97,16 @@ export default async function AdminPage() {
                 { label: "Post Announcement", href: "/admin/announcements" },
                 { label: "Manage Clubs", href: "/admin/clubs" },
                 { label: "Support Queue", href: "/admin/support" },
-                { label: "Manage Users", href: "/admin/users" },
                 { label: "View Reports", href: "/admin/reports" },
+                { label: "Club Content & Governance", href: "/clubs/manage" },
+                { label: "Opportunities", href: "/admin/opportunities" },
+                ...(user.role === "admin" ? [
+                  { label: "Manage Users", href: "/admin/users" },
+                  { label: "Announcement Review", href: "/admin/review" },
+                  { label: "Custom Roles", href: "/admin/roles" },
+                  { label: "Site Text", href: "/manage/site" },
+                  { label: "Management Audit", href: "/admin/audit" },
+                ] : []),
               ].map((t) => (
                 <Link
                   key={t.label}

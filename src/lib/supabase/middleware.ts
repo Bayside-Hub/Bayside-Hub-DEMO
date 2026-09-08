@@ -2,6 +2,7 @@ import { createServerClient as createClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseAnonKey, supabaseUrl } from "./config";
 import type { Database } from "./types";
+import { shouldClearAuthCookies } from "@/lib/session-errors";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -34,6 +35,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (error) {
+    if (!shouldClearAuthCookies(error)) return { response: supabaseResponse, user: null };
     // Clear only invalid Supabase auth cookies; unrelated preference cookies
     // must survive an expired or malformed login session.
     for (const cookie of request.cookies.getAll()) {

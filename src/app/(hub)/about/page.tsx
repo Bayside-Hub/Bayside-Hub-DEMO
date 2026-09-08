@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import { LogoMark } from "@/components/icons";
 import { PageHeader } from "@/components/ui";
+import { getSiteText } from "@/lib/site-content";
 
 export const metadata: Metadata = { title: "About Us" };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const text = await getSiteText();
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader
         title="About Us"
-        subtitle="Bayside Hub is Bayside High School's one-stop platform for activities, clubs, events, and opportunities."
+        subtitle={text.about_intro}
       />
 
       <section className="card-gradient relative overflow-hidden rounded-panel px-8 py-12 sm:px-12">

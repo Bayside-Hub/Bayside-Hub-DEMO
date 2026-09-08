@@ -24,7 +24,7 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
 
   // A missing or malformed profile never gains elevated access.
   const role: Role =
-    profile && ["student", "advisor", "staff", "admin"].includes(profile.role)
+    profile && ["student", "teacher", "advisor", "staff", "admin"].includes(profile.role)
       ? profile.role
       : "student";
 

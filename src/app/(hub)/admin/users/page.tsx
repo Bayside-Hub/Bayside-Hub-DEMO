@@ -20,6 +20,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
   const configured = isSupabaseConfigured();
 
   const supabase = configured ? await createServerClient() : null;
+  const { data: clubs } = supabase ? await supabase.from("clubs").select("id, name").order("name") : { data: [] };
   const { data: rows, count } = supabase
     ? await supabase
         .from("profiles")
@@ -69,7 +70,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                       )}
                     </p>
                   </div>
-                  <UserRoleForm id={row.id} role={row.role} />
+                  <UserRoleForm id={row.id} role={row.role} clubs={clubs ?? []} />
                 </li>
               ))}
             </ul>

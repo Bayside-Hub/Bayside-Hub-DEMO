@@ -5,6 +5,7 @@ import { useState } from "react";
 import { createBrowserClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { safeNextPath } from "@/lib/navigation";
+import EmailAccount from "./email-account";
 
 export function LoginCardSkeleton() {
   return (
@@ -50,7 +51,7 @@ export default function LoginCard() {
       <p className="text-3xl font-bold text-[#4285f4]">Bayside Hub</p>
       <p className="mt-5 text-base text-black">Welcome back!</p>
       <h1 className="mt-5 text-5xl font-bold text-black sm:text-6xl">Log In</h1>
-      <p className="mt-4 text-sm leading-6 text-[#5f6368]">Use Google to continue securely with your NYC student or school account.</p>
+      <p className="mt-4 text-sm leading-6 text-[#5f6368]">Sign in with your school email or Google, or create a new school account below.</p>
 
       {error === "auth" && (
         <p className="mt-4 rounded-light bg-orange/10 px-3 py-2 text-xs font-medium text-orange">
@@ -68,6 +69,7 @@ export default function LoginCard() {
         </p>
       )}
 
+      <EmailAccount next={next} recovery={searchParams.get("mode") === "recovery"} />
       <div className="mt-10 flex w-full flex-col gap-3">
         <p className="text-center text-sm text-[#6096b4]">continue with</p>
         <button

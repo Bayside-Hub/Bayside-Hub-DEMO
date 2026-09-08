@@ -5,6 +5,24 @@ calendar, and opportunities — built with Next.js, Tailwind CSS, and Supabase.
 
 ## Features
 
+### New administration rollout (pending database verification)
+
+Compact desktop navigation, email account registration, required club selection
+when assigning Advisors, school announcement review, scoped custom roles, a public
+text editor, and Privacy/Terms links are implemented in code. Follow
+[the manual Supabase setup and role-test checklist](docs/SUPABASE_SETUP.md) before
+enabling them. SQL has not been applied to the production project by this update.
+Passing a build does not establish RLS, email delivery or upload readiness.
+
+See [current progress and outstanding work](docs/RELEASE_STATUS.md) for the
+verified scope. The new database files must be applied before using the new
+administration features, even if Vercel automatically deploys the GitHub commit.
+
+Remaining work: real five-role end-to-end tests after migration, password recovery
+email delivery verification, searchable audit UI, broader site-content settings, and school review of legal
+notices and data retention. The site should remain in closed beta until these
+checks and the existing release checklist are complete.
+
 - **Google sign-in** via Supabase Auth (NYC student accounts)
 - **Announcements** — published by staff, featured on the home page, with archive and version history
 - **Activities & Clubs** — browsable club directory with filters, detail pages,
@@ -70,6 +88,12 @@ calendar, and opportunities — built with Next.js, Tailwind CSS, and Supabase.
      display fields, RLS moderation rules, and Realtime publication
    - `supabase/opportunity_scholarships.sql` — enables Scholarship as an
      opportunity category on existing databases
+   - `supabase/account_roles_and_review.sql` — Teacher defaults, scoped Advisor
+     assignments, role history and school announcement review
+   - `supabase/custom_permissions.sql` — custom roles, scoped permissions,
+     public text settings, publication guards and management audit
+   - `supabase/chat_recent_messages.sql` — latest messages in chronological order
+   - `supabase/demo_clubs.sql` — optional, explicitly marked draft test clubs
 
 4. Enable Google OAuth:
 

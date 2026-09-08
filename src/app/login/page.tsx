@@ -27,6 +27,7 @@ export default function LoginPage() {
         <section className="login-intro-card relative w-full rounded-[15px] border border-[#c0dbea] bg-[#f7f8f0] px-6 py-10 shadow-[0_4px_100px_rgba(255,255,255,0.28)] sm:px-12 sm:py-14">
           <Suspense fallback={<LoginCardSkeleton />}><LoginCard /></Suspense>
           <p className="mt-7 text-center text-xs text-[#5f6368]">Need help? <Link href="/support#technical-support" className="font-semibold text-navy underline-offset-2 hover:underline">Visit Technical Support</Link></p>
+          <nav aria-label="Account policies" className="mt-4 flex justify-center gap-5 text-xs text-navy"><Link href="/privacy" className="underline">Privacy Policy</Link><Link href="/terms" className="underline">Terms of Use</Link></nav>
         </section>
       </main>
     </div>

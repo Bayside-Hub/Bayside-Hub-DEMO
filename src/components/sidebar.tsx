@@ -29,7 +29,10 @@ export type NavItem = {
 
 export const mainNavItems: NavItem[] = [
   { href: "/", label: "Home", icon: HomeIcon },
-  { href: "/announcements", label: "Announcements", icon: MegaphoneIcon },
+  { href: "/announcements", label: "Announcements", icon: MegaphoneIcon, sub: [
+    { href: "/announcements", label: "All Announcements" },
+    { href: "/announcements/submit", label: "Submit for Review" },
+  ] },
   {
     href: "/clubs",
     label: "Activities & Clubs",
@@ -67,6 +70,7 @@ export const mainNavItems: NavItem[] = [
       { href: "/support#club-support", label: "Club Support" },
       { href: "/support#technical-support", label: "Technical Support" },
       { href: "/support/manual", label: "User Manual" },
+      { href: "/manage/site", label: "Site Text Editor" },
     ],
   },
   { href: "/about", label: "About Us", icon: InfoIcon },
@@ -80,12 +84,16 @@ export const adminNavItems: NavItem[] = [
     adminOnly: true,
     sub: [
       { href: "/admin", label: "Admin Home" },
+      { href: "/admin/review", label: "Announcement Review", roles: ["admin"] },
       { href: "/admin/announcements", label: "Post Announcement" },
       { href: "/admin/clubs", label: "Manage Clubs" },
       { href: "/admin/support", label: "Support Requests" },
       { href: "/admin/opportunities", label: "Manage Opportunities" },
       { href: "/admin/reports", label: "Reports" },
       { href: "/admin/users", label: "Manage Users", roles: ["admin"] },
+      { href: "/admin/roles", label: "Custom Roles", roles: ["admin"] },
+      { href: "/admin/audit", label: "Management Audit", roles: ["admin"] },
+      { href: "/manage/site", label: "Site Text Editor", roles: ["admin"] },
     ],
   },
 ];
@@ -99,6 +107,7 @@ export function isNavItemActive(pathname: string, item: NavItem) {
 }
 
 export function isSubItemActive(pathname: string, href: string) {
+  if (href.includes("#") || href.includes("?")) return false;
   const destination = href.split(/[?#]/)[0];
   if (["/clubs", "/opportunities", "/support", "/admin"].includes(destination)) return pathname === destination;
   return pathname === destination || pathname.startsWith(`${destination}/`);
@@ -158,12 +167,28 @@ function DesktopNavItem({ item, pathname, role, expanded, onToggle, onNavigate }
 
 export default function Sidebar({ role = "student" }: { role?: Role }) {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(true);
   const [openMenu, setOpenMenu] = useState<string | null>(() =>
     [...mainNavItems, ...adminNavItems].find((item) => item.sub && isNavItemActive(pathname, item))?.href ?? null,
   );
 
+  // The compact rail uses normal links; expanding reveals inline submenus.
+  if (collapsed) return (
+    <aside aria-label="Primary navigation" className="flex h-full w-[72px] shrink-0 flex-col border-r border-white/10 bg-[#090a0b] p-2 text-cream">
+      <button type="button" aria-label="Expand navigation" aria-expanded={false} onClick={() => setCollapsed(false)} className="flex min-h-12 items-center justify-center rounded-xl hover:bg-white/10" title="Expand navigation"><LogoMark className="h-6 w-6" /></button>
+      <nav aria-label="Main navigation" className="my-3 min-h-0 flex-1 space-y-1 overflow-y-auto">
+        {[...mainNavItems, ...adminNavItems].filter(item => !item.adminOnly || ["staff", "admin"].includes(role)).map(item => {
+          const Icon = item.icon;
+          return <Link key={item.href} href={item.href} title={item.label} aria-label={item.label} aria-current={pathname === item.href ? "page" : undefined} className={`flex min-h-12 items-center justify-center rounded-xl ${isNavItemActive(pathname, item) ? "bg-navy text-cream" : "text-cream/70 hover:bg-white/10"}`}><Icon className="h-5 w-5" /></Link>;
+        })}
+      </nav>
+      <Link href="/profile" aria-label="My Profile" title="My Profile" className="flex min-h-12 items-center justify-center rounded-xl hover:bg-white/10"><UserIcon className="h-5 w-5" /></Link>
+    </aside>
+  );
+
   return (
     <aside aria-label="Primary navigation" className="z-40 flex h-full w-60 shrink-0 flex-col overflow-hidden border-r border-white/10 bg-[#090a0b]/95 text-cream shadow-[18px_0_45px_-36px_rgba(151,191,244,.75)] backdrop-blur-xl">
+      <button type="button" aria-label="Collapse navigation" aria-expanded={true} onClick={() => setCollapsed(true)} className="mx-3 mt-2 min-h-10 rounded-lg text-xs text-cream/70 hover:bg-white/10">← Collapse navigation</button>
       <Link href="/" aria-label="Bayside Hub home" className="mx-3 mt-4 flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-white/[0.06]">
         <span className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-cream text-navy shadow-[0_6px_20px_rgba(252,241,221,.14)]">
           <LogoMark className="h-5 w-6" />

@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import BetaBanner from "./beta-banner";
 import Sidebar from "./sidebar";
 import Topbar from "./topbar";
+import SiteFooter from "./site-footer";
 
 /**
  * Shared application chrome for public and authenticated pages.
@@ -29,6 +30,7 @@ export default async function HubShell({ children }: { children: ReactNode }) {
           <Topbar user={user} />
           <main id="main-content" className="hub-unified-backdrop min-h-0 flex-1 overflow-y-auto">
             {children}
+            <SiteFooter />
           </main>
         </div>
       </div>

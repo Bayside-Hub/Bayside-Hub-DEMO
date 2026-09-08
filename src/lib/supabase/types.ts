@@ -1,4 +1,4 @@
-export type Role = "student" | "advisor" | "staff" | "admin";
+export type Role = "student" | "teacher" | "advisor" | "staff" | "admin";
 
 export type Profile = {
   id: string;
@@ -21,6 +21,12 @@ export type SessionUser = {
 export type Database = {
   public: {
     Tables: {
+      management_audit: TableDefinition<{ id: string; actor_id: string | null; resource: string; operation: string; before_data: unknown; after_data: unknown; created_at: string }>;
+      account_role_audit: TableDefinition<{ id: string; actor_id: string | null; profile_id: string | null; previous_role: string | null; new_role: string | null; club_id: string | null; created_at: string }>;
+      custom_roles: TableDefinition<{ id: string; name: string; permissions: string[]; created_at: string }>;
+      custom_role_assignments: TableDefinition<{ id: string; role_id: string; profile_id: string; club_id: string | null; created_at: string }>;
+      site_content: TableDefinition<{ key: string; body: string; updated_by: string | null; updated_at: string }>;
+      school_announcement_submissions: TableDefinition<{ id: string; club_id: string; author_id: string; title: string; body: string; status: string; review_note: string | null; created_at: string }>;
       profiles: {
         Row: Profile;
         Insert: Partial<Profile>;
@@ -74,6 +80,12 @@ export type Database = {
       };
     };
     Functions: {
+      get_managed_club_ids: { Args: Record<string, never>; Returns: string[] };
+      has_custom_permission: { Args: { p_permission: string; p_club_id?: string | null }; Returns: boolean };
+      can_manage_club: { Args: { p_club_id: string }; Returns: boolean };
+      can_govern_club: { Args: { p_club_id: string }; Returns: boolean };
+      assign_account_role: { Args: { p_user_id: string; p_role: string; p_club_id?: string | null }; Returns: undefined };
+      review_school_announcement: { Args: { p_id: string; p_approve: boolean; p_note: string }; Returns: undefined };
       set_user_role: {
         Args: { p_user_id: string; p_role: Role };
         Returns: undefined;

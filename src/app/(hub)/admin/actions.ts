@@ -164,12 +164,15 @@ export async function updateUserRole(_prev: ActionState, formData: FormData): Pr
 
   if (!user || user.role !== "admin") return { ok: false, message: "Admins only." };
   if (!isSupabaseConfigured() || !id) return invalid();
-  if (!["student", "advisor", "staff", "admin"].includes(role)) return invalid();
+  if (!["student", "teacher", "advisor", "staff", "admin"].includes(role)) return invalid();
+  const clubId = String(formData.get("club_id") ?? "");
+  if (role === "advisor" && !clubId) return { ok: false, message: "Choose the club this advisor will manage." };
 
   const supabase = await createServerClient();
-  const { error } = await supabase.rpc("set_user_role", {
+  const { error } = await supabase.rpc("assign_account_role", {
     p_user_id: id,
-    p_role: role as "student" | "advisor" | "staff" | "admin",
+    p_role: role,
+    p_club_id: role === "advisor" ? clubId : null,
   });
 
   if (error) return invalid();

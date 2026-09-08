@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
 import SupportRequestForm from "./request-form";
+import { getSiteText } from "@/lib/site-content";
 
 export const metadata: Metadata = { title: "Support" };
 
@@ -24,6 +25,7 @@ function searchable(value: string, query: string) {
 }
 
 export default async function SupportPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const text = await getSiteText();
   const { q = "" } = await searchParams;
   const query = q.trim();
   const user = await getCurrentUser();
@@ -44,7 +46,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
             <input id="support-search" name="q" defaultValue={query} placeholder="Ask a question…" className="h-12 min-w-0 flex-1 rounded-[8px] bg-[#f0ebe5] px-4 text-sm text-[#2a2829] outline-none placeholder:text-[#6f6a6b] focus:ring-2 focus:ring-[#97b4de]" />
             <button className="h-12 rounded-[8px] bg-[#263a99] px-6 text-xs font-bold text-[#f0ebe5]">SEARCH</button>
           </form>
-          <p className="mt-2 text-base text-[#dcd0be] sm:text-xl">Comments, concerns, and issues are welcome.</p>
+          <p className="mt-2 text-base text-[#dcd0be] sm:text-xl">{text.support_intro}</p>
           {query ? <Link href="/support" className="mt-3 text-xs font-semibold text-[#97b4de] hover:underline">Clear search</Link> : null}
         </header>
 

@@ -99,9 +99,14 @@ export default function MobileNav({ user }: { user: SessionUser | null }) {
     };
 
     document.addEventListener("keydown", onKeyDown);
+    // A resized desktop window must not keep a hidden drawer/focus trap active.
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const onViewportChange = () => { if (desktop.matches) closeMenu(); };
+    desktop.addEventListener("change", onViewportChange);
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", onKeyDown);
+      desktop.removeEventListener("change", onViewportChange);
     };
   }, [closeMenu, open]);
 

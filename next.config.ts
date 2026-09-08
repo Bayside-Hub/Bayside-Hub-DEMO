@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  // Accept a 4 MiB photo plus multipart metadata, below Vercel's payload limit.
+  experimental: { serverActions: { bodySizeLimit: "4.25mb" } },
   images: {
     remotePatterns: [
       {

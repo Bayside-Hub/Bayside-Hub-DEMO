@@ -4,15 +4,14 @@ import { PageHeader } from "@/components/ui";
 import { requireStaff } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
-import { weeklyReport } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Reports — Admin",
 };
 
 const statCards = [
-  { title: "Approved Clubs", key: "approved" },
-  { title: "Pending Reviews", key: "pending" },
+  { title: "Approved Applications", key: "approved" },
+  { title: "Pending Applications", key: "pending" },
   { title: "Rejected", key: "rejected" },
 ] as const;
 
@@ -32,9 +31,9 @@ export default async function AdminReportsPage() {
     : [{ count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }, { count: 0 }];
 
   const counts = {
-    approved: approved.count ?? 0,
-    pending: pending.count ?? 0,
-    rejected: rejected.count ?? 0,
+    approved: approved.count ?? "Unavailable",
+    pending: pending.count ?? "Unavailable",
+    rejected: rejected.count ?? "Unavailable",
   };
 
   return (
@@ -62,48 +61,17 @@ export default async function AdminReportsPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="rounded-card border border-black/5 bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-ink">Report Summaries</h2>
+          <h2 className="text-lg font-bold text-ink">What this report covers</h2>
           <div className="mt-4 space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold text-navy">Weekly Reports</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-muted">
-                {weeklyReport.weekly.map((w) => (
-                  <li key={w} className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-navy" aria-hidden />
-                    {w}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-[#8a6a10]">Monthly Insights</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-muted">
-                {weeklyReport.monthly.map((w) => (
-                  <li key={w} className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-orange" aria-hidden />
-                    {w}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-[#C2410C]">Quarterly Analysis</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-muted">
-                {weeklyReport.quarterly.map((w) => (
-                  <li key={w} className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-peach" aria-hidden />
-                    {w}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <p className="text-sm leading-6 text-muted">Counts reflect stored club applications and published school announcements. An application is not necessarily an active club.</p>
+            <p className="text-sm leading-6 text-muted">Attendance, funding and engagement trends are not collected by this report. No estimated activity figures are shown.</p>
           </div>
         </div>
 
         <div className="flex flex-col items-start justify-center rounded-card border border-black/5 bg-card p-6 shadow-sm">
           <h2 className="text-lg font-bold text-ink">Live activity</h2>
           <p className="mt-1 text-sm text-muted">
-            {anns.count ?? 0} published announcements and {apps.count ?? 0} club
+            {anns.count ?? "Unavailable"} published announcements and {apps.count ?? "Unavailable"} club
             applications on file.
           </p>
           <Link

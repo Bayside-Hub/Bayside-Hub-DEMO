@@ -12,12 +12,10 @@ export default async function ManageClubsPage() {
   if (!isSupabaseConfigured()) return <div className="mx-auto max-w-4xl px-6 py-8"><PageHeader title="Manage clubs" subtitle="Apply the core platform migration to enable club management." /></div>;
   const supabase = await createServerClient();
   let clubIds: string[] | null = null;
-  if (user.role === "advisor") {
-    const { data } = await supabase.from("club_advisors").select("club_id").eq("profile_id", user.id);
-    clubIds = (data ?? []).map((row) => row.club_id);
-  } else if (!["staff", "admin"].includes(user.role)) {
-    const { data } = await supabase.from("club_officers").select("club_id").eq("profile_id", user.id);
-    clubIds = (data ?? []).map((row) => row.club_id);
+  if (!["staff", "admin"].includes(user.role)) {
+    const { data, error } = await supabase.rpc("get_managed_club_ids", {});
+    if (error) return <p role="alert" className="p-8">Club permissions could not be loaded. Please contact Support to verify database setup.</p>;
+    clubIds = data ?? [];
   }
   const query = supabase.from("clubs").select("id, slug, name, short_description, interest_tags, contact_email, google_classroom_code, active_start_date, active_end_date, status").order("name");
   const { data: clubs } = clubIds ? (clubIds.length ? await query.in("id", clubIds) : { data: [] }) : await query;

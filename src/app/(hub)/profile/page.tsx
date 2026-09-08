@@ -133,7 +133,7 @@ export default async function ProfilePage() {
             <Link href="/announcements" className="flex items-center justify-between rounded-xl bg-white p-4 text-[11px] font-bold hover:bg-[#f0ebe5]"><span>CLUB ANNOUNCEMENTS</span><span className="text-lg text-[#263a99]" aria-hidden>→</span></Link>
           </aside>
         </div>
-        <footer className="mt-10 flex items-center gap-5 pb-1 text-[10px] font-medium text-[#f0ebe5]"><span>PROFILE</span><span className="h-px flex-1 bg-[#f0ebe5]" /><span className="text-[#dcd0be]">{user.name.toUpperCase()}</span></footer>
+        <footer className="mt-10 flex flex-wrap items-center gap-5 pb-1 text-xs font-medium text-[#f0ebe5]"><span>PROFILE</span><nav aria-label="Profile policies" className="flex flex-wrap gap-4"><Link href="/privacy" className="underline">Privacy Policy</Link><Link href="/terms" className="underline">Terms of Use</Link><Link href="/support" className="underline">Support</Link></nav><span className="text-[#dcd0be]">{user.name.toUpperCase()}</span></footer>
       </div>
     </div>
   );

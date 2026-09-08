@@ -14,8 +14,10 @@ import { getEvents } from "@/lib/events";
 import { getOpportunities } from "@/lib/opportunities";
 import { getCurrentUser } from "@/lib/auth";
 import { getStudentDashboard } from "@/lib/student-dashboard";
+import { getSiteText } from "@/lib/site-content";
 
 export default async function Home() {
+  const text = await getSiteText();
   const [user, dashboard, announcements, clubs, events, opportunities] = await Promise.all([
     getCurrentUser(),
     getStudentDashboard(),
@@ -57,9 +59,7 @@ export default async function Home() {
             Anchored in Excellence
           </h1>
           <p className="mt-6 max-w-3xl text-lg font-semibold leading-8 text-cream lg:text-2xl lg:leading-[30px]">
-            Welcome to Bayside Hub! Bayside Hub offers our students to
-            discover different activities, opportunities, and clubs, all in
-            one place. Browse around to start exploring!
+            {text.home_intro}
           </p>
           <div className="mt-10">
             <PrimaryButton
