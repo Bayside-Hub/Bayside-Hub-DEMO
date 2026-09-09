@@ -37,7 +37,7 @@ export function AnnouncementCard({ a }: { a: Announcement }) {
     <article className="card-gradient flex flex-col rounded-[10px] p-5">
       <div className="flex items-center justify-between gap-3">
         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tagClasses(a.tag)}`}>{a.tag}</span>
-        <time className="text-xs text-cream/60">{a.date}</time>
+        <time className="text-xs text-cream/60" aria-label={`Published ${a.date}`}>{a.date}</time>
       </div>
       <h3 className="mt-3 text-lg font-semibold text-cream">{a.title}</h3>
       <p className="mt-1.5 line-clamp-3 text-sm leading-6 text-cream/70">{a.excerpt}</p>

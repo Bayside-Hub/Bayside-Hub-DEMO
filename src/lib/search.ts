@@ -3,23 +3,21 @@ import { getAnnouncements } from "@/lib/announcements";
 import { isEventUpcoming } from "@/lib/data";
 import { getEvents } from "@/lib/events";
 import { getOpportunities } from "@/lib/opportunities";
+import { rankSearchResults, type SearchResult } from "./search-ranking";
 
-export type SearchResult = {
-  kind: "Club" | "Announcement" | "Opportunity" | "Event";
-  title: string;
-  href: string;
-  meta?: string;
-};
+export type { SearchResult } from "./search-ranking";
+
+const SEARCH_SOURCE_LIMIT = 250;
 
 export async function getSearchResults(query: string, limit = 24): Promise<SearchResult[]> {
-  const normalized = query.trim().toLocaleLowerCase();
+  const normalized = query.normalize("NFKC").trim();
   if (!normalized) return [];
 
   const [clubs, announcements, events, opportunities] = await Promise.all([
-    getAllClubs(),
+    getAllClubs(SEARCH_SOURCE_LIMIT),
     getAnnouncements(100),
-    getEvents(),
-    getOpportunities(),
+    getEvents(SEARCH_SOURCE_LIMIT),
+    getOpportunities(SEARCH_SOURCE_LIMIT),
   ]);
 
   const results: SearchResult[] = [
@@ -49,11 +47,5 @@ export async function getSearchResults(query: string, limit = 24): Promise<Searc
     })),
   ];
 
-  const seen = new Set<string>();
-  return results
-    .filter((result) =>
-      `${result.title} ${result.meta ?? ""}`.toLocaleLowerCase().includes(normalized),
-    )
-    .filter((result) => !seen.has(result.href) && Boolean(seen.add(result.href)))
-    .slice(0, limit);
+  return rankSearchResults(results, normalized, limit);
 }

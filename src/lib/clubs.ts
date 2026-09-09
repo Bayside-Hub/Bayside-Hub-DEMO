@@ -99,15 +99,17 @@ export function mapApprovedClub(row: ApprovedClubRow): Club {
  * All public clubs: the static directory plus club applications that an
  * administrator approved — approved charters go live automatically.
  */
-export const getAllClubs = cache(async (): Promise<Club[]> => {
-  if (!isSupabaseConfigured()) return staticClubs;
+export const getAllClubs = cache(async (limit?: number): Promise<Club[]> => {
+  if (!isSupabaseConfigured()) return limit === undefined ? staticClubs : staticClubs.slice(0, limit);
 
   const supabase = await createServerClient();
-  const { data: canonicalRows, error: canonicalError } = await supabase
+  let canonicalQuery = supabase
     .from("clubs")
     .select("id, slug, name, short_description, interest_tags, is_stem, is_community_service, active_start_date, active_end_date, google_classroom_code, contact_email, join_policy, status, created_by, created_at, updated_at")
     .eq("status", "published")
     .order("name");
+  if (limit !== undefined) canonicalQuery = canonicalQuery.limit(limit);
+  const { data: canonicalRows, error: canonicalError } = await canonicalQuery;
 
   if (!canonicalError && canonicalRows?.length) {
     // Fetch relations in parallel to avoid one database round trip per club.
@@ -141,11 +143,12 @@ export const getAllClubs = cache(async (): Promise<Club[]> => {
     .select("id, club_name, category, description, meeting_days, created_at")
     .order("created_at", { ascending: false });
 
-  if (error) return staticClubs;
+  if (error) throw new Error(`Unable to load clubs: ${error.message}`);
 
   const approved: Club[] = (rows ?? []).map(mapApprovedClub);
 
-  return preferLiveData(approved, staticClubs);
+  const output = preferLiveData(approved, staticClubs);
+  return limit === undefined ? output : output.slice(0, limit);
 });
 
 /** Look up a single club by slug across static + approved applications. */

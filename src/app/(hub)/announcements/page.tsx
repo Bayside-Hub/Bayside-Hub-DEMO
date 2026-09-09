@@ -1,17 +1,19 @@
 import Link from "next/link";
 import { AnnouncementCard } from "@/components/cards";
-import { getAnnouncements } from "@/lib/announcements";
+import { getAnnouncementTags, getAnnouncementsPage } from "@/lib/announcements";
 
 export default async function AnnouncementsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string }>;
+  searchParams: Promise<{ tag?: string; page?: string }>;
 }) {
-  const { tag } = await searchParams;
-  const announcements = await getAnnouncements();
-  const tags = ["All", ...Array.from(new Set(announcements.map((a) => a.tag)))];
+  const { tag, page: rawPage } = await searchParams;
+  const page = Number.parseInt(rawPage ?? "1", 10);
+  const tagsFromDb = await getAnnouncementTags();
+  const tags = ["All", ...tagsFromDb];
   const active = tag && tags.includes(tag) ? tag : "All";
-  const filtered = active === "All" ? announcements : announcements.filter((a) => a.tag === active);
+  const result = await getAnnouncementsPage(Number.isFinite(page) ? page : 1, active === "All" ? undefined : active);
+  const announcements = result.announcements;
   const categories = [
     { label: "Club", description: "Browse club meetings, dates, times, and locations.", href: "/clubs" },
     { label: "Sport", description: "Find tryouts, practices, seasons, and team information.", href: "/sports" },
@@ -56,18 +58,33 @@ export default async function AnnouncementsPage({
       </nav>
 
       <section aria-label="Announcements">
-        {filtered.length === 0 ? (
+        {announcements.length === 0 ? (
           <p className="rounded-card border border-dashed border-line bg-card/60 px-6 py-14 text-center text-sm text-muted">
             No announcements in this category yet.
           </p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((a) => (
+            {announcements.map((a) => (
               <AnnouncementCard key={a.id} a={a} />
             ))}
           </div>
         )}
       </section>
+      {result.pageCount > 1 && (
+        <nav aria-label="Announcement pages" className="mt-8 flex items-center justify-center gap-3">
+          {result.page > 1 && (
+            <Link href={`/announcements?${new URLSearchParams({ ...(active !== "All" ? { tag: active } : {}), page: String(result.page - 1) })}`} className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-cream">
+              Previous
+            </Link>
+          )}
+          <span className="text-sm text-muted" aria-live="polite">Page {result.page} of {result.pageCount}</span>
+          {result.page < result.pageCount && (
+            <Link href={`/announcements?${new URLSearchParams({ ...(active !== "All" ? { tag: active } : {}), page: String(result.page + 1) })}`} className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-cream">
+              Next
+            </Link>
+          )}
+        </nav>
+      )}
     </div>
   );
 }

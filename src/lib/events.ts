@@ -81,15 +81,17 @@ function shortTime(value: string | null) {
   return `${hours % 12 || 12}:${minutes} ${hours >= 12 ? "PM" : "AM"}`;
 }
 
-export const getEvents = cache(async (): Promise<EventItem[]> => {
-  if (!isSupabaseConfigured()) return seedEvents;
+export const getEvents = cache(async (limit?: number): Promise<EventItem[]> => {
+  if (!isSupabaseConfigured()) return limit === undefined ? seedEvents : seedEvents.slice(0, limit);
   const supabase = await createServerClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("events")
     .select("*")
     .eq("published", true)
     .order("start_at");
-  if (error) return seedEvents;
+  if (limit !== undefined) query = query.limit(limit);
+  const { data, error } = await query;
+  if (error) throw new Error(`Unable to load events: ${error.message}`);
   const [meetingResult, clubResult] = await Promise.all([
     supabase.from("club_meetings").select("id, club_id, day_of_week, start_time, end_time, location, recurrence_note"),
     supabase.from("clubs").select("id, slug, name, active_start_date, active_end_date").eq("status", "published"),
@@ -98,7 +100,8 @@ export const getEvents = cache(async (): Promise<EventItem[]> => {
   const recurring = meetingResult.error || clubResult.error
     ? []
     : meetingEvents(meetingResult.data ?? [], clubResult.data ?? []);
-  return preferLiveData([...live, ...recurring], seedEvents);
+  const output = preferLiveData([...live, ...recurring], seedEvents);
+  return limit === undefined ? output : output.slice(0, limit);
 });
 
 export async function getEvent(id: string) {

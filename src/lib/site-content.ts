@@ -13,7 +13,8 @@ export const siteTextDefaults = {
 export const getSiteText = cache(async () => {
   if (!isSupabaseConfigured()) return siteTextDefaults;
   const db = await createServerClient();
-  const { data } = await db.from("site_content").select("key,body");
+  const { data, error } = await db.from("site_content").select("key,body");
+  if (error) throw new Error(`Unable to load site content: ${error.message}`);
   const result = { ...siteTextDefaults };
   for (const item of data ?? []) {
     if (Object.hasOwn(result, item.key)) result[item.key as keyof typeof result] = item.body;
