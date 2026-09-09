@@ -103,5 +103,47 @@ begin
 end;
 $$;
 
+-- Managers can review a minimal roster without receiving member email
+-- addresses or unrelated profile fields.
+create or replace function public.get_club_attendance_records(
+  p_club_id uuid,
+  p_limit integer default 1000
+)
+returns table (
+  id uuid,
+  session_id uuid,
+  session_label text,
+  profile_id uuid,
+  member_name text,
+  checked_in_at timestamptz
+)
+language plpgsql
+stable
+security definer set search_path = public
+as $$
+begin
+  if not public.can_manage_club(p_club_id) then
+    raise exception 'Club attendance access denied' using errcode = '42501';
+  end if;
+
+  return query
+  select
+    record.id,
+    record.session_id,
+    session.label,
+    record.profile_id,
+    coalesce(nullif(profile.full_name, ''), 'Club member'),
+    record.checked_in_at
+  from public.club_attendance_records record
+  join public.club_attendance_sessions session on session.id = record.session_id
+  join public.profiles profile on profile.id = record.profile_id
+  where record.club_id = p_club_id
+  order by record.checked_in_at desc
+  limit least(greatest(coalesce(p_limit, 1000), 1), 2000);
+end;
+$$;
+
 revoke all on function public.check_in_to_club(text) from public, anon;
 grant execute on function public.check_in_to_club(text) to authenticated;
+revoke all on function public.get_club_attendance_records(uuid, integer) from public, anon;
+grant execute on function public.get_club_attendance_records(uuid, integer) to authenticated;

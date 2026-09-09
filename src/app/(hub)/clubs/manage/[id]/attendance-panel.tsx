@@ -2,7 +2,7 @@ import Image from "next/image";
 import QRCode from "qrcode";
 import { headers } from "next/headers";
 import ActionFeedbackForm from "@/components/action-feedback-form";
-import type { ClubAttendanceSessionRow } from "@/lib/supabase/types";
+import type { ClubAttendanceRecordDetail, ClubAttendanceSessionRow } from "@/lib/supabase/types";
 import { createServerClient } from "@/lib/supabase/server";
 import { closeAttendanceSession, createAttendanceSession } from "../actions";
 
@@ -19,11 +19,12 @@ export default async function AttendancePanel({ clubId }: { clubId: string }) {
   const supabase = await createServerClient();
   const [{ data }, { data: records }] = await Promise.all([
     supabase.from("club_attendance_sessions").select("*").eq("club_id", clubId).order("created_at", { ascending: false }).limit(12),
-    supabase.from("club_attendance_records").select("session_id").eq("club_id", clubId),
+    supabase.rpc("get_club_attendance_records", { p_club_id: clubId, p_limit: 1000 }),
   ]);
   const sessions: ClubAttendanceSessionRow[] = data ?? [];
+  const attendanceRecords: ClubAttendanceRecordDetail[] = records ?? [];
   const attendanceCounts = new Map<string, number>();
-  for (const record of records ?? []) attendanceCounts.set(record.session_id, (attendanceCounts.get(record.session_id) ?? 0) + 1);
+  for (const record of attendanceRecords) attendanceCounts.set(record.session_id, (attendanceCounts.get(record.session_id) ?? 0) + 1);
   const siteOrigin = await origin();
   const rows = await Promise.all(sessions.map(async (session) => ({
     ...session,
@@ -61,6 +62,16 @@ export default async function AttendancePanel({ clubId }: { clubId: string }) {
             {usable ? <ActionFeedbackForm action={closeAttendanceSession} className="mt-4"><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="session_id" value={session.id} /><button className="rounded-full border border-[#f78660] px-4 py-2 text-xs font-semibold text-[#f78660]">Close check-in</button></ActionFeedbackForm> : null}
           </div>
         </div>
+        <details className="mt-5 border-t border-white/10 pt-4">
+          <summary className="cursor-pointer text-sm font-semibold text-powder">View attendance records</summary>
+          {attendanceCounts.get(session.id) ? <div className="mt-3 overflow-x-auto"><table className="w-full text-left text-sm">
+            <thead className="text-xs uppercase text-cream/50"><tr><th className="pb-2 pr-4">Member</th><th className="pb-2">Checked in</th></tr></thead>
+            <tbody className="divide-y divide-white/10">{attendanceRecords.filter((record) => record.session_id === session.id).map((record) => <tr key={record.id}>
+              <td className="py-2 pr-4 font-medium text-cream">{record.member_name}</td>
+              <td className="py-2 text-cream/65"><time dateTime={record.checked_in_at}>{new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(record.checked_in_at))}</time></td>
+            </tr>)}</tbody>
+          </table></div> : <p className="mt-3 text-sm text-cream/55">No members have checked in yet.</p>}
+        </details>
       </article>;
     })}</div> : <p className="mt-4 rounded-card border border-dashed border-line p-6 text-center text-sm text-muted">No check-in codes yet.</p>}
   </section>;

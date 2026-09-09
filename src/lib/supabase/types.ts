@@ -112,6 +112,10 @@ export type Database = {
         Args: { p_code: string };
         Returns: ClubCheckInResult[];
       };
+      get_club_attendance_records: {
+        Args: { p_club_id: string; p_limit?: number };
+        Returns: ClubAttendanceRecordDetail[];
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -286,6 +290,15 @@ export type ClubAttendanceRecordRow = {
   session_id: string;
   club_id: string;
   profile_id: string;
+  checked_in_at: string;
+};
+
+export type ClubAttendanceRecordDetail = {
+  id: string;
+  session_id: string;
+  session_label: string;
+  profile_id: string;
+  member_name: string;
   checked_in_at: string;
 };
 
