@@ -1,28 +1,19 @@
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { leaveClub } from "@/app/(hub)/clubs/actions";
 import { getCurrentUser } from "@/lib/auth";
-import { isEventUpcoming } from "@/lib/data";
+import { isEventUpcoming, type EventItem } from "@/lib/data";
 import { getEvents } from "@/lib/events";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
-import type { ClubApplicationRow } from "@/lib/supabase/types";
+import type { ClubApplicationRow, MyClubAttendance, SupportRequestRow } from "@/lib/supabase/types";
 
-type ProfileClub = {
-  id: string;
-  slug: string;
-  name: string;
-  status: "pending" | "active";
-  requestedAt: string;
-  role: string;
-  meetingDay: string;
-  location: string;
-};
+type ProfileClub = { id: string; slug: string; name: string; status: "pending" | "active"; requestedAt: string; role: string; meetingDay: string; location: string };
+type ProfileData = { clubs: ProfileClub[]; applications: ClubApplicationRow[]; rsvpIds: string[]; support: SupportRequestRow[]; attendance: MyClubAttendance[] };
 
-export const metadata: Metadata = { title: "Profile" };
-
+export const metadata: Metadata = { title: "My Hub" };
+export const dynamic = "force-dynamic";
 const dayNames = ["", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays", "Sundays"];
 
 function initials(name: string) {
@@ -30,111 +21,92 @@ function initials(name: string) {
   return `${parts[0]?.[0] ?? ""}${parts.length > 1 ? parts.at(-1)?.[0] ?? "" : ""}`.toUpperCase();
 }
 
-function dateLabel(value: string) {
-  return new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(new Date(value));
+function dateTime(value: string) {
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
-async function getProfileData(userId: string) {
-  if (!isSupabaseConfigured()) return { clubs: [] as ProfileClub[], applications: [] as ClubApplicationRow[] };
-  const supabase = await createServerClient();
-  const [membershipResult, officerResult, advisorResult, meetingResult, applicationsResult] = await Promise.all([
-    supabase.from("club_memberships").select("club_id, status, requested_at").eq("profile_id", userId).in("status", ["pending", "active"]),
-    supabase.from("club_officers").select("club_id, title").eq("profile_id", userId),
-    supabase.from("club_advisors").select("club_id").eq("profile_id", userId),
-    supabase.from("club_meetings").select("club_id, day_of_week, location").order("day_of_week"),
-    supabase.from("club_applications").select("id, club_name, category, description, meeting_days, contact_email, submitted_by, status, created_at, reviewed_at, reviewed_by").eq("submitted_by", userId).order("created_at", { ascending: false }).limit(3),
+async function getProfileData(userId: string): Promise<ProfileData> {
+  const empty: ProfileData = { clubs: [], applications: [], rsvpIds: [], support: [], attendance: [] };
+  if (!isSupabaseConfigured()) return empty;
+  const db = await createServerClient();
+  const [memberships, officers, advisors, meetings, applications, rsvps, support, attendance] = await Promise.all([
+    db.from("club_memberships").select("club_id, status, requested_at").eq("profile_id", userId).in("status", ["pending", "active"]),
+    db.from("club_officers").select("club_id, title").eq("profile_id", userId),
+    db.from("club_advisors").select("club_id").eq("profile_id", userId),
+    db.from("club_meetings").select("club_id, day_of_week, location").order("day_of_week"),
+    db.from("club_applications").select("*").eq("submitted_by", userId).order("created_at", { ascending: false }).limit(5),
+    db.from("event_rsvps").select("event_id").eq("user_id", userId),
+    db.from("support_requests").select("*").eq("submitted_by", userId).order("updated_at", { ascending: false }).limit(5),
+    db.rpc("get_my_club_attendance", { p_limit: 8 }),
   ]);
-  const memberships = membershipResult.data ?? [];
-  const clubIds = [...new Set(memberships.map((row) => row.club_id))];
-  const clubResult = clubIds.length
-    ? await supabase.from("clubs").select("id, slug, name").in("id", clubIds)
-    : { data: [] as { id: string; slug: string; name: string }[] };
-  const clubsById = new Map((clubResult.data ?? []).map((club) => [club.id, club]));
-  const roles = new Map((officerResult.data ?? []).map((row) => [row.club_id, row.title]));
-  const advised = new Set((advisorResult.data ?? []).map((row) => row.club_id));
-  const meetings = new Map((meetingResult.data ?? []).map((row) => [row.club_id, row]));
-
+  const membershipRows = memberships.data ?? [];
+  const clubIds = [...new Set(membershipRows.map((row) => row.club_id))];
+  const clubRows = clubIds.length ? await db.from("clubs").select("id, slug, name").in("id", clubIds) : { data: [] as { id: string; slug: string; name: string }[] };
+  const byId = new Map((clubRows.data ?? []).map((club) => [club.id, club]));
+  const roles = new Map((officers.data ?? []).map((row) => [row.club_id, row.title]));
+  const advised = new Set((advisors.data ?? []).map((row) => row.club_id));
+  const schedules = new Map((meetings.data ?? []).map((row) => [row.club_id, row]));
   return {
-    clubs: memberships.flatMap((membership) => {
-      const club = clubsById.get(membership.club_id);
+    clubs: membershipRows.flatMap((membership) => {
+      const club = byId.get(membership.club_id);
       if (!club) return [];
-      const meeting = meetings.get(club.id);
-      return [{
-        ...club,
-        status: membership.status as "pending" | "active",
-        requestedAt: membership.requested_at,
-        role: roles.get(club.id) ?? (advised.has(club.id) ? "Advisor" : "Member"),
-        meetingDay: meeting ? dayNames[meeting.day_of_week] : "Schedule TBA",
-        location: meeting?.location ?? "Location TBA",
-      }];
+      const meeting = schedules.get(club.id);
+      return [{ ...club, status: membership.status as "pending" | "active", requestedAt: membership.requested_at, role: roles.get(club.id) ?? (advised.has(club.id) ? "Advisor" : "Member"), meetingDay: meeting ? dayNames[meeting.day_of_week] : "Schedule TBA", location: meeting?.location ?? "Location TBA" }];
     }),
-    applications: applicationsResult.data ?? [],
+    applications: applications.data ?? [],
+    rsvpIds: (rsvps.data ?? []).map((row) => row.event_id),
+    support: support.data ?? [],
+    attendance: attendance.data ?? [],
   };
 }
 
-function SectionTitle({ children, detail }: { children: React.ReactNode; detail: string }) {
-  return <div className="text-center"><h2 className="text-base font-bold tracking-wide text-[#f0ebe5] sm:text-xl">{children}</h2><p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[#97b4de]">{detail}</p></div>;
+function Stat({ value, label, href }: { value: number; label: string; href: string }) {
+  return <Link href={href} className="rounded-card border border-line bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"><strong className="font-display text-3xl text-ink">{value}</strong><span className="mt-1 block text-xs font-semibold uppercase tracking-wide text-muted">{label}</span></Link>;
+}
+
+function SectionHeader({ title, action, href }: { title: string; action?: string; href?: string }) {
+  return <div className="flex items-end justify-between gap-3"><h2 className="font-display text-xl font-bold uppercase tracking-tight text-ink">{title}</h2>{action && href ? <Link href={href} className="text-xs font-bold text-powder hover:text-ink">{action} →</Link> : null}</div>;
+}
+
+function EventRow({ event, attending }: { event: EventItem; attending: boolean }) {
+  return <Link href={`/events/${event.id}`} className="flex gap-3 rounded-control border border-line bg-card p-3 transition hover:border-powder/60"><span className="flex size-11 shrink-0 items-center justify-center rounded-control bg-navy text-xs font-bold text-cream">{event.dateISO?.slice(-2) ?? "•"}</span><span className="min-w-0 flex-1"><strong className="block truncate text-sm text-ink">{event.title}</strong><small className="mt-1 block truncate text-xs text-muted">{event.date} · {event.time} · {event.location}</small></span>{attending ? <span className="self-center rounded-full bg-powder/20 px-2.5 py-1 text-[10px] font-bold text-ink">GOING</span> : null}</Link>;
 }
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
-  if (!user) {
-    redirect("/login?next=/profile");
-  }
+  if (!user) redirect("/login?next=/profile");
+  const [data, allEvents] = await Promise.all([getProfileData(user.id), getEvents()]);
+  const activeClubs = data.clubs.filter((club) => club.status === "active");
+  const pendingClubs = data.clubs.filter((club) => club.status === "pending");
+  const rsvpSet = new Set(data.rsvpIds);
+  const upcomingEvents = allEvents.filter((event) => isEventUpcoming(event)).sort((a, b) => (a.dateISO ?? "").localeCompare(b.dateISO ?? "")).slice(0, 4);
+  const myUpcoming = upcomingEvents.filter((event) => rsvpSet.has(event.id));
+  const openSupport = data.support.filter((item) => ["open", "in_review"].includes(item.status));
+  const canManage = ["advisor", "staff", "admin"].includes(user.role) || activeClubs.some((club) => club.role !== "Member");
 
-  const [{ clubs, applications }, allEvents] = await Promise.all([getProfileData(user.id), getEvents()]);
-  const activeClubs = clubs.filter((club) => club.status === "active");
-  const upcomingEvents = allEvents.filter((event) => isEventUpcoming(event)).slice(0, 2);
-  const roleLabel = user.role === "student" ? "Student account" : `${user.role} account`;
+  return <div className="profile-backdrop min-h-full px-5 py-8 sm:px-8 lg:px-10"><div className="mx-auto max-w-7xl">
+    <header className="overflow-hidden rounded-panel border border-line bg-card shadow-[0_24px_80px_-52px_rgba(88,154,239,.75)]">
+      <div className="h-24 bg-[radial-gradient(circle_at_20%_10%,rgba(151,191,244,.9),transparent_35%),radial-gradient(circle_at_78%_30%,rgba(255,142,104,.75),transparent_38%),linear-gradient(120deg,#263a99,#11172c)] sm:h-32" />
+      <div className="flex flex-col gap-5 px-5 pb-6 sm:flex-row sm:items-end sm:px-7"><div className="-mt-10 flex size-24 shrink-0 items-center justify-center rounded-[28px] border-4 border-card bg-navy font-display text-3xl font-bold text-cream shadow-lg">{initials(user.name)}</div><div className="min-w-0 flex-1 sm:pb-1"><p className="text-xs font-bold uppercase tracking-[.18em] text-powder">{user.role} account</p><h1 className="mt-1 truncate font-display text-3xl font-bold text-ink sm:text-4xl">{user.name}</h1><p className="mt-1 truncate text-sm text-muted">{user.email} · Bayside High School</p></div><div className="flex flex-wrap gap-2 sm:pb-1"><Link href="/clubs/check-in" className="rounded-full bg-navy px-4 py-2 text-xs font-bold text-cream">Quick check-in</Link><form action="/auth/signout" method="post"><button className="rounded-full border border-line bg-content-bg px-4 py-2 text-xs font-bold text-ink">Sign out</button></form></div></div>
+    </header>
 
-  return (
-    <div className="profile-backdrop fixed inset-0 z-50 overflow-y-auto bg-black font-sans text-[#2a2829]">
-      <div className="mx-auto flex min-h-full w-full max-w-[1920px] flex-col px-4 py-5 sm:px-8 lg:px-[3.125%]">
-        <nav className="flex items-center justify-between" aria-label="Profile navigation"><Link href="/" className="text-xs font-bold text-[#97b4de] hover:text-[#f0ebe5]">&lt; DASHBOARD</Link><div className="flex size-10 items-center justify-center rounded-full bg-[#263a99] text-[10px] font-medium text-[#f0ebe5]">{initials(user.name)}</div></nav>
+    <section className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Account overview"><Stat value={activeClubs.length} label="Active clubs" href="#clubs" /><Stat value={pendingClubs.length} label="Pending joins" href="#clubs" /><Stat value={data.attendance.length} label="Recent check-ins" href="#attendance" /><Stat value={openSupport.length} label="Open requests" href="#activity" /></section>
 
-        <header className="mt-6 grid items-center gap-5 lg:grid-cols-[minmax(0,1fr)_200px_434px]">
-          <div className="relative h-40 overflow-hidden rounded-[20px] border-4 border-[#f0ebe5] sm:h-52 lg:h-[279px]"><Image src="/profile/keep-going.jpeg" alt="Hand-painted stars encouraging students to keep going" fill priority className="object-cover" sizes="(max-width: 1024px) 100vw, 60vw" /></div>
-          <div className="mx-auto flex size-36 items-center justify-center rounded-full border-4 border-[#f0ebe5] bg-[#97b4de] text-4xl font-bold text-[#263a99] sm:size-[200px] sm:text-5xl">{initials(user.name)}</div>
-          <div className="text-center lg:text-left"><p className="text-lg font-bold uppercase text-[#97b4de] sm:text-2xl">{roleLabel}</p><h1 className="mt-1 break-words text-4xl font-bold leading-none text-[#f0ebe5] sm:text-[52px]">{user.name}</h1><p className="mt-3 text-sm text-[#dcd0be] sm:text-xl">Bayside High School · NYC Public Schools</p></div>
-        </header>
+    <div className="mt-7 grid gap-7 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,.75fr)]"><main className="min-w-0 space-y-8">
+      <section id="clubs"><SectionHeader title="My clubs" action="Browse all clubs" href="/clubs" />
+        {data.clubs.length ? <div className="mt-4 grid gap-3 md:grid-cols-2">{data.clubs.map((club) => <article key={club.id} className="rounded-card border border-line bg-card p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-wider text-powder">{club.role}</p><h3 className="mt-1 font-display text-lg font-bold text-ink">{club.name}</h3></div><span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${club.status === "active" ? "bg-powder/20 text-ink" : "bg-orange/20 text-orange"}`}>{club.status}</span></div><p className="mt-3 text-sm text-muted">{club.meetingDay} · {club.location}</p><div className="mt-4 flex flex-wrap gap-2"><Link href={`/clubs/${club.slug}`} className="rounded-full bg-navy px-3.5 py-2 text-xs font-semibold text-cream">Open club</Link><Link href="/calendar" className="rounded-full border border-line px-3.5 py-2 text-xs font-semibold text-ink">Calendar</Link>{club.status === "active" ? <form action={leaveClub}><input type="hidden" name="club_id" value={club.id} /><input type="hidden" name="slug" value={club.slug} /><button className="rounded-full px-3 py-2 text-xs font-semibold text-muted hover:text-orange">Leave</button></form> : null}</div></article>)}</div> : <div className="mt-4 rounded-card border border-dashed border-line bg-card/70 p-8 text-center text-sm text-muted">You have not joined a Club yet. <Link href="/clubs" className="font-bold text-powder">Explore the directory</Link>.</div>}
+      </section>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.73fr)_minmax(360px,1fr)]">
-          <main className="min-w-0 space-y-5">
-            <section className="rounded-[14px] bg-[#f0ebe5]/95 p-5 sm:p-6">
-              <h2 className="text-sm font-bold text-[#263a99] sm:text-base">STUDENT INFORMATION</h2>
-              <dl className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.7fr_1fr_auto] lg:items-end">
-                <div><dt className="text-[10px] font-medium text-[#263a99]">FULL NAME</dt><dd className="mt-2 text-sm font-semibold uppercase">{user.name}</dd></div>
-                <div className="min-w-0"><dt className="text-[10px] font-medium text-[#263a99]">SCHOOL EMAIL</dt><dd className="mt-2 truncate text-sm font-semibold">{user.email}</dd></div>
-                <div><dt className="text-[10px] font-medium text-[#263a99]">ACCESS ROLE</dt><dd className="mt-2 text-sm font-semibold uppercase">{user.role}</dd></div>
-                <form action="/auth/signout" method="post"><button className="h-10 rounded-full bg-[#263a99] px-7 text-[11px] font-bold text-[#f0ebe5] hover:bg-[#1d2f7e]">SIGN OUT</button></form>
-              </dl>
-            </section>
+      <section id="attendance"><SectionHeader title="Check-in history" action="Enter a code" href="/clubs/check-in" />
+        {data.attendance.length ? <div className="mt-4 overflow-hidden rounded-card border border-line bg-card"><div className="divide-y divide-line">{data.attendance.map((entry) => <Link key={entry.id} href={`/clubs/${entry.club_slug}`} className="flex items-center gap-3 p-4 transition hover:bg-content-bg/60"><span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-powder/20 text-powder">✓</span><span className="min-w-0 flex-1"><strong className="block truncate text-sm text-ink">{entry.session_label}</strong><small className="mt-0.5 block truncate text-xs text-muted">{entry.club_name}</small></span><time dateTime={entry.checked_in_at} className="text-right text-xs text-muted">{dateTime(entry.checked_in_at)}</time></Link>)}</div></div> : <div className="mt-4 rounded-card border border-dashed border-line bg-card/70 p-6 text-center text-sm text-muted">Your completed Club check-ins will appear here.</div>}
+      </section>
 
-            <SectionTitle detail={`${activeClubs.length} active`}>MY ENROLLED CLUBS</SectionTitle>
-            {activeClubs.length ? <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">{activeClubs.map((club, index) => (
-              <article key={club.id} className="flex min-h-56 flex-col rounded-xl bg-[#dcd0be]/95 p-[18px]">
-                <div className={`size-12 rounded-[14px] ${index % 2 ? "bg-[#97b4de]" : "bg-[#263a99]"}`} /><h3 className="mt-3 text-base font-bold uppercase">{club.name}</h3><p className="mt-1 text-xs font-medium text-[#263a99]">{club.role}</p><p className="mt-2 text-[10px] font-medium uppercase">{club.meetingDay} · {club.location}</p>
-                <div className="mt-auto flex flex-wrap gap-2 pt-4 text-[10px] font-medium text-[#263a99]"><Link href={`/clubs/${club.slug}`} className="rounded-full bg-[#e8e1d8] px-4 py-2">PROFILE</Link><Link href="/calendar" className="rounded-full bg-[#e8e1d8] px-4 py-2">CALENDAR</Link><form action={leaveClub}><input type="hidden" name="club_id" value={club.id} /><input type="hidden" name="slug" value={club.slug} /><button className="rounded-full bg-[#e8e1d8] px-4 py-2">LEAVE</button></form></div><p className="mt-3 text-right text-[9px] font-medium uppercase">Joined {dateLabel(club.requestedAt)}</p>
-              </article>
-            ))}</div> : <div className="rounded-xl border border-dashed border-[#f0ebe5]/40 p-8 text-center text-sm text-[#dcd0be]">No active clubs yet. <Link href="/clubs" className="font-bold text-[#97b4de]">Browse clubs</Link></div>}
+      <section id="activity"><SectionHeader title="Requests & applications" action="Get support" href="/support" /><div className="mt-4 grid gap-3 md:grid-cols-2"><div className="rounded-card border border-line bg-card p-5"><h3 className="text-sm font-bold text-ink">Club applications</h3>{data.applications.length ? <ul className="mt-3 divide-y divide-line">{data.applications.map((item) => <li key={item.id} className="flex items-center justify-between gap-3 py-3 text-sm"><span className="truncate text-ink">{item.club_name}</span><span className="text-xs font-bold uppercase text-muted">{item.status}</span></li>)}</ul> : <p className="mt-3 text-sm text-muted">No applications submitted.</p>}<Link href="/clubs/apply" className="mt-4 inline-block text-xs font-bold text-powder">Start an application →</Link></div><div className="rounded-card border border-line bg-card p-5"><h3 className="text-sm font-bold text-ink">Support requests</h3>{data.support.length ? <ul className="mt-3 divide-y divide-line">{data.support.map((item) => <li key={item.id} className="py-3"><div className="flex items-center justify-between gap-3"><span className="truncate text-sm text-ink">{item.subject}</span><span className="text-[10px] font-bold uppercase text-muted">{item.status.replace("_", " ")}</span></div><p className="mt-1 text-xs capitalize text-muted">{item.request_type.replaceAll("_", " ")}</p></li>)}</ul> : <p className="mt-3 text-sm text-muted">No support requests.</p>}</div></div></section>
+    </main>
 
-            <SectionTitle detail="Application history ↓">RECENT ACTIVITY</SectionTitle>
-            <div className="space-y-2">{applications.length ? applications.map((application, index) => (
-              <div key={application.id} className="flex items-center gap-3 rounded-[10px] bg-[#f0ebe5] p-3"><div className={`size-8 shrink-0 rounded-full ${index % 2 ? "bg-[#97b4de]" : "bg-[#263a99]"}`} /><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold">Applied for {application.club_name}</p><p className="mt-1 text-[10px] font-medium text-[#263a99]">{application.category} · {dateLabel(application.created_at)}</p></div><span className="text-[10px] font-bold uppercase text-[#263a99]">{application.status}</span></div>
-            )) : <div className="rounded-[10px] bg-[#f0ebe5] p-5 text-center text-xs">No recent applications.</div>}</div>
-          </main>
-
-          <aside className="min-w-0 space-y-5">
-            <section className="rounded-[14px] bg-[#dcd0be] p-[22px]"><div className="flex items-center justify-between"><h2 className="text-xl font-bold">UPCOMING EVENTS</h2><Link href="/calendar" className="text-[10px] font-bold text-[#263a99]">VIEW ALL</Link></div><div className="mt-3 space-y-2">{upcomingEvents.map((event) => (
-              <Link key={event.id} href={`/events/${event.id}`} className="flex items-center gap-3 rounded-[10px] bg-[#f0ebe5] p-3 hover:bg-white"><span className="w-14 text-[10px] font-bold uppercase text-[#263a99]">{event.date.split(",").at(-1)?.trim() ?? event.date}</span><span className="min-w-0 flex-1"><strong className="block truncate text-xs">{event.title}</strong><small className="mt-1 block truncate text-[10px] font-medium text-[#263a99]">{event.time} · {event.location}</small></span><span className="text-xl font-bold text-[#263a99]">+</span></Link>
-            ))}</div></section>
-            <div className="relative h-40 overflow-hidden rounded-2xl border-4 border-[#f0ebe5] sm:h-[167px]"><Image src="/profile/hope-happy.jpeg" alt="Hand-painted stars wishing students happiness" fill className="object-cover" sizes="(max-width: 1280px) 100vw, 35vw" /></div>
-            <section className="rounded-[14px] bg-[#dcd0be] p-[22px]"><h2 className="text-xl font-bold">ACCOUNT LINKS</h2><div className="mt-3 grid gap-2 sm:grid-cols-3"><Link href="/clubs" className="flex min-h-24 flex-col items-center justify-center rounded-xl bg-[#263a99] p-3 text-center text-[#f0ebe5]"><span className="text-[10px] font-medium">CLUB DIRECTORY</span><span className="mt-2 text-lg">✦</span></Link><Link href="/support" className="flex min-h-24 flex-col items-center justify-center rounded-xl bg-[#97b4de] p-3 text-center"><span className="text-lg">✦</span><span className="mt-2 text-[10px] font-medium">SUPPORT</span></Link><Link href="/clubs/manage" className="flex min-h-24 flex-col items-center justify-center rounded-xl bg-[#263a99] p-3 text-center text-[#f0ebe5]"><span className="text-[10px] font-medium">MANAGE CLUBS</span><span className="mt-2 text-lg">✦</span></Link></div></section>
-            <Link href="/announcements" className="flex items-center justify-between rounded-xl bg-white p-4 text-[11px] font-bold hover:bg-[#f0ebe5]"><span>CLUB ANNOUNCEMENTS</span><span className="text-lg text-[#263a99]" aria-hidden>→</span></Link>
-          </aside>
-        </div>
-        <footer className="mt-10 flex flex-wrap items-center gap-5 pb-1 text-xs font-medium text-[#f0ebe5]"><span>PROFILE</span><nav aria-label="Profile policies" className="flex flex-wrap gap-4"><Link href="/privacy" className="underline">Privacy Policy</Link><Link href="/terms" className="underline">Terms of Use</Link><Link href="/support" className="underline">Support</Link></nav><span className="text-[#dcd0be]">{user.name.toUpperCase()}</span></footer>
-      </div>
-    </div>
-  );
+    <aside className="min-w-0 space-y-6"><section><SectionHeader title="Coming up" action="Full calendar" href="/calendar" /><div className="mt-4 space-y-2">{(myUpcoming.length ? myUpcoming : upcomingEvents).map((event) => <EventRow key={event.id} event={event} attending={rsvpSet.has(event.id)} />)}{!upcomingEvents.length ? <p className="rounded-card border border-dashed border-line bg-card p-5 text-sm text-muted">No upcoming events.</p> : null}</div></section>
+      <section className="rounded-card border border-line bg-card p-5"><h2 className="font-display text-xl font-bold uppercase text-ink">Quick actions</h2><nav className="mt-4 grid grid-cols-2 gap-2" aria-label="Profile quick actions">{[{ href: "/clubs/check-in", label: "Check in", icon: "✓" }, { href: "/clubs", label: "Find a Club", icon: "＋" }, { href: "/calendar", label: "Calendar", icon: "○" }, { href: "/announcements", label: "Updates", icon: "↗" }, { href: "/clubs/apply", label: "Start a Club", icon: "✦" }, { href: "/support", label: "Get help", icon: "?" }].map((item) => <Link key={item.href} href={item.href} className="flex min-h-24 flex-col justify-between rounded-control border border-line bg-content-bg p-3 text-sm font-semibold text-ink transition hover:border-powder"><span className="text-xl text-powder">{item.icon}</span>{item.label}</Link>)}</nav>{canManage ? <Link href="/clubs/manage" className="mt-3 flex items-center justify-between rounded-control bg-navy px-4 py-3 text-sm font-bold text-cream"><span>Manage my Clubs</span><span>→</span></Link> : null}</section>
+      <section className="rounded-card border border-line bg-card p-5"><h2 className="text-sm font-bold text-ink">Account details</h2><dl className="mt-4 space-y-3 text-sm"><div><dt className="text-xs text-muted">School email</dt><dd className="mt-0.5 break-all font-medium text-ink">{user.email}</dd></div><div><dt className="text-xs text-muted">Access role</dt><dd className="mt-0.5 capitalize text-ink">{user.role}</dd></div></dl><div className="mt-4 flex gap-4 text-xs font-semibold text-muted"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div></section>
+    </aside></div>
+  </div></div>;
 }

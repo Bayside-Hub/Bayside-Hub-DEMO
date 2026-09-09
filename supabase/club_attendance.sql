@@ -143,7 +143,26 @@ begin
 end;
 $$;
 
+create or replace function public.get_my_club_attendance(p_limit integer default 20)
+returns table (id uuid, session_label text, club_name text, club_slug text, checked_in_at timestamptz)
+language plpgsql stable security definer set search_path = public
+as $$
+begin
+  if auth.uid() is null then raise exception 'Authentication required' using errcode = '42501'; end if;
+  return query
+  select attendance_row.id, attendance_session.label, club_row.name, club_row.slug, attendance_row.checked_in_at
+  from public.club_attendance_records as attendance_row
+  join public.club_attendance_sessions as attendance_session on attendance_session.id = attendance_row.session_id
+  join public.clubs as club_row on club_row.id = attendance_row.club_id
+  where attendance_row.profile_id = auth.uid()
+  order by attendance_row.checked_in_at desc
+  limit least(greatest(coalesce(p_limit, 20), 1), 100);
+end;
+$$;
+
 revoke all on function public.check_in_to_club(text) from public, anon;
 grant execute on function public.check_in_to_club(text) to authenticated;
 revoke all on function public.get_club_attendance_records(uuid, integer) from public, anon;
 grant execute on function public.get_club_attendance_records(uuid, integer) to authenticated;
+revoke all on function public.get_my_club_attendance(integer) from public, anon;
+grant execute on function public.get_my_club_attendance(integer) to authenticated;
