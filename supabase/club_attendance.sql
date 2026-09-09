@@ -67,9 +67,8 @@ begin
     return;
   end if;
 
-  select s, c.slug into target, target_slug
+  select s.* into target
   from public.club_attendance_sessions s
-  join public.clubs c on c.id = s.club_id
   where upper(s.code) = upper(btrim(p_code))
     and s.active
     and (s.expires_at is null or s.expires_at > now())
@@ -79,6 +78,10 @@ begin
     return query select 'invalid', 'That check-in code is invalid or expired.', null::text, null::text;
     return;
   end if;
+
+  select c.slug into target_slug
+  from public.clubs c
+  where c.id = target.club_id;
 
   if not exists (
     select 1 from public.club_memberships m
