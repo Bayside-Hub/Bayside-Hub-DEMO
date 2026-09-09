@@ -28,7 +28,8 @@ select role, count(*) from public.profiles group by role;
 1. `supabase/account_roles_and_review.sql`：Teacher、Advisor 社团绑定、身份日志、学校公告审核。
 2. `supabase/custom_permissions.sql`：自定义权限、社团权限查询、网站文字与管理日志。
 3. `supabase/chat_recent_messages.sql`：聊天显示最新 100 条，而不是最早 100 条。
-4. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
+4. `supabase/club_attendance.sql`：Club 活动临时/永久验证码、二维码签到与签到记录。
+5. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
 
 旧账号不会按域名自动改身份。Advisor 改为其他基础身份时，会移除该账号全部 Advisor 社团绑定；独立董事会任命和自定义权限不随之撤销。
 自定义权限不是任意数据库权限：支持社团内容、社团治理、网站介绍文字，不能授予管理员审核/账号管理能力。

@@ -93,6 +93,7 @@ checks and the existing release checklist are complete.
    - `supabase/custom_permissions.sql` — custom roles, scoped permissions,
      public text settings, publication guards and management audit
    - `supabase/chat_recent_messages.sql` — latest messages in chronological order
+   - `supabase/club_attendance.sql` — temporary/permanent Club check-in codes, QR redemption, and attendance records
    - `supabase/demo_clubs.sql` — optional, explicitly marked draft test clubs
 
 4. Enable Google OAuth:

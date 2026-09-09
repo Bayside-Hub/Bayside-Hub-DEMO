@@ -116,9 +116,10 @@ export default async function ClubDetailPage({
             </form>
           )}
           {user && membership.status === "active" ? (
-            <p role="status" className="mt-3 rounded-control bg-[#97b4de]/25 px-4 py-3 text-xs font-medium text-[#263a99]">
-              You&apos;ve joined this club. Meeting details are below and the club now appears in your profile.
-            </p>
+            <div role="status" className="mt-3 rounded-control bg-[#97b4de]/25 px-4 py-3 text-xs font-medium text-[#263a99]">
+              <p>You&apos;ve joined this club. Meeting details are below and the club now appears in your profile.</p>
+              <Link href="/clubs/check-in" className="mt-2 inline-block font-bold underline underline-offset-2">Quick activity check-in →</Link>
+            </div>
           ) : user && membership.status === "pending" ? (
             <p role="status" className="mt-3 rounded-control bg-[#f78660]/20 px-4 py-3 text-xs font-medium text-[#2a2829]">
               Your join request is waiting for club approval. You can track it from your profile.

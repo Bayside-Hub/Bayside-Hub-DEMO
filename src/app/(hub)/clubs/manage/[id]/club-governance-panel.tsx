@@ -10,6 +10,7 @@ import {
   updateClubPublication,
 } from "../actions";
 import type { ClubAdvisorRow, ClubAuditLogRow, ClubComplianceRow, ClubMediaRow, ClubOfficerRow, Role } from "@/lib/supabase/types";
+import AttendancePanel from "./attendance-panel";
 
 const input = "h-10 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink";
 
@@ -109,6 +110,7 @@ export default function ClubGovernancePanel({
         <p className="mt-2 text-sm text-cream/65">Append-only records identify what changed and when for review or investigation.</p>
         {history.length ? <ol className="mt-4 divide-y divide-line">{history.map((entry) => <li key={entry.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"><p className="text-cream"><span className="font-semibold capitalize">{entry.action}</span> {entry.entity_type.replaceAll("_", " ")}</p><p className="text-xs text-cream/60">{new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.created_at))}{entry.actor_id ? ` · actor ${entry.actor_id.slice(0, 8)}` : " · system"}</p></li>)}</ol> : <p className="mt-4 text-sm text-cream/60">No recorded changes yet. History starts after the governance migration is applied.</p>}
       </section>
+      <div className="lg:col-span-2"><AttendancePanel clubId={clubId} /></div>
     </div>
   );
 }

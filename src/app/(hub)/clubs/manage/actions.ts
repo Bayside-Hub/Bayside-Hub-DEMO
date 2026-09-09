@@ -93,6 +93,60 @@ export async function addClubMeeting(formData: FormData) {
   return saved;
 }
 
+function randomAttendanceCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
+}
+
+export async function createAttendanceSession(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context) return denied;
+  const label = String(formData.get("label") ?? "").trim();
+  const codeType = formData.get("code_type") === "permanent" ? "permanent" : "temporary";
+  const duration = Number(formData.get("duration_minutes"));
+  if (label.length < 3 || label.length > 120) return invalid;
+  if (codeType === "temporary" && ![15, 30, 60, 120, 240].includes(duration)) return invalid;
+
+  const expiresAt = codeType === "temporary"
+    ? new Date(Date.now() + duration * 60_000).toISOString()
+    : null;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const code = randomAttendanceCode();
+    const { error } = await context.supabase.from("club_attendance_sessions").insert({
+      club_id: clubId,
+      label,
+      code,
+      code_type: codeType,
+      expires_at: expiresAt,
+      created_by: context.user.id,
+    });
+    if (!error) {
+      revalidatePath(`/clubs/manage/${clubId}`);
+      return { ok: true, message: `${codeType === "temporary" ? "Temporary" : "Permanent"} check-in code created.` };
+    }
+    if (error.code !== "23505") return failed;
+  }
+  return { ok: false, message: "A unique code could not be generated. Please try again." };
+}
+
+export async function closeAttendanceSession(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const sessionId = String(formData.get("session_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context || !sessionId) return denied;
+  const { data, error } = await context.supabase.from("club_attendance_sessions")
+    .update({ active: false })
+    .eq("id", sessionId)
+    .eq("club_id", clubId)
+    .select("id")
+    .maybeSingle();
+  if (error || !data) return failed;
+  revalidatePath(`/clubs/manage/${clubId}`);
+  return { ok: true, message: "Check-in closed. The code can no longer be used." };
+}
+
 export async function publishClubAnnouncement(formData: FormData) {
   const clubId = String(formData.get("club_id") ?? "");
   const context = await managerContext(clubId);

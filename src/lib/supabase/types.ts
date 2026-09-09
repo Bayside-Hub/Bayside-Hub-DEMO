@@ -65,6 +65,8 @@ export type Database = {
       club_media: TableDefinition<ClubMediaRow>;
       club_announcements: TableDefinition<ClubAnnouncementRow>;
       club_messages: TableDefinition<ClubMessageRow>;
+      club_attendance_sessions: TableDefinition<ClubAttendanceSessionRow>;
+      club_attendance_records: TableDefinition<ClubAttendanceRecordRow>;
       announcement_versions: TableDefinition<AnnouncementVersionRow>;
       events: TableDefinition<EventRow>;
       opportunities: TableDefinition<OpportunityRow>;
@@ -105,6 +107,10 @@ export type Database = {
       get_club_chat_messages: {
         Args: { p_club_id: string; p_limit?: number };
         Returns: ClubChatMessage[];
+      };
+      check_in_to_club: {
+        Args: { p_code: string };
+        Returns: ClubCheckInResult[];
       };
     };
     Enums: Record<string, never>;
@@ -261,6 +267,33 @@ export type ClubChatMessage = ClubMessageRow & {
   author_name: string;
   author_avatar_url: string | null;
   can_delete: boolean;
+};
+
+export type ClubAttendanceSessionRow = {
+  id: string;
+  club_id: string;
+  label: string;
+  code: string;
+  code_type: "temporary" | "permanent";
+  expires_at: string | null;
+  active: boolean;
+  created_by: string;
+  created_at: string;
+};
+
+export type ClubAttendanceRecordRow = {
+  id: string;
+  session_id: string;
+  club_id: string;
+  profile_id: string;
+  checked_in_at: string;
+};
+
+export type ClubCheckInResult = {
+  result: "unauthenticated" | "invalid" | "not_member" | "checked_in" | "already_checked_in";
+  message: string;
+  club_slug: string | null;
+  session_label: string | null;
 };
 
 export type AnnouncementVersionRow = {
