@@ -6,6 +6,7 @@ import { LogoMark } from "./icons";
 import MobileNav from "./mobile-nav";
 import SearchBox from "./search-box";
 import type { SessionUser } from "@/lib/supabase/types";
+import ThemeToggle from "./theme-toggle";
 
 function initials(user: SessionUser) {
   const parts = user.name.split(/\s+/).filter(Boolean);
@@ -36,6 +37,7 @@ export default function Topbar({ user }: { user: SessionUser | null }) {
       </div>
       <SearchBox />
       <div className="flex shrink-0 items-center gap-3">
+        <ThemeToggle />
         {user ? (
           <>
             <div className="hidden text-right sm:block">

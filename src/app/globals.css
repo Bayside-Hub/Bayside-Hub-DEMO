@@ -19,27 +19,37 @@
   --card-bg: #ffffff;
   --ring: #e2e2e2;
   --line: rgba(0, 0, 0, 0.1);
+  --topbar-bg: rgba(246, 248, 252, 0.82);
+  --rail-bg: #f4f6fb;
+  --rail-surface: rgba(30, 50, 121, 0.08);
+  --page-glow: rgba(71, 114, 170, 0.2);
+  --page-accent: rgba(255, 142, 104, 0.16);
 }
 
-/* Dark scope — hub content pages (Figma: black canvas, cream text, deep-blue gradient cards) */
-.theme-dark {
-  --content-bg: #000000;
-  --card-bg: #0b1226;
-  --home-bg: #000000;
+/* One global theme controls every surface. The attribute is set before paint. */
+[data-theme="dark"] {
+  --content-bg: #070911;
+  --card-bg: #101527;
+  --home-bg: #070911;
   --ink: #fcf1dd;
   --muted: rgba(252, 241, 221, 0.62);
   --ring: rgba(252, 241, 221, 0.28);
   --line: rgba(252, 241, 221, 0.16);
+  --topbar-bg: rgba(7, 9, 17, 0.78);
+  --rail-bg: #0b0911;
+  --rail-surface: rgba(255, 255, 255, 0.08);
+  --page-glow: rgba(88, 154, 239, 0.24);
+  --page-accent: rgba(255, 142, 104, 0.14);
 }
 
-/* Light scope — admin area (Figma Admin-H: #D9D9D9 canvas + white cards) */
-.theme-light {
-  --content-bg: #d9d9d9;
-  --card-bg: #ffffff;
-  --ink: #1a1a1a;
-  --muted: #595959;
-  --ring: #e2e2e2;
-  --line: rgba(0, 0, 0, 0.1);
+[data-theme="light"] {
+  --content-bg: #eef2f8;
+  --card-bg: rgba(255, 255, 255, 0.88);
+  --home-bg: #e9eef7;
+  --ink: #172039;
+  --muted: #5f687b;
+  --ring: rgba(41, 69, 168, 0.2);
+  --line: rgba(28, 42, 75, 0.12);
 }
 
 @theme inline {
@@ -84,6 +94,7 @@ body {
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  transition: background-color 220ms ease, color 220ms ease;
 }
 
 ::selection { background: var(--powder); color: #111111; }
@@ -95,6 +106,20 @@ body {
   background: linear-gradient(165deg, #05070d 0%, #0b1330 67%, #172b70 88%, #2945a8 100%);
   box-shadow: 0 18px 50px -34px rgba(151, 191, 244, 0.8);
 }
+
+[data-theme="light"] .card-gradient {
+  background: linear-gradient(145deg, rgba(255,255,255,0.96), rgba(241,245,252,0.94) 62%, rgba(221,231,249,0.96));
+  border: 1px solid rgba(41, 69, 168, 0.12);
+  box-shadow: 0 18px 55px -38px rgba(28, 55, 128, 0.48), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+[data-theme="light"] .card-gradient .text-cream,
+[data-theme="light"] .hub-unified-backdrop > * > * > .text-cream { color: var(--ink) !important; }
+[data-theme="light"] .card-gradient [class*="text-cream/"] { color: var(--muted) !important; }
+[data-theme="light"] .hub-unified-backdrop [class~="text-cream"] { color: var(--ink) !important; }
+[data-theme="light"] .hub-unified-backdrop [class*="text-cream/"] { color: var(--muted) !important; }
+[data-theme="light"] .hub-unified-backdrop .bg-navy.text-cream,
+[data-theme="light"] .hub-unified-backdrop .bg-navy .text-cream { color: #fcf1dd !important; }
 
 @media (hover: hover) {
   .card-gradient { transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease; }
@@ -143,12 +168,30 @@ body {
 .club-detail-backdrop,
 .opportunity-backdrop,
 .support-backdrop {
-  background-color: #000000;
-  background-image: url("/profile/mesh-gradient.svg");
+  background-color: var(--content-bg);
+  background-image:
+    radial-gradient(circle at 12% 8%, var(--page-glow), transparent 32rem),
+    radial-gradient(circle at 88% 28%, var(--page-accent), transparent 28rem),
+    linear-gradient(135deg, transparent 0 48%, color-mix(in srgb, var(--line) 34%, transparent) 49%, transparent 50% 100%),
+    url("/profile/mesh-gradient.svg");
   background-position: center top;
   background-repeat: no-repeat;
-  background-size: min(1200px, 100vw) auto;
+  background-size: auto, auto, 42px 42px, min(1200px, 100vw) auto;
 }
+
+[data-theme="light"] .hub-unified-backdrop,
+[data-theme="light"] .profile-backdrop,
+[data-theme="light"] .club-detail-backdrop,
+[data-theme="light"] .opportunity-backdrop,
+[data-theme="light"] .support-backdrop {
+  background-image:
+    radial-gradient(circle at 10% 5%, rgba(88,154,239,.24), transparent 32rem),
+    radial-gradient(circle at 92% 24%, rgba(255,142,104,.2), transparent 28rem),
+    linear-gradient(135deg, transparent 0 48%, rgba(41,69,168,.025) 49%, transparent 50% 100%);
+}
+
+header { background-color: var(--topbar-bg) !important; backdrop-filter: blur(18px) saturate(140%); }
+.theme-toggle { color: var(--ink); }
 
 /* A restrained parallax drift gives long pages depth without moving content. */
 @keyframes hub-backdrop-parallax {

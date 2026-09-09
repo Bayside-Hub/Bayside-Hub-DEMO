@@ -2,24 +2,25 @@
 .figma-rail {
   display: flex; flex-direction: column; align-items: center;
   width: 90px; height: 100%; padding: 20px 0 16px;
-  background: #120c18; color: #fff; border-right: 1px solid #ffffff12;
+  background: var(--rail-bg); color: var(--ink); border-right: 1px solid var(--line);
 }
-.figma-rail-contrast { background: #000; }
+.figma-rail-contrast { background: var(--rail-bg); }
 .rail-brand, .rail-avatar {
   display: flex; align-items: center; justify-content: center;
   width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%;
-  background: #ffffff1a; color: #fff;
+  background: var(--rail-surface); color: var(--ink);
 }
 .rail-brand { color: #d5bbff; }
 .rail-control {
   display: flex; width: 44px; height: 44px; align-items: center;
   justify-content: center; border-radius: 8px; cursor: pointer;
-  color: #fff; transition: background-color 120ms;
+  color: var(--ink); transition: background-color 120ms, color 120ms;
 }
-.rail-control:hover, .rail-control-active, .rail-control[aria-expanded="true"] { background: #ffffff1a; }
+.rail-control:hover, .rail-control-active, .rail-control[aria-expanded="true"] { background: var(--rail-surface); }
+[data-theme="light"] .figma-rail img { filter: brightness(0) saturate(100%) invert(17%) sepia(20%) saturate(1220%) hue-rotate(185deg); opacity: .78; }
 .rail-control:focus-visible, .rail-brand:focus-visible, .rail-avatar:focus-visible,
 .rail-sub-link:focus-visible { outline: 2px solid #c9a4ff; outline-offset: 3px; }
-.rail-search { margin: 18px 0 12px; border-radius: 50%; background: #ffffff0a; flex-shrink: 0; }
+.rail-search { margin: 18px 0 12px; border-radius: 50%; background: var(--rail-surface); flex-shrink: 0; }
 .rail-groups { width: 100%; min-height: 0; flex: 1; overflow-y: auto; scrollbar-width: thin; }
 .rail-group { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0 18px; margin: 0 14px; border-bottom: 1px solid #ffffff1a; }
 .rail-group h2 { font-size: 12px; font-weight: 400; color: #ffffff99; margin-bottom: 6px; }
@@ -30,7 +31,7 @@
   position: fixed; inset: auto; margin: 0; width: 244px;
   max-width: calc(100vw - 110px); max-height: calc(100dvh - 24px);
   overflow-y: auto; padding: 10px; border-radius: 8px;
-  border: 1px solid #ffffff1a; background: #120c18; color: #fff;
+  border: 1px solid var(--line); background: var(--rail-bg); color: var(--ink);
   box-shadow: 0 16px 48px #0008; font-size: 14px;
 }
 .rail-sub-link { display: block; padding: 10px 12px; border-radius: 5px; }
