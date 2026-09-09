@@ -133,9 +133,10 @@ export default function MobileNav({ user }: { user: SessionUser | null }) {
           setOpenSection(mainNavItems.find((item) => item.sub && isNavItemActive(pathname, item))?.href ?? null);
           setOpen(true);
         }}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-card text-ink shadow-sm transition-colors hover:border-powder hover:bg-content-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-powder"
+        className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-line bg-card px-3 text-ink shadow-sm transition-colors hover:border-powder hover:bg-content-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-powder"
       >
         <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5" aria-hidden><path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+        <span className="text-xs font-bold">Menu</span>
       </button>
 
       {open ? (

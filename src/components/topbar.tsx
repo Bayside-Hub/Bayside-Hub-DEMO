@@ -21,7 +21,7 @@ export default function Topbar({ user }: { user: SessionUser | null }) {
 
   return (
     <header
-      className={`flex h-16 shrink-0 items-center justify-between gap-2 border-b border-line bg-content-bg px-3 sm:gap-4 sm:px-6 ${
+      className={`relative z-40 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-line bg-content-bg px-3 sm:gap-4 sm:px-6 ${
         isAdmin ? "theme-light" : ""
       }`}
     >
