@@ -141,7 +141,7 @@ export default function MobileNav({ user }: { user: SessionUser | null }) {
       {open ? (
         <div ref={dialogRef} className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
           <button type="button" tabIndex={-1} className="absolute inset-0 h-full w-full bg-black/65 backdrop-blur-[2px]" onClick={closeMenu} aria-label="Close navigation menu" />
-          <div className="absolute inset-y-0 left-0 flex w-[min(21rem,88vw)] flex-col overflow-hidden border-r border-white/10 bg-[#090a0b] text-cream shadow-2xl">
+          <div className="absolute inset-y-0 left-0 flex w-[min(21rem,88vw)] flex-col overflow-hidden border-r border-white/10 bg-[#120c18] text-cream shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
               <Link href="/" onClick={closeMenu} className="flex items-center gap-3 font-display text-lg font-extrabold tracking-tight">
                 <span className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-cream text-navy"><LogoMark className="h-5 w-6" /></span>

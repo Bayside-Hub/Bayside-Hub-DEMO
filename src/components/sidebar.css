@@ -1,0 +1,45 @@
+/* Reference: Figma 1:3341. A fixed narrow rail never changes content width. */
+.figma-rail {
+  display: flex; flex-direction: column; align-items: center;
+  width: 90px; height: 100%; padding: 20px 0 16px;
+  background: #120c18; color: #fff; border-right: 1px solid #ffffff12;
+}
+.figma-rail-contrast { background: #000; }
+.rail-brand, .rail-avatar {
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%;
+  background: #ffffff1a; color: #fff;
+}
+.rail-brand { color: #d5bbff; }
+.rail-control {
+  display: flex; width: 44px; height: 44px; align-items: center;
+  justify-content: center; border-radius: 8px; cursor: pointer;
+  color: #fff; transition: background-color 120ms;
+}
+.rail-control:hover, .rail-control-active, .rail-control[aria-expanded="true"] { background: #ffffff1a; }
+.rail-control:focus-visible, .rail-brand:focus-visible, .rail-avatar:focus-visible,
+.rail-sub-link:focus-visible { outline: 2px solid #c9a4ff; outline-offset: 3px; }
+.rail-search { margin: 18px 0 12px; border-radius: 50%; background: #ffffff0a; flex-shrink: 0; }
+.rail-groups { width: 100%; min-height: 0; flex: 1; overflow-y: auto; scrollbar-width: thin; }
+.rail-group { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0 18px; margin: 0 14px; border-bottom: 1px solid #ffffff1a; }
+.rail-group h2 { font-size: 12px; font-weight: 400; color: #ffffff99; margin-bottom: 6px; }
+.rail-account { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 12px; }
+.rail-avatar { width: 34px; height: 34px; background: #dfcaff; color: #261336; font-size: 12px; font-weight: 700; }
+/* Popover top-layer escapes both the rail's scroll clipping and main-card z-index. */
+.rail-popover {
+  position: fixed; inset: auto; margin: 0; width: 244px;
+  max-width: calc(100vw - 110px); max-height: calc(100dvh - 24px);
+  overflow-y: auto; padding: 10px; border-radius: 8px;
+  border: 1px solid #ffffff1a; background: #120c18; color: #fff;
+  box-shadow: 0 16px 48px #0008; font-size: 14px;
+}
+.rail-sub-link { display: block; padding: 10px 12px; border-radius: 5px; }
+.rail-sub-link:hover, .rail-sub-link[aria-current="page"] { background: #ffffff1a; }
+@media (max-height: 760px) {
+  .figma-rail { padding-top: 12px; }
+  .rail-group { gap: 2px; padding: 8px 0; }
+  .rail-search { margin: 8px 0; }
+  .rail-account { gap: 4px; padding-top: 6px; }
+}
+@media (max-width: 1023px) { .rail-popover { display: none; } }
+@media (prefers-reduced-motion: reduce) { .rail-control { transition: none; } }

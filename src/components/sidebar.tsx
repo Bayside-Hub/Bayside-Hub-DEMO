@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import Image from "next/image";
+import "./sidebar.css";
 import {
   LogoMark,
   HomeIcon,
@@ -113,112 +115,105 @@ export function isSubItemActive(pathname: string, href: string) {
   return pathname === destination || pathname.startsWith(`${destination}/`);
 }
 
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden>
-      <path d="m6 8 4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+/** Figma rail icons are committed exports, not approximated glyphs. */
+const railAssets: Record<string, string> = {
+  "/": "home", "/announcements": "mail", "/clubs": "users",
+  "/calendar": "calendar", "/opportunities": "briefcase",
+  "/support": "question", "/about": "form", "/admin": "shield",
+  "/clubs/manage": "users",
+};
+
+function RailIcon({ name }: { name: string }) {
+  return <Image src={`/navigation/${name}.svg`} width={24} height={24} alt="" aria-hidden />;
 }
 
-function DesktopNavItem({ item, pathname, role, expanded, onToggle, onNavigate }: {
-  item: NavItem;
-  pathname: string;
-  role: Role;
-  expanded: boolean;
-  onToggle: () => void;
-  onNavigate: () => void;
-}) {
-  if (item.adminOnly && !["staff", "admin"].includes(role)) return null;
-  const Icon = item.icon;
+/** Native popovers live in the browser top layer, above content stacking contexts. */
+function RailItem({ item, pathname, role }: { item: NavItem; pathname: string; role: Role }) {
+  const panel = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const id = useId();
   const active = isNavItemActive(pathname, item);
-  const submenuId = `desktop-nav-${item.href.replace(/[^a-z]/gi, "") || "home"}`;
+  const classes = `rail-control ${active ? "rail-control-active" : ""}`;
 
+  useEffect(() => {
+    const close = () => panel.current?.hidePopover();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && panel.current?.matches(":popover-open")) {
+        close();
+        trigger.current?.focus();
+      }
+    };
+    window.addEventListener("resize", close);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("resize", close);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+
+  function position() {
+    const node = panel.current;
+    const button = trigger.current;
+    if (!node || !button) return;
+    const rect = button.getBoundingClientRect();
+    node.style.left = `${(button.closest("aside")?.getBoundingClientRect().right ?? rect.right) + 8}px`;
+    node.style.top = `${Math.max(12, Math.min(rect.top, window.innerHeight - node.offsetHeight - 12))}px`;
+  }
+
+  const glyph = <RailIcon name={railAssets[item.href] ?? "form"} />;
+  if (!item.sub) return <Link href={item.href} aria-label={item.label} title={item.label} aria-current={active ? "page" : undefined} className={classes}>{glyph}</Link>;
   return (
-    <div className="mb-1">
-      <div className={`flex items-center rounded-[11px] transition-colors ${active ? "bg-[#263a99] text-cream shadow-[0_8px_24px_rgba(38,58,153,.25)]" : "text-cream/72 hover:bg-white/[0.07] hover:text-cream"}`}>
-        <Link href={item.href} aria-current={active ? "page" : undefined} onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-sm font-semibold">
-          <Icon className="h-[19px] w-[19px] shrink-0" />
-          <span className="truncate">{item.label}</span>
-        </Link>
-        {item.sub ? (
-          <button type="button" aria-label={`${expanded ? "Collapse" : "Expand"} ${item.label}`} aria-expanded={expanded} aria-controls={submenuId} onClick={onToggle} className="mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-current transition-colors hover:bg-white/10">
-            <Chevron open={expanded} />
-          </button>
-        ) : null}
+    <div>
+      <button ref={trigger} type="button" className={classes} title={item.label} aria-label={item.label} aria-expanded={expanded} aria-controls={id} popoverTarget={id}>{glyph}</button>
+      <div ref={panel} id={id} popover="auto" className="rail-popover" aria-label={item.label}
+        onToggle={(event) => {
+          const isOpen = event.newState === "open";
+          setExpanded(isOpen);
+          if (isOpen) position();
+        }}>
+        <p className="px-3 pb-2 pt-1 text-xs font-medium tracking-wide text-white/60">{item.label}</p>
+        {item.sub.filter(sub => !sub.roles || sub.roles.includes(role)).map(sub => (
+          <Link key={sub.href} href={sub.href} aria-current={isSubItemActive(pathname, sub.href) ? "page" : undefined}
+            onClick={() => panel.current?.hidePopover()}
+            className="rail-sub-link">{sub.label}</Link>
+        ))}
       </div>
-
-      {item.sub && expanded ? (
-        <div id={submenuId} className="ml-[21px] mt-1 space-y-0.5 border-l border-white/15 py-1 pl-4">
-          {item.sub.map((subItem) => {
-            if (subItem.roles && !subItem.roles.includes(role)) return null;
-            const subActive = isSubItemActive(pathname, subItem.href);
-            return (
-              <Link key={subItem.href} href={subItem.href} aria-current={subActive ? "page" : undefined} className={`block rounded-lg px-3 py-2 text-[13px] font-medium leading-5 transition-colors ${subActive ? "bg-white/10 text-cream" : "text-cream/55 hover:bg-white/[0.06] hover:text-cream"}`}>
-                {subItem.label}
-              </Link>
-            );
-          })}
-        </div>
-      ) : null}
     </div>
   );
 }
 
-export default function Sidebar({ role = "student" }: { role?: Role }) {
+export default function Sidebar({ role = "student", name }: { role?: Role; name?: string }) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(true);
-  const [openMenu, setOpenMenu] = useState<string | null>(() =>
-    [...mainNavItems, ...adminNavItems].find((item) => item.sub && isNavItemActive(pathname, item))?.href ?? null,
-  );
-
-  // The compact rail uses normal links; expanding reveals inline submenus.
-  if (collapsed) return (
-    <aside aria-label="Primary navigation" className="flex h-full w-[72px] shrink-0 flex-col border-r border-white/10 bg-[#090a0b] p-2 text-cream">
-      <button type="button" aria-label="Expand navigation" aria-expanded={false} onClick={() => setCollapsed(false)} className="flex min-h-12 items-center justify-center rounded-xl hover:bg-white/10" title="Expand navigation"><LogoMark className="h-6 w-6" /></button>
-      <nav aria-label="Main navigation" className="my-3 min-h-0 flex-1 space-y-1 overflow-y-auto">
-        {[...mainNavItems, ...adminNavItems].filter(item => !item.adminOnly || ["staff", "admin"].includes(role)).map(item => {
-          const Icon = item.icon;
-          return <Link key={item.href} href={item.href} title={item.label} aria-label={item.label} aria-current={pathname === item.href ? "page" : undefined} className={`flex min-h-12 items-center justify-center rounded-xl ${isNavItemActive(pathname, item) ? "bg-navy text-cream" : "text-cream/70 hover:bg-white/10"}`}><Icon className="h-5 w-5" /></Link>;
-        })}
-      </nav>
-      <Link href="/profile" aria-label="My Profile" title="My Profile" className="flex min-h-12 items-center justify-center rounded-xl hover:bg-white/10"><UserIcon className="h-5 w-5" /></Link>
-    </aside>
-  );
-
+  const [contrast, setContrast] = useState(false);
+  const groups = [
+    { label: "General", items: mainNavItems.filter(item => !["/support", "/about"].includes(item.href)) },
+    { label: "Myspace", items: [
+      { href: "/clubs/manage", label: "Manage My Clubs", icon: ClubsIcon },
+      ...(["staff", "admin"].includes(role) ? adminNavItems : []),
+    ] },
+    { label: "Support", items: mainNavItems.filter(item => ["/support", "/about"].includes(item.href)) },
+  ];
+  const initials = name?.trim().split(/\s+/).map(part => part[0]).slice(0, 2).join("").toUpperCase();
   return (
-    <aside aria-label="Primary navigation" className="z-40 flex h-full w-60 shrink-0 flex-col overflow-hidden border-r border-white/10 bg-[#090a0b]/95 text-cream shadow-[18px_0_45px_-36px_rgba(151,191,244,.75)] backdrop-blur-xl">
-      <button type="button" aria-label="Collapse navigation" aria-expanded={true} onClick={() => setCollapsed(true)} className="mx-3 mt-2 min-h-10 rounded-lg text-xs text-cream/70 hover:bg-white/10">← Collapse navigation</button>
-      <Link href="/" aria-label="Bayside Hub home" className="mx-3 mt-4 flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-white/[0.06]">
-        <span className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-cream text-navy shadow-[0_6px_20px_rgba(252,241,221,.14)]">
-          <LogoMark className="h-5 w-6" />
-        </span>
-        <span className="font-display text-[17px] font-extrabold tracking-tight">Bayside Hub</span>
-      </Link>
-
-      <div className="mx-4 my-3 h-px bg-white/10" aria-hidden />
-
-      <nav className="min-h-0 flex-1 overflow-y-auto px-3 pb-4" aria-label="Main navigation">
-        <p className="px-3 pb-2 pt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cream/35">Explore</p>
-        {mainNavItems.map((item) => (
-          <DesktopNavItem key={item.href} item={item} pathname={pathname} role={role} expanded={openMenu === item.href} onToggle={() => setOpenMenu((current) => current === item.href ? null : item.href)} onNavigate={() => setOpenMenu(null)} />
+    <aside aria-label="Primary navigation" className={`figma-rail ${contrast ? "figma-rail-contrast" : ""}`}>
+      <Link href="/" aria-label="Bayside Hub home" title="Bayside Hub" className="rail-brand"><LogoMark className="h-6 w-6" /></Link>
+      <button type="button" aria-label="Search website" title="Search website" className="rail-control rail-search"
+        onClick={() => document.getElementById("site-search")?.focus()}><RailIcon name="search" /></button>
+      <nav aria-label="Main navigation" className="rail-groups" onScroll={() => {
+        document.querySelectorAll<HTMLElement>(".rail-popover:popover-open").forEach(node => node.hidePopover());
+      }}>
+        {groups.map(group => (
+          <section key={group.label} aria-label={group.label} className="rail-group">
+            <h2>{group.label}</h2>
+            {group.items.map(item => <RailItem key={item.href} item={item} pathname={pathname} role={role} />)}
+          </section>
         ))}
-
-        {["staff", "admin"].includes(role) ? (
-          <>
-            <div className="mx-3 my-3 h-px bg-white/10" aria-hidden />
-            <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-cream/35">Manage</p>
-            {adminNavItems.map((item) => (
-              <DesktopNavItem key={item.href} item={item} pathname={pathname} role={role} expanded={openMenu === item.href} onToggle={() => setOpenMenu((current) => current === item.href ? null : item.href)} onNavigate={() => setOpenMenu(null)} />
-            ))}
-          </>
-        ) : null}
       </nav>
-
-      <div className="border-t border-white/10 p-3">
-        <Link href="/profile" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-cream/72 transition-colors hover:bg-white/[0.07] hover:text-cream">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.05]"><UserIcon className="h-4 w-4" /></span>
-          <span className="min-w-0"><span className="block">My Profile</span><span className="block text-[10px] font-medium uppercase tracking-wider text-cream/35">{role}</span></span>
+      <div className="rail-account">
+        <button type="button" className="rail-control" aria-label="Higher contrast navigation" aria-pressed={contrast} title="Higher contrast navigation" onClick={() => setContrast(value => !value)}><RailIcon name="sun" /></button>
+        <Link href="/profile" className="rail-avatar" aria-label={name ? `My Profile: ${name}` : "Sign in or view profile"} title={name ?? "My Profile"}>
+          {initials || <UserIcon className="h-5 w-5" />}
         </Link>
       </div>
     </aside>
