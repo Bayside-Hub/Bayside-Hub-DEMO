@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark";
 
@@ -10,26 +10,37 @@ function preferredTheme(): Theme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme | null>(null);
+const THEME_EVENT = "bayside-theme-change";
 
-  useEffect(() => {
-    const current = preferredTheme();
-    document.documentElement.dataset.theme = current;
-    document.documentElement.style.colorScheme = current;
-    const frame = window.requestAnimationFrame(() => setTheme(current));
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
+function subscribe(onChange: () => void) {
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  window.addEventListener("storage", onChange);
+  window.addEventListener(THEME_EVENT, onChange);
+  media.addEventListener("change", onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(THEME_EVENT, onChange);
+    media.removeEventListener("change", onChange);
+  };
+}
+
+function snapshot(): Theme {
+  const current = document.documentElement.dataset.theme;
+  return current === "light" || current === "dark" ? current : preferredTheme();
+}
+
+export default function ThemeToggle() {
+  const theme = useSyncExternalStore(subscribe, snapshot, () => "dark");
 
   function toggle() {
     const next = theme === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = next;
     document.documentElement.style.colorScheme = next;
     window.localStorage.setItem("bayside-theme", next);
-    setTheme(next);
+    window.dispatchEvent(new Event(THEME_EVENT));
   }
 
-  const isDark = theme !== "light";
+  const isDark = theme === "dark";
   return <button
     type="button"
     onClick={toggle}

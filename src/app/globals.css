@@ -24,6 +24,9 @@
   --rail-surface: rgba(30, 50, 121, 0.08);
   --page-glow: rgba(71, 114, 170, 0.2);
   --page-accent: rgba(255, 142, 104, 0.16);
+  --banner-shell: #e7ecf4;
+  --banner-bg: #ffd59c;
+  --banner-ink: #352315;
 }
 
 /* One global theme controls every surface. The attribute is set before paint. */
@@ -40,6 +43,9 @@
   --rail-surface: rgba(255, 255, 255, 0.08);
   --page-glow: rgba(88, 154, 239, 0.24);
   --page-accent: rgba(255, 142, 104, 0.14);
+  --banner-shell: #090b12;
+  --banner-bg: #f07f4f;
+  --banner-ink: #17191a;
 }
 
 [data-theme="light"] {
@@ -96,6 +102,9 @@ body {
   text-rendering: optimizeLegibility;
   transition: background-color 220ms ease, color 220ms ease;
 }
+
+.beta-banner-shell { background: var(--banner-shell); transition: background-color 220ms ease; }
+.beta-banner-card { background: var(--banner-bg); color: var(--banner-ink); transition: background-color 220ms ease, color 220ms ease; }
 
 ::selection { background: var(--powder); color: #111111; }
 

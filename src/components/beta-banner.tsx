@@ -30,10 +30,10 @@ export default function BetaBanner() {
   };
 
   return (
-    <div className="shrink-0 bg-[#111313] px-3 py-2 sm:px-5 sm:py-3">
+    <div className="beta-banner-shell shrink-0 px-3 py-2 sm:px-5 sm:py-3">
       <div
         role="status"
-        className="mx-auto flex w-full max-w-[1880px] items-start gap-3 rounded-[10px] bg-[#ff7a00] px-4 py-3 text-[#17191a] shadow-[0_8px_24px_rgba(0,0,0,0.16)] sm:items-center sm:px-5"
+        className="beta-banner-card mx-auto flex w-full max-w-[1880px] items-start gap-3 rounded-[10px] px-4 py-3 shadow-[0_8px_24px_rgba(0,0,0,0.16)] sm:items-center sm:px-5"
       >
         <svg viewBox="0 0 24 24" fill="none" className="mt-0.5 h-5 w-5 shrink-0 sm:mt-0" aria-hidden>
           <path d="M12 3 2.75 20h18.5L12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
