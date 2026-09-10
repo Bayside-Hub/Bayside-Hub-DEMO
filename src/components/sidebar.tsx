@@ -15,7 +15,6 @@ import {
   SupportIcon,
   InfoIcon,
   AdminIcon,
-  UserIcon,
 } from "./icons";
 import type { Role } from "@/lib/supabase/types";
 
@@ -183,9 +182,8 @@ function RailItem({ item, pathname, role }: { item: NavItem; pathname: string; r
   );
 }
 
-export default function Sidebar({ role = "student", name }: { role?: Role; name?: string }) {
+export default function Sidebar({ role = "student" }: { role?: Role; name?: string }) {
   const pathname = usePathname();
-  const [contrast, setContrast] = useState(false);
   const groups = [
     { label: "General", items: mainNavItems.filter(item => !["/support", "/about"].includes(item.href)) },
     { label: "Myspace", items: [
@@ -194,12 +192,9 @@ export default function Sidebar({ role = "student", name }: { role?: Role; name?
     ] },
     { label: "Support", items: mainNavItems.filter(item => ["/support", "/about"].includes(item.href)) },
   ];
-  const initials = name?.trim().split(/\s+/).map(part => part[0]).slice(0, 2).join("").toUpperCase();
   return (
-    <aside aria-label="Primary navigation" className={`figma-rail ${contrast ? "figma-rail-contrast" : ""}`}>
+    <aside aria-label="Primary navigation" className="figma-rail">
       <Link href="/" aria-label="Bayside Hub home" title="Bayside Hub" className="rail-brand"><LogoMark className="h-6 w-6" /></Link>
-      <button type="button" aria-label="Search website" title="Search website" className="rail-control rail-search"
-        onClick={() => document.getElementById("site-search")?.focus()}><RailIcon name="search" /></button>
       <nav aria-label="Main navigation" className="rail-groups" onScroll={() => {
         document.querySelectorAll<HTMLElement>(".rail-popover:popover-open").forEach(node => node.hidePopover());
       }}>
@@ -210,12 +205,6 @@ export default function Sidebar({ role = "student", name }: { role?: Role; name?
           </section>
         ))}
       </nav>
-      <div className="rail-account">
-        <button type="button" className="rail-control" aria-label="Higher contrast navigation" aria-pressed={contrast} title="Higher contrast navigation" onClick={() => setContrast(value => !value)}><RailIcon name="sun" /></button>
-        <Link href="/profile" className="rail-avatar" aria-label={name ? `My Profile: ${name}` : "Sign in or view profile"} title={name ?? "My Profile"}>
-          {initials || <UserIcon className="h-5 w-5" />}
-        </Link>
-      </div>
     </aside>
   );
 }
