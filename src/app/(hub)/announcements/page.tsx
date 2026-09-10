@@ -23,7 +23,7 @@ export default async function AnnouncementsPage({
 
   return (
     <div className="mx-auto w-full max-w-[1700px] px-6 py-10 lg:px-12 lg:py-16">
-      <header className="max-w-[1100px]">
+      <header className="page-title-card max-w-[1100px]">
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-powder">Daily updates</p>
         <h1 className="font-display text-[clamp(2.15rem,8.5vw,6.6rem)] font-semibold uppercase leading-none tracking-[-0.04em] text-cream">Announcements</h1>
         <p className="mt-6 max-w-[953px] text-base font-semibold leading-7 text-cream/90 sm:text-2xl sm:leading-[30px]">Browse daily announcements and check for new updates. We keep track of events, dates, activities, and opportunities you may have missed this morning.</p>

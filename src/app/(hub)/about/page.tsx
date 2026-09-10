@@ -12,7 +12,6 @@ export default async function AboutPage() {
       <PageHeader
         title="About Us"
         subtitle={text.about_intro}
-        className="rounded-panel border border-line px-6 py-6 shadow-sm sm:px-8"
       />
 
       <section className="card-gradient relative overflow-hidden rounded-panel px-8 py-12 sm:px-12">

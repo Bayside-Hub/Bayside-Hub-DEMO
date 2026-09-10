@@ -7,7 +7,7 @@ export default async function AnnouncementsArchivePage({ searchParams }: { searc
   const archived = await getArchivedAnnouncements(100, from, to);
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <header className="mb-8">
+      <header className="page-title-card mb-8">
         <Link href="/announcements" className="rounded-full border border-line px-3 py-1 text-xs font-medium text-muted hover:border-powder hover:text-powder">← Back</Link>
         <h1 className="mt-4 font-display text-4xl font-bold uppercase tracking-tight text-ink sm:text-5xl">Announcement Archive</h1>
         <p className="mt-2 max-w-3xl text-base leading-7 text-muted">Announcements archived by Bayside Hub administrators, newest first.</p>

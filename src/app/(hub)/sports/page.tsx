@@ -12,7 +12,7 @@ export default async function SportsPage() {
   const items = events.filter((e) => e.category === "sports" && isEventUpcoming(e));
   return (
     <div className="mx-auto w-full max-w-[1700px] px-6 py-10 lg:px-12 lg:py-16">
-      <header className="mb-12 max-w-[1050px]">
+      <header className="page-title-card mb-12 max-w-[1050px]">
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-orange">Athletics</p>
         <h1 className="font-display text-[clamp(3.5rem,9vw,6.6rem)] font-semibold uppercase leading-none tracking-[-0.04em] text-cream">
           Sports

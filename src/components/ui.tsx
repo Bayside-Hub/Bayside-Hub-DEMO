@@ -67,7 +67,7 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <header className={`mb-8 ${className ?? ""}`}>
+    <header className={`page-title-card mb-8 ${className ?? ""}`}>
       {eyebrow && (
         <p className="text-xs font-bold uppercase tracking-[0.25em] text-orange">{eyebrow}</p>
       )}

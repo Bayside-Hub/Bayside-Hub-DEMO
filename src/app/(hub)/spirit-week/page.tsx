@@ -16,7 +16,7 @@ export default async function SpiritWeekPage() {
   const spirit = events.find((e) => e.category === "spirit-week");
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <header className="mb-8 text-center">
+      <header className="page-title-card mb-8 text-center">
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-orange">SPIRIT WEEK</p>
         <h1 className="mt-2 font-display text-4xl font-bold uppercase tracking-tight text-ink sm:text-5xl">
           Spirit Week is a time to show off our SCHOOL SPIRIT!

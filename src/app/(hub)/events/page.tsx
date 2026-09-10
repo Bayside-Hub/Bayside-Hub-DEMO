@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 function EventSection({ title, subtitle, items }: { title: string; subtitle: string; items: EventItem[] }) {
   return (
     <div className="mx-auto w-full max-w-[1700px] px-6 py-10 lg:px-12 lg:py-16">
-      <header className="mb-12 max-w-[1050px]">
+      <header className="page-title-card mb-12 max-w-[1050px]">
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-powder">Bayside High School</p>
         <h1 className="font-display text-[clamp(3.5rem,9vw,6.6rem)] font-semibold uppercase leading-none tracking-[-0.04em] text-cream">{title}</h1>
         <p className="mt-6 max-w-[953px] text-base font-semibold leading-7 text-cream/90 sm:text-xl sm:leading-8">{subtitle}</p>

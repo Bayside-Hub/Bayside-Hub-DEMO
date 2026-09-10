@@ -39,7 +39,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
   return (
     <div className="support-backdrop relative min-h-full overflow-hidden bg-black px-5 py-8 text-[#f0ebe5] sm:px-8 lg:px-12">
       <div className="relative mx-auto w-full max-w-[1812px]">
-        <header className="flex min-h-[300px] flex-col items-center justify-center py-10 text-center">
+        <header className="page-title-card flex min-h-[300px] flex-col items-center justify-center text-center">
           <h1 className="text-4xl font-bold sm:text-5xl lg:text-[52px]">We are here to help!</h1>
           <form role="search" className="mt-5 flex w-full max-w-2xl flex-col gap-3 sm:flex-row">
             <label htmlFor="support-search" className="sr-only">Search support</label>
