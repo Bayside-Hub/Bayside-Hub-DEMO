@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoMark } from "./icons";
-import MobileNav from "./mobile-nav";
 import SearchBox from "./search-box";
 import type { SessionUser } from "@/lib/supabase/types";
 import ThemeToggle from "./theme-toggle";
@@ -26,7 +25,6 @@ export default function Topbar({ user }: { user: SessionUser | null }) {
       }`}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <MobileNav user={user} />
         <Link
           href="/"
           aria-label="Bayside Hub home"

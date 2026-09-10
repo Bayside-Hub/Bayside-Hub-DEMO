@@ -4,6 +4,7 @@ import BetaBanner from "./beta-banner";
 import Sidebar from "./sidebar";
 import Topbar from "./topbar";
 import SiteFooter from "./site-footer";
+import MobileBottomNav from "./mobile-bottom-nav";
 
 /**
  * Shared application chrome for public and authenticated pages.
@@ -28,12 +29,13 @@ export default async function HubShell({ children }: { children: ReactNode }) {
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar user={user} />
-          <main id="main-content" className="hub-unified-backdrop min-h-0 flex-1 overflow-y-auto">
+          <main id="main-content" className="hub-unified-backdrop min-h-0 flex-1 overflow-y-auto pb-20 lg:pb-0">
             {children}
             <SiteFooter />
           </main>
         </div>
       </div>
+      <MobileBottomNav user={user} />
     </div>
   );
 }
