@@ -58,14 +58,16 @@ export function PageHeader({
   title,
   subtitle,
   actions,
+  className,
 }: {
   eyebrow?: string;
   title: string;
   subtitle?: string;
   actions?: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <header className="mb-8">
+    <header className={`mb-8 ${className ?? ""}`}>
       {eyebrow && (
         <p className="text-xs font-bold uppercase tracking-[0.25em] text-orange">{eyebrow}</p>
       )}
