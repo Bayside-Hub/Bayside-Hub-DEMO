@@ -56,6 +56,7 @@ export default function ClubBrowser({ clubs }: { clubs: Club[] }) {
       <PageHeader
         title="Activities &amp; Clubs"
         subtitle={`Explore ${clubs.length} currently listed club${clubs.length === 1 ? "" : "s"}. Filter by interest, meeting day, or commitment.`}
+        className="rounded-panel border border-line px-6 py-6 shadow-sm sm:px-8"
         actions={
           <div className="flex flex-wrap items-center gap-3">
             <div
