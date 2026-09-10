@@ -69,7 +69,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
 
         <section id="request-support" className="mt-8 scroll-mt-24 rounded-[20px] bg-[#dcd0be]/95 p-5 text-[#2a2829] sm:p-8">
           <h2 className="text-2xl font-bold">Request support</h2>
-          <p className="mt-2 text-sm text-[#6f6a6b]">Average response time: within two school days. For in-person help, visit the S.O. office in Room 100.</p>
+          <p className="mt-2 text-sm text-[#6f6a6b]">Average response time: within two school days. For in-person help, visit the S.O. office in Room 131.</p>
           {user ? <SupportRequestForm /> : <Link href="/login?next=/support" className="mt-5 inline-flex h-11 items-center rounded-[8px] bg-[#263a99] px-6 text-xs font-bold text-[#f0ebe5]">SIGN IN TO REQUEST SUPPORT</Link>}
         </section>
 
