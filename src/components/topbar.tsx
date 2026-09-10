@@ -21,7 +21,7 @@ export default function Topbar({ user }: { user: SessionUser | null }) {
 
   return (
     <header
-      className={`relative z-40 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-line bg-content-bg px-3 sm:gap-4 sm:px-6 ${
+      className={`flex h-16 shrink-0 items-center justify-between gap-4 border-b border-line bg-content-bg px-4 sm:px-6 ${
         isAdmin ? "theme-light" : ""
       }`}
     >
@@ -30,7 +30,7 @@ export default function Topbar({ user }: { user: SessionUser | null }) {
         <Link
           href="/"
           aria-label="Bayside Hub home"
-          className="hidden h-9 w-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-powder sm:flex lg:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-cream/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-powder lg:hidden"
         >
           <LogoMark className="h-5 w-6" />
         </Link>
