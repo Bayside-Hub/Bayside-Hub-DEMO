@@ -13,7 +13,8 @@ function toAnnouncement(row: {
   body: string;
   created_at: string;
   effective_date?: string | null;
-}): Announcement {
+  media_id?: string | null;
+}, image?: { url: string; alt: string | null }): Announcement {
   const date = row.effective_date ?? row.created_at;
   return {
     id: row.id,
@@ -25,7 +26,16 @@ function toAnnouncement(row: {
       year: "numeric",
     }).format(new Date(date)),
     excerpt: row.body,
+    imageUrl: image?.url,
+    imageAlt: image?.alt ?? undefined,
   };
+}
+
+async function attachAnnouncementMedia(supabase: Awaited<ReturnType<typeof createServerClient>>, rows: Array<{ media_id?: string | null }>) {
+  const ids = [...new Set(rows.map((row) => row.media_id).filter((id): id is string => Boolean(id)))];
+  if (!ids.length) return new Map<string, { url: string; alt: string | null }>();
+  const { data } = await supabase.from("club_media").select("id,storage_path,alt_text").in("id", ids);
+  return new Map((data ?? []).map((item) => [item.id, { url: supabase.storage.from("club-media").getPublicUrl(item.storage_path).data.publicUrl, alt: item.alt_text }]));
 }
 
 export const getAnnouncements = cache(async (limit = 100): Promise<Announcement[]> => {
@@ -34,13 +44,14 @@ export const getAnnouncements = cache(async (limit = 100): Promise<Announcement[
   const supabase = await createServerClient();
   const { data: rows, error } = await supabase
     .from("announcements")
-    .select("id, title, tag, body, created_at")
+    .select("id, title, tag, body, created_at, media_id")
     .eq("published", true)
     .order("created_at", { ascending: false })
     .limit(limit);
 
   if (error) throw new Error(`Unable to load announcements: ${error.message}`);
-  return (rows ?? []).map(toAnnouncement).slice(0, limit);
+  const media = await attachAnnouncementMedia(supabase, rows ?? []);
+  return (rows ?? []).map((row) => toAnnouncement(row, row.media_id ? media.get(row.media_id) : undefined)).slice(0, limit);
 });
 
 export const getAnnouncementTags = cache(async (): Promise<string[]> => {
@@ -65,15 +76,16 @@ export const getAnnouncementsPage = cache(async (
     return { announcements: filtered.slice(start, start + safePageSize), page: Math.min(safePage, pageCount), pageCount };
   }
   const supabase = await createServerClient();
-  let query = supabase.from("announcements").select("id, title, tag, body, created_at", { count: "exact" }).eq("published", true);
+  let query = supabase.from("announcements").select("id, title, tag, body, created_at, media_id", { count: "exact" }).eq("published", true);
   if (tag) query = query.eq("tag", tag);
   const { data, count, error } = await query
     .order("created_at", { ascending: false })
     .range((safePage - 1) * safePageSize, safePage * safePageSize - 1);
   if (error) throw new Error(`Unable to load announcements: ${error.message}`);
   const pageCount = Math.max(1, Math.ceil((count ?? 0) / safePageSize));
+  const media = await attachAnnouncementMedia(supabase, data ?? []);
   return {
-    announcements: (data ?? []).map(toAnnouncement),
+    announcements: (data ?? []).map((row) => toAnnouncement(row, row.media_id ? media.get(row.media_id) : undefined)),
     page: Math.min(safePage, pageCount),
     pageCount,
   };
@@ -84,7 +96,7 @@ export const getArchivedAnnouncements = cache(async (limit = 100, from?: string,
   const supabase = await createServerClient();
   let query = supabase
     .from("announcements")
-    .select("id, title, tag, body, created_at, effective_date")
+    .select("id, title, tag, body, created_at, effective_date, media_id")
     .not("archived_at", "is", null)
     .order("archived_at", { ascending: false })
     .limit(limit);
@@ -92,7 +104,8 @@ export const getArchivedAnnouncements = cache(async (limit = 100, from?: string,
   if (to) query = query.lte("effective_date", to);
   const { data: rows, error } = await query;
   if (error) throw new Error(`Unable to load archived announcements: ${error.message}`);
-  return (rows ?? []).map(toAnnouncement);
+  const media = await attachAnnouncementMedia(supabase, rows ?? []);
+  return (rows ?? []).map((row) => toAnnouncement(row, row.media_id ? media.get(row.media_id) : undefined));
 });
 
 export async function getAnnouncement(id: string): Promise<Announcement | null> {
@@ -100,11 +113,13 @@ export async function getAnnouncement(id: string): Promise<Announcement | null> 
     const supabase = await createServerClient();
     const { data: row } = await supabase
       .from("announcements")
-      .select("id, title, tag, body, created_at")
+      .select("id, title, tag, body, created_at, media_id")
       .eq("id", id)
       .or("published.eq.true,archived_at.not.is.null")
       .maybeSingle();
     if (row) {
+      const media = row.media_id ? await attachAnnouncementMedia(supabase, [row]) : new Map();
+      const image = row.media_id ? media.get(row.media_id) : undefined;
       return {
         id: row.id,
         title: row.title,
@@ -115,6 +130,8 @@ export async function getAnnouncement(id: string): Promise<Announcement | null> 
           year: "numeric",
         }).format(new Date(row.created_at)),
         excerpt: row.body,
+        imageUrl: image?.url,
+        imageAlt: image?.alt ?? undefined,
       };
     }
     return null;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Announcement, Club, EventItem } from "@/lib/data";
 import { ArrowRightIcon } from "./icons";
 
@@ -34,7 +35,9 @@ export function tagClasses(tag: string) {
 
 export function AnnouncementCard({ a }: { a: Announcement }) {
   return (
-    <article className="card-gradient flex flex-col rounded-[10px] p-5">
+    <article className="card-gradient flex flex-col overflow-hidden rounded-[10px]">
+      {a.imageUrl ? <Image src={a.imageUrl} alt={a.imageAlt ?? ""} width={720} height={405} sizes="(max-width: 768px) 100vw, 33vw" className="aspect-video w-full object-cover" /> : null}
+      <div className="flex flex-1 flex-col p-5">
       <div className="flex items-center justify-between gap-3">
         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tagClasses(a.tag)}`}>{a.tag}</span>
         <time className="text-xs text-cream/60" aria-label={`Published ${a.date}`}>{a.date}</time>
@@ -45,6 +48,7 @@ export function AnnouncementCard({ a }: { a: Announcement }) {
         <PrimaryButton href={`/announcements/${a.id}`} className="h-9 px-5 text-xs">
           Full Announcement
         </PrimaryButton>
+      </div>
       </div>
     </article>
   );
@@ -71,8 +75,8 @@ export function ClubCard({ club }: { club: Club }) {
           <span className="rounded-full bg-orange/90 px-2.5 py-1 font-semibold text-black">Community Service</span>
         )}
       </div>
-      <div className="mt-5 flex h-32 w-32 items-center justify-center rounded-full bg-cream shadow-[0_4px_39px_-10px_rgba(252,241,221,0.7)]">
-        <span className="font-display text-4xl font-extrabold text-navy">{initials}</span>
+      <div className="relative mt-5 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-cream shadow-[0_4px_39px_-10px_rgba(252,241,221,0.7)]">
+        {club.logo ? <Image src={club.logo} alt={`${club.name} cover`} fill sizes="128px" className="object-cover" /> : <span className="font-display text-4xl font-extrabold text-navy">{initials}</span>}
       </div>
       <span className="mt-5 inline-flex h-10 items-center justify-center rounded-[22px] bg-cream px-6 font-display text-xs font-extrabold tracking-wide text-black transition-colors group-hover:bg-white">
         View Club

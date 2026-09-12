@@ -26,7 +26,7 @@ export type Database = {
       custom_roles: TableDefinition<{ id: string; name: string; permissions: string[]; created_at: string }>;
       custom_role_assignments: TableDefinition<{ id: string; role_id: string; profile_id: string; club_id: string | null; created_at: string }>;
       site_content: TableDefinition<{ key: string; body: string; updated_by: string | null; updated_at: string }>;
-      school_announcement_submissions: TableDefinition<{ id: string; club_id: string; author_id: string; title: string; body: string; status: string; review_note: string | null; created_at: string }>;
+      school_announcement_submissions: TableDefinition<{ id: string; club_id: string; author_id: string; title: string; body: string; media_id: string | null; status: string; review_note: string | null; created_at: string }>;
       profiles: {
         Row: Profile;
         Insert: Partial<Profile>;
@@ -136,6 +136,7 @@ export type AnnouncementRow = {
   updated_at: string;
   updated_by: string | null;
   version_note: string | null;
+  media_id: string | null;
 };
 
 export type ClubApplicationRow = {
@@ -246,6 +247,8 @@ export type ClubMediaRow = {
   alt_text: string | null;
   uploaded_by: string | null;
   created_at: string;
+  visibility: "private" | "gallery";
+  is_cover: boolean;
 };
 
 export type ClubAnnouncementRow = {
@@ -257,6 +260,7 @@ export type ClubAnnouncementRow = {
   published_by: string | null;
   created_at: string;
   updated_at: string;
+  media_id: string | null;
 };
 
 export type ClubMessageRow = {

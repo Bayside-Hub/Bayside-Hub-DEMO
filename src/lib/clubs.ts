@@ -37,6 +37,7 @@ function mapDatabaseClub(
   const firstMeeting = meetings[0];
   const start = shortTime(firstMeeting?.start_time ?? null);
   const end = shortTime(firstMeeting?.end_time ?? null);
+  const cover = media.find((item) => item.is_cover);
   return {
     id: row.id,
     slug: row.slug,
@@ -65,14 +66,17 @@ function mapDatabaseClub(
       title: announcement.title,
       body: announcement.body,
       date: announcement.created_at,
+      image: media.find((item) => item.id === announcement.media_id)?.storage_path,
+      imageAlt: media.find((item) => item.id === announcement.media_id)?.alt_text ?? undefined,
     })),
-    media: media.map((item) => ({
+    media: media.filter((item) => item.visibility !== "private").map((item) => ({
       id: item.id,
       type: item.media_type,
       path: item.storage_path,
       title: item.title ?? undefined,
       alt: item.alt_text ?? undefined,
     })),
+    logo: cover?.storage_path,
   };
 }
 

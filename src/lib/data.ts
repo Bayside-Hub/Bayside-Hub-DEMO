@@ -18,7 +18,7 @@ export type Club = {
   googleClassroomCode?: string;
   contactEmail?: string;
   joinPolicy?: "instant" | "approval_required";
-  announcements?: { id: string; title: string; body: string; date: string }[];
+  announcements?: { id: string; title: string; body: string; date: string; image?: string; imageAlt?: string }[];
   media?: { id: string; type: "image" | "video" | "document"; path: string; title?: string; alt?: string }[];
   logo?: string;
 };
@@ -166,6 +166,8 @@ export type Announcement = {
   tag: string;
   date: string;
   excerpt: string;
+  imageUrl?: string;
+  imageAlt?: string;
 };
 
 export const announcements: Announcement[] = [

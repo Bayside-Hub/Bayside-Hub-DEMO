@@ -8,6 +8,8 @@ import {
   updateClubCompliance,
   uploadClubImage,
   updateClubPublication,
+  updateClubImagePlacement,
+  publishClubAnnouncement,
 } from "../actions";
 import type { ClubAdvisorRow, ClubAuditLogRow, ClubComplianceRow, ClubMediaRow, ClubOfficerRow, Role } from "@/lib/supabase/types";
 import AttendancePanel from "./attendance-panel";
@@ -73,16 +75,30 @@ export default function ClubGovernancePanel({
       </section>
 
       <section className="card-gradient rounded-[10px] p-6">
-        <h2 className="font-display text-xl font-bold uppercase text-cream">Public photo gallery</h2>
-        <p className="mt-2 text-sm text-cream/65">JPEG, PNG, WebP, or GIF; maximum 4 MB. Alt text is required for accessibility. Upload only photos approved for public sharing.</p>
+        <h2 className="font-display text-xl font-bold uppercase text-cream">Media library</h2>
+        <p className="mt-2 text-sm text-cream/65">New photos are private by default. Choose Gallery or Club cover only for photos approved for public sharing.</p>
         <ActionFeedbackForm action={uploadClubImage} className="mt-4 grid gap-3">
           <input type="hidden" name="club_id" value={clubId} />
           <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" required className="text-sm text-cream" />
           <input name="title" maxLength={120} placeholder="Photo title (optional)" className={input} />
           <input name="alt_text" required maxLength={240} placeholder="Describe the photo for screen-reader users" className={input} />
+          <label className="text-sm text-cream">Initial placement<select name="visibility" defaultValue="private" className={`${input} mt-1`}><option value="private">Private library</option><option value="gallery">Public gallery</option></select></label>
+          <label className="flex items-center gap-2 text-sm text-cream"><input type="checkbox" name="is_cover" /> Set as Club cover</label>
           <button className="h-10 rounded-full bg-cream px-5 font-bold text-black">Upload photo</button>
         </ActionFeedbackForm>
-        {media.length ? <ul className="mt-5 space-y-2">{media.map((item) => <li key={item.id} className="flex items-center justify-between gap-3 rounded-control border border-line p-3 text-sm"><div><p className="font-semibold text-cream">{item.title ?? "Club photo"}</p><p className="line-clamp-1 text-cream/60">{item.alt_text}</p></div><ActionFeedbackForm action={deleteClubImage}><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="media_id" value={item.id} /><button className="text-xs font-semibold text-orange">Delete</button></ActionFeedbackForm></li>)}</ul> : <p className="mt-4 text-sm text-cream/60">No photos uploaded yet.</p>}
+        {media.length ? <ul className="mt-5 space-y-3">{media.map((item) => <li key={item.id} className="rounded-control border border-line p-3 text-sm"><div><p className="font-semibold text-cream">{item.title ?? "Club photo"}</p><p className="line-clamp-1 text-cream/60">{item.alt_text}</p></div><ActionFeedbackForm action={updateClubImagePlacement} className="mt-3 flex flex-wrap items-end gap-2"><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="media_id" value={item.id} /><label className="text-xs text-cream/70">Placement<select name="visibility" defaultValue={item.visibility} className={`${input} mt-1`}><option value="private">Private</option><option value="gallery">Gallery</option></select></label><label className="flex h-10 items-center gap-2 text-xs text-cream"><input type="checkbox" name="is_cover" defaultChecked={item.is_cover} /> Cover</label><button className="h-10 rounded-full bg-cream px-4 text-xs font-bold text-navy">Save</button></ActionFeedbackForm><ActionFeedbackForm action={deleteClubImage} className="mt-2"><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="media_id" value={item.id} /><button className="text-xs font-semibold text-orange">Delete</button></ActionFeedbackForm></li>)}</ul> : <p className="mt-4 text-sm text-cream/60">No photos uploaded yet.</p>}
+      </section>
+
+      <section className="card-gradient rounded-[10px] p-6">
+        <h2 className="font-display text-xl font-bold uppercase text-cream">Club update with image</h2>
+        <p className="mt-2 text-sm text-cream/65">Publish to this Club page and optionally reuse a photo from the media library.</p>
+        <ActionFeedbackForm action={publishClubAnnouncement} className="mt-4 grid gap-3">
+          <input type="hidden" name="club_id" value={clubId} />
+          <input name="title" required minLength={3} maxLength={120} placeholder="Update title" className={input} />
+          <textarea name="body" required minLength={3} maxLength={10000} rows={4} placeholder="Club update" className={`${input} h-auto py-2`} />
+          <label className="text-sm text-cream">Photo<select name="media_id" defaultValue="" className={`${input} mt-1`}><option value="">No photo</option>{media.map((item) => <option key={item.id} value={item.id}>{item.title ?? "Club photo"}</option>)}</select></label>
+          <button className="h-10 rounded-full bg-cream px-5 font-bold text-navy">Publish to Club page</button>
+        </ActionFeedbackForm>
       </section>
 
       <section className="card-gradient rounded-[10px] p-6 lg:col-span-2">

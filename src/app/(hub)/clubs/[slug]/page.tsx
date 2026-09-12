@@ -59,7 +59,7 @@ export default async function ClubDetailPage({
       </nav>
 
       <section className="grid min-h-[360px] gap-8 overflow-hidden rounded-[22px] border border-[#97b4de] bg-[#f0ebe5]/95 p-6 text-[#2a2829] lg:grid-cols-[210px_minmax(0,1fr)_280px] lg:items-center lg:p-10">
-        <div className="mx-auto flex size-[170px] flex-col items-center justify-center rounded-full border border-[#2a2829] bg-[#97b4de]"><span className="text-6xl font-bold text-[#263a99]">{club.name[0]}</span><span className="mt-2 text-[10px] font-bold uppercase">{club.name}</span></div>
+        <div className="relative mx-auto flex size-[170px] flex-col items-center justify-center overflow-hidden rounded-full border border-[#2a2829] bg-[#97b4de]">{club.logo ? <Image src={club.logo} alt={`${club.name} cover`} fill sizes="170px" className="object-cover" /> : <><span className="text-6xl font-bold text-[#263a99]">{club.name[0]}</span><span className="mt-2 text-[10px] font-bold uppercase">{club.name}</span></>}</div>
         <div>
           <p className="text-sm">{club.category} · {club.meetingDate}</p>
           <h1 className="mt-2 font-display text-5xl font-bold uppercase leading-none sm:text-6xl">{club.name}</h1>
@@ -173,6 +173,7 @@ export default async function ClubDetailPage({
                   </time>
                 </div>
                 <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-cream/75">{announcement.body}</p>
+                {announcement.image ? <Image src={announcement.image} alt={announcement.imageAlt ?? ""} width={960} height={540} sizes="(max-width: 1024px) 100vw, 70vw" className="mt-4 aspect-video w-full rounded-[10px] object-cover" /> : null}
               </article>
             ))}
           </div>

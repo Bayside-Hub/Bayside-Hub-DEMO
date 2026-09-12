@@ -9,10 +9,17 @@ export async function submitSchoolAnnouncement(_state: string, form: FormData) {
   const title = String(form.get("title") ?? "").trim();
   const body = String(form.get("body") ?? "").trim();
   const clubId = String(form.get("club_id") ?? "");
+  const requestedMediaId = String(form.get("media_id") ?? "");
   if (title.length < 3 || title.length > 120 || body.length < 3 || body.length > 10000 || !clubId) return "Choose a club and complete the title and announcement.";
   const db = await createServerClient();
+  let mediaId: string | null = null;
+  if (requestedMediaId) {
+    const { data: media } = await db.from("club_media").select("id").eq("id", requestedMediaId).eq("club_id", clubId).maybeSingle();
+    if (!media) return "Choose a photo from the selected Club's media library.";
+    mediaId = media.id;
+  }
   // RLS checks current, club-scoped leadership at the moment of submission.
-  const { error } = await db.from("school_announcement_submissions").insert({ title, body, club_id: clubId, author_id: user.id });
+  const { error } = await db.from("school_announcement_submissions").insert({ title, body, club_id: clubId, author_id: user.id, media_id: mediaId });
   if (error) return "Unable to submit. Confirm your club leadership access or contact Support.";
   revalidatePath("/announcements/submit");
   revalidatePath("/admin/review");

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getAnnouncement, getAnnouncementVersions } from "@/lib/announcements";
 import type { Metadata } from "next";
+import Image from "next/image";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -29,6 +30,7 @@ export default async function AnnouncementDetailPage({
           <time className="text-[#2a2829]/60">{a.date}</time>
         </div>
         <h1 className="mt-5 font-display text-5xl font-bold uppercase tracking-tight sm:text-7xl">{a.title}</h1>
+        {a.imageUrl ? <Image src={a.imageUrl} alt={a.imageAlt ?? ""} width={1200} height={675} sizes="(max-width: 1024px) 100vw, 960px" className="mt-6 aspect-video w-full rounded-[14px] object-cover" /> : null}
         <p className="mt-5 leading-8 text-[#2a2829]/75">{a.excerpt}</p>
         <p className="mt-4 leading-8 text-[#2a2829]/75">
           Full details are shared by the SO office each morning. This

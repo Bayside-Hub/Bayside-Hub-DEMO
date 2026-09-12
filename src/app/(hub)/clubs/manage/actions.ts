@@ -153,9 +153,17 @@ export async function publishClubAnnouncement(formData: FormData) {
   if (!context) return denied;
   const post = parseClubPostInput(formData);
   if (!post) return invalid;
+  const requestedMediaId = String(formData.get("media_id") ?? "");
+  let mediaId: string | null = null;
+  if (requestedMediaId) {
+    const { data: media } = await context.supabase.from("club_media").select("id").eq("id", requestedMediaId).eq("club_id", clubId).maybeSingle();
+    if (!media) return { ok: false, message: "Choose an image from this Club's media library." };
+    mediaId = media.id;
+  }
   const { error } = await context.supabase.from("club_announcements").insert({
     club_id: clubId,
     ...post,
+    media_id: mediaId,
     published_by: context.user.id,
   });
   if (error) return failed;
@@ -307,6 +315,8 @@ export async function uploadClubImage(formData: FormData) {
   const image = formData.get("image");
   const title = String(formData.get("title") ?? "").trim();
   const altText = String(formData.get("alt_text") ?? "").trim();
+  const visibility = formData.get("visibility") === "gallery" ? "gallery" : "private";
+  const isCover = formData.get("is_cover") === "on";
   if (!context) return denied;
   if (!(image instanceof File) || !altText || altText.length > 240 || title.length > 120) return invalid;
   if (image.size <= 0 || image.size > MAX_IMAGE_UPLOAD_BYTES || !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(image.type)) return { ok: false, message: "Choose a JPG, PNG, WebP or GIF image up to 4 MB." };
@@ -314,23 +324,47 @@ export async function uploadClubImage(formData: FormData) {
   const storagePath = `${clubId}/${crypto.randomUUID()}.${extension}`;
   const { error: uploadError } = await context.supabase.storage.from("club-media").upload(storagePath, image, { contentType: image.type, upsert: false });
   if (uploadError) return { ok: false, message: "Image upload failed. Check the club-media bucket, its policies and your access." };
-  const { error: rowError } = await context.supabase.from("club_media").insert({
+  const { data: insertedMedia, error: rowError } = await context.supabase.from("club_media").insert({
     club_id: clubId,
     media_type: "image",
     storage_path: storagePath,
     title: title || null,
     alt_text: altText,
     uploaded_by: context.user.id,
-  });
+    visibility,
+    is_cover: false,
+  }).select("id").maybeSingle();
   // Storage and Postgres are separate systems; roll back the object when its
   // metadata row fails so an inaccessible orphan file is not retained.
   if (rowError) {
     const { error: cleanupError } = await context.supabase.storage.from("club-media").remove([storagePath]);
     return { ok: false, message: cleanupError ? "Photo metadata failed, and file cleanup failed. Contact Support before retrying." : "Photo metadata could not be saved. The uploaded file was removed." };
   }
+  if (isCover && insertedMedia) {
+    const { error: clearCoverError } = await context.supabase.from("club_media").update({ is_cover: false }).eq("club_id", clubId).neq("id", insertedMedia.id);
+    const { error: setCoverError } = clearCoverError
+      ? { error: clearCoverError }
+      : await context.supabase.from("club_media").update({ is_cover: true }).eq("id", insertedMedia.id).eq("club_id", clubId);
+    if (setCoverError) return { ok: false, message: "Photo uploaded, but its cover placement could not be saved. You can retry from the media library." };
+  }
   revalidatePath(`/clubs/manage/${clubId}`);
   revalidatePath("/clubs", "layout");
-  return { ok: true, message: "Photo uploaded. Images in this gallery have public URLs; upload only approved photos." };
+  return { ok: true, message: isCover ? "Photo uploaded and set as the Club cover." : visibility === "gallery" ? "Photo uploaded to the public gallery." : "Photo uploaded privately to the media library." };
+}
+
+export async function updateClubImagePlacement(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const mediaId = String(formData.get("media_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context || !mediaId) return denied;
+  const visibility = formData.get("visibility") === "gallery" ? "gallery" : "private";
+  const isCover = formData.get("is_cover") === "on";
+  if (isCover) await context.supabase.from("club_media").update({ is_cover: false }).eq("club_id", clubId).neq("id", mediaId);
+  const { data, error } = await context.supabase.from("club_media").update({ visibility, is_cover: isCover }).eq("id", mediaId).eq("club_id", clubId).select("id").maybeSingle();
+  if (error || !data) return failed;
+  revalidatePath(`/clubs/manage/${clubId}`);
+  revalidatePath("/clubs", "layout");
+  return { ok: true, message: "Photo placement updated." };
 }
 
 export async function deleteClubImage(formData: FormData) {
@@ -338,12 +372,18 @@ export async function deleteClubImage(formData: FormData) {
   const mediaId = String(formData.get("media_id") ?? "");
   const context = await managerContext(clubId);
   if (!context || !mediaId) return denied;
+  const [{ count: clubPostUses }, { count: schoolPostUses }, { count: submissionUses }] = await Promise.all([
+    context.supabase.from("club_announcements").select("id", { count: "exact", head: true }).eq("media_id", mediaId),
+    context.supabase.from("announcements").select("id", { count: "exact", head: true }).eq("media_id", mediaId),
+    context.supabase.from("school_announcement_submissions").select("id", { count: "exact", head: true }).eq("media_id", mediaId),
+  ]);
+  if ((clubPostUses ?? 0) + (schoolPostUses ?? 0) + (submissionUses ?? 0) > 0) return { ok: false, message: "This photo is used by an announcement. Remove it from the announcement before deleting it." };
   const { data: media } = await context.supabase.from("club_media").select("storage_path").eq("id", mediaId).eq("club_id", clubId).maybeSingle();
   if (!media) return { ok: false, message: "Photo not found or no longer accessible." };
-  const { error } = await context.supabase.storage.from("club-media").remove([media.storage_path]);
-  if (error) return { ok: false, message: "The photo file could not be deleted. Try again later." };
   const { error: rowError } = await context.supabase.from("club_media").delete().eq("id", mediaId).eq("club_id", clubId);
-  if (rowError) return { ok: false, message: "File removed, but the gallery entry could not be removed. Refresh and retry deleting this entry." };
+  if (rowError) return { ok: false, message: rowError.code === "23503" ? "This photo is used by an announcement. Remove it from the announcement before deleting it." : "The media library entry could not be removed. Refresh and try again." };
+  const { error } = await context.supabase.storage.from("club-media").remove([media.storage_path]);
+  if (error) return { ok: false, message: "The library entry was removed, but the stored file needs administrator cleanup." };
   revalidatePath(`/clubs/manage/${clubId}`);
   revalidatePath("/clubs", "layout");
   return { ok: true, message: "Photo removed from the gallery and storage." };
