@@ -17,6 +17,7 @@
   --ink: #1a1a1a;
   --muted: #595959;
   --card-bg: #ffffff;
+  --popover-bg: #ffffff;
   --ring: #e2e2e2;
   --line: rgba(0, 0, 0, 0.1);
   --topbar-bg: rgba(246, 248, 252, 0.82);
@@ -33,6 +34,7 @@
 [data-theme="dark"] {
   --content-bg: #070911;
   --card-bg: #101527;
+  --popover-bg: #101527;
   --home-bg: #070911;
   --ink: #fcf1dd;
   --muted: rgba(252, 241, 221, 0.62);
@@ -51,6 +53,7 @@
 [data-theme="light"] {
   --content-bg: #eef2f8;
   --card-bg: rgba(255, 255, 255, 0.88);
+  --popover-bg: #ffffff;
   --home-bg: #e9eef7;
   --ink: #172039;
   --muted: #5f687b;
@@ -200,6 +203,11 @@ body {
 }
 
 .site-topbar { background-color: var(--topbar-bg) !important; backdrop-filter: blur(18px) saturate(140%); }
+.search-popover {
+  background-color: var(--popover-bg);
+  box-shadow: 0 24px 64px -24px rgba(7, 9, 17, 0.58), 0 8px 24px -14px rgba(7, 9, 17, 0.32);
+  isolation: isolate;
+}
 .page-title-card {
   border: 1px solid var(--line);
   border-radius: 24px;

@@ -175,7 +175,7 @@ export default function SearchBox() {
           id="search-results"
           role="listbox"
           aria-label="Search results"
-          className="absolute left-0 right-0 top-11 z-50 max-h-[26rem] overflow-y-auto rounded-card border border-line bg-card p-1.5 shadow-xl"
+          className="search-popover absolute left-0 right-0 top-11 z-[80] max-h-[min(26rem,calc(100vh-8rem))] overscroll-contain overflow-y-auto rounded-card border border-line p-1.5"
         >
           {query.trim() === "" ? (
             <div className="px-3 py-2.5">
