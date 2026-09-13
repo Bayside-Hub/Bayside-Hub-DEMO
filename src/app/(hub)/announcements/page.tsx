@@ -25,22 +25,29 @@ export default async function AnnouncementsPage({
     <div className="mx-auto w-full max-w-[1700px] px-6 py-10 lg:px-12 lg:py-16">
       <header className="page-title-card max-w-[1100px]">
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.28em] text-powder">Daily updates</p>
-        <h1 className="font-display text-[clamp(2.15rem,8.5vw,6.6rem)] font-semibold uppercase leading-none tracking-[-0.04em] text-cream">Announcements</h1>
-        <p className="mt-6 max-w-[953px] text-base font-semibold leading-7 text-cream/90 sm:text-2xl sm:leading-[30px]">Browse daily announcements and check for new updates. We keep track of events, dates, activities, and opportunities you may have missed this morning.</p>
-        <Link href="/announcements/archive" className="mt-7 inline-flex h-16 items-center rounded-[22px] bg-cream px-10 text-sm font-extrabold text-black sm:h-20 sm:min-w-[280px] sm:justify-center sm:text-xl">FULL ANNOUNCEMENT</Link>
+        <h1 className="font-display text-[clamp(2.15rem,8.5vw,5.8rem)] font-semibold uppercase leading-none tracking-[-0.04em] text-cream">Announcements</h1>
+        <p className="mt-5 max-w-3xl text-base leading-7 text-cream/75 sm:text-lg">School news, Club updates, events, and opportunities—all in one place.</p>
+        <Link href="/announcements/archive" className="mt-6 inline-flex h-11 items-center rounded-full border border-line px-6 text-sm font-bold text-cream transition-colors hover:bg-cream/10">View archive →</Link>
       </header>
 
-      <section className="mt-14 grid gap-5 sm:grid-cols-2 xl:grid-cols-4" aria-label="Announcement categories">
+      <section className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Announcement categories">
         {categories.map((category) => (
-          <Link key={category.label} href={category.href} className="card-gradient group flex min-h-[300px] flex-col rounded-[26px_26px_10px_10px] border border-line p-7">
-            <h2 className="text-3xl font-semibold uppercase text-cream">{category.label}</h2>
-            <p className="mt-5 max-w-[18rem] text-sm leading-5 text-cream/75">{category.description}</p>
-            <span className="mt-auto self-end text-2xl text-cream transition-transform group-hover:rotate-90">⊕</span>
+          <Link key={category.label} href={category.href} className="card-gradient group rounded-[18px] border border-line p-5 transition-colors hover:border-cream/30">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold uppercase text-cream">{category.label}</h2>
+              <span className="text-lg text-powder transition-transform group-hover:translate-x-1">→</span>
+            </div>
+            <p className="mt-2 line-clamp-2 text-sm leading-5 text-cream/65">{category.description}</p>
           </Link>
         ))}
       </section>
 
-      <nav aria-label="Filter by tag" className="mb-8 mt-12 flex flex-wrap gap-2">
+      <div className="mb-5 mt-10 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-powder">Latest</p>
+          <h2 className="mt-1 font-display text-3xl font-bold uppercase text-cream">Recent updates</h2>
+        </div>
+        <nav aria-label="Filter by tag" className="flex flex-wrap gap-2">
         {tags.map((t) => (
           <Link
             key={t}
@@ -55,7 +62,8 @@ export default async function AnnouncementsPage({
             {t}
           </Link>
         ))}
-      </nav>
+        </nav>
+      </div>
 
       <section aria-label="Announcements">
         {announcements.length === 0 ? (
@@ -63,7 +71,7 @@ export default async function AnnouncementsPage({
             No announcements in this category yet.
           </p>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 lg:grid-cols-2">
             {announcements.map((a) => (
               <AnnouncementCard key={a.id} a={a} />
             ))}

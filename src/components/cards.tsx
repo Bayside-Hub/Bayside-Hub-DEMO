@@ -35,21 +35,28 @@ export function tagClasses(tag: string) {
 
 export function AnnouncementCard({ a }: { a: Announcement }) {
   return (
-    <article className="card-gradient flex flex-col overflow-hidden rounded-[10px]">
-      {a.imageUrl ? <Image src={a.imageUrl} alt={a.imageAlt ?? ""} width={720} height={405} sizes="(max-width: 768px) 100vw, 33vw" className="aspect-video w-full object-cover" /> : null}
-      <div className="flex flex-1 flex-col p-5">
-      <div className="flex items-center justify-between gap-3">
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tagClasses(a.tag)}`}>{a.tag}</span>
-        <time className="text-xs text-cream/60" aria-label={`Published ${a.date}`}>{a.date}</time>
-      </div>
-      <h3 className="mt-3 text-lg font-semibold text-cream">{a.title}</h3>
-      <p className="mt-1.5 line-clamp-3 text-sm leading-6 text-cream/70">{a.excerpt}</p>
-      <div className="mt-4">
-        <PrimaryButton href={`/announcements/${a.id}`} className="h-9 px-5 text-xs">
-          Full Announcement
-        </PrimaryButton>
-      </div>
-      </div>
+    <article>
+      <Link
+        href={`/announcements/${a.id}`}
+        className="card-gradient group flex min-h-40 overflow-hidden rounded-[18px] border border-line transition-all hover:-translate-y-0.5 hover:border-cream/30 hover:shadow-lg"
+      >
+        <div className="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${tagClasses(a.tag)}`}>{a.tag}</span>
+            <time className="text-xs text-cream/55" aria-label={`Published ${a.date}`}>{a.date}</time>
+          </div>
+          <h3 className="mt-3 line-clamp-2 text-lg font-semibold leading-snug text-cream sm:text-xl">{a.title}</h3>
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-cream/65">{a.excerpt}</p>
+          <span className="mt-auto pt-4 text-xs font-bold uppercase tracking-wider text-powder transition-colors group-hover:text-cream">
+            Read more →
+          </span>
+        </div>
+        {a.imageUrl ? (
+          <div className="relative w-28 shrink-0 sm:w-40 lg:w-48">
+            <Image src={a.imageUrl} alt={a.imageAlt ?? ""} fill sizes="(max-width: 640px) 112px, 192px" className="object-cover" />
+          </div>
+        ) : null}
+      </Link>
     </article>
   );
 }
