@@ -10,7 +10,6 @@ import {
   HomeIcon,
   MegaphoneIcon,
   ClubsIcon,
-  CalendarIcon,
   OpportunitiesIcon,
   SupportIcon,
   InfoIcon,
@@ -30,8 +29,10 @@ export type NavItem = {
 
 export const mainNavItems: NavItem[] = [
   { href: "/", label: "Home", icon: HomeIcon },
-  { href: "/announcements", label: "Announcements", icon: MegaphoneIcon, sub: [
-    { href: "/announcements", label: "All Announcements" },
+  { href: "/announcements", label: "Updates & Calendar", icon: MegaphoneIcon, sub: [
+    { href: "/announcements", label: "Latest Updates" },
+    { href: "/announcements#calendar", label: "School Calendar" },
+    { href: "/announcements#bell-schedule", label: "Bell Schedule" },
     { href: "/announcements/submit", label: "Submit for Review" },
   ] },
   {
@@ -48,7 +49,6 @@ export const mainNavItems: NavItem[] = [
       { href: "/spirit-week", label: "Spirit Week" },
     ],
   },
-  { href: "/calendar", label: "Calendar", icon: CalendarIcon },
   {
     href: "/opportunities",
     label: "Opportunities",
@@ -117,7 +117,7 @@ export function isSubItemActive(pathname: string, href: string) {
 /** Figma rail icons are committed exports, not approximated glyphs. */
 const railAssets: Record<string, string> = {
   "/": "home", "/announcements": "mail", "/clubs": "users",
-  "/calendar": "calendar", "/opportunities": "briefcase",
+  "/opportunities": "briefcase",
   "/support": "question", "/about": "form", "/admin": "shield",
   "/clubs/manage": "users",
 };

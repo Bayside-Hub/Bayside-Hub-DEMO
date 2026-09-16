@@ -10,7 +10,7 @@ import type { SessionUser } from "@/lib/supabase/types";
 const primaryItems = [
   { href: "/", label: "Home", icon: HomeIcon },
   { href: "/clubs", label: "Clubs", icon: ClubsIcon },
-  { href: "/calendar", label: "Calendar", icon: CalendarIcon },
+  { href: "/announcements", label: "Updates", icon: CalendarIcon },
   { href: "/opportunities", label: "Explore", icon: OpportunitiesIcon },
 ];
 

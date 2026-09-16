@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Announcements",
+  title: "Updates & Calendar",
 };
 
 export default function AnnouncementsLayout({

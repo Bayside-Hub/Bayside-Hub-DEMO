@@ -1,16 +1,21 @@
 import Link from "next/link";
 import AnnouncementBoard from "@/components/announcement-board";
+import BellSchedule from "@/components/bell-schedule";
 import { CalendarIcon, MegaphoneIcon, SearchIcon } from "@/components/icons";
 import { getAnnouncementTags, getAnnouncementsPage } from "@/lib/announcements";
+import { getEvents } from "@/lib/events";
+import { isEventUpcoming } from "@/lib/data";
+import CalendarBoard from "../calendar/calendar-board";
 
 export default async function AnnouncementsPage({ searchParams }: { searchParams: Promise<{ tag?: string; page?: string; q?: string }> }) {
   const { tag, page: rawPage, q = "" } = await searchParams;
   const page = Number.parseInt(rawPage ?? "1", 10);
   const query = q.trim().slice(0, 80);
-  const tagsFromDb = await getAnnouncementTags();
+  const [tagsFromDb, events] = await Promise.all([getAnnouncementTags(), getEvents()]);
   const tags = ["All", ...tagsFromDb];
   const active = tag && tags.includes(tag) ? tag : "All";
   const result = await getAnnouncementsPage(Number.isFinite(page) ? page : 1, active === "All" ? undefined : active, undefined, query);
+  const upcoming = events.filter((event) => event.dateISO && isEventUpcoming(event)).sort((a, b) => `${a.dateISO}${a.time}`.localeCompare(`${b.dateISO}${b.time}`)).slice(0, 4);
   const filterQuery = (nextTag: string) => {
     const params = new URLSearchParams();
     if (nextTag !== "All") params.set("tag", nextTag);
@@ -22,9 +27,9 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
     <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-6 lg:py-12">
       <header className="flex flex-col gap-5 border-b border-line pb-7 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-powder">Daily updates</p>
-          <h1 className="mt-2 font-display text-4xl font-bold uppercase tracking-tight text-ink sm:text-6xl">Announcements</h1>
-          <p className="mt-3 max-w-2xl text-base leading-7 text-muted">Review what&apos;s new, save important notices, and quickly find dates, Club updates, and opportunities.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-powder">Your school day at a glance</p>
+          <h1 className="mt-2 font-display text-4xl font-bold uppercase tracking-tight text-ink sm:text-6xl">Updates &amp; Calendar</h1>
+          <p className="mt-3 max-w-2xl text-base leading-7 text-muted">Read important updates, check upcoming dates, and find today&apos;s bell times in one place.</p>
         </div>
         <div className="flex flex-wrap gap-2"><Link href="/announcements/submit" className="inline-flex h-11 items-center rounded-full bg-navy px-5 text-sm font-bold text-cream">Submit announcement</Link><Link href="/announcements/archive" className="inline-flex h-11 items-center rounded-full border border-line bg-card px-5 text-sm font-bold text-ink">Archive</Link></div>
       </header>
@@ -46,10 +51,18 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
         </main>
 
         <aside className="space-y-4">
-          <section className="rounded-[18px] border border-line bg-card p-5 shadow-sm"><h2 className="font-bold text-ink">Quick actions</h2><div className="mt-3 grid gap-2"><Link href="/calendar" className="flex items-center gap-3 rounded-control bg-content-bg p-3 text-sm font-semibold text-ink"><CalendarIcon className="size-5 text-navy" />View school calendar</Link><Link href="/announcements/archive" className="flex items-center gap-3 rounded-control bg-content-bg p-3 text-sm font-semibold text-ink"><MegaphoneIcon className="size-5 text-navy" />Search the archive</Link><Link href="/announcements/feed.xml" className="flex items-center gap-3 rounded-control bg-content-bg p-3 text-sm font-semibold text-ink"><span className="flex size-5 items-center justify-center font-bold text-navy">RSS</span>Follow new posts</Link></div></section>
+          <section className="rounded-[18px] border border-line bg-card p-5 shadow-sm"><div className="flex items-center justify-between gap-3"><h2 className="font-bold text-ink">Coming up</h2><Link href="#calendar" className="text-xs font-bold text-navy">Full calendar ↓</Link></div><div className="mt-3 divide-y divide-line">{upcoming.length ? upcoming.map((event) => <Link key={event.id} href={`/events/${event.id}`} className="flex gap-3 py-3 first:pt-0"><time className="w-12 shrink-0 text-xs font-bold uppercase text-navy">{event.dateISO ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(new Date(`${event.dateISO}T00:00:00`)) : "TBA"}</time><span className="min-w-0"><span className="block truncate text-sm font-semibold text-ink">{event.title}</span><span className="mt-0.5 block truncate text-xs text-muted">{event.time} · {event.location}</span></span></Link>) : <p className="py-3 text-sm text-muted">No upcoming events.</p>}</div></section>
+          <section className="rounded-[18px] border border-line bg-card p-5 shadow-sm"><h2 className="font-bold text-ink">Quick actions</h2><div className="mt-3 grid gap-2"><Link href="#bell-schedule" className="flex items-center gap-3 rounded-control bg-content-bg p-3 text-sm font-semibold text-ink"><CalendarIcon className="size-5 text-navy" />View bell schedule</Link><Link href="/announcements/archive" className="flex items-center gap-3 rounded-control bg-content-bg p-3 text-sm font-semibold text-ink"><MegaphoneIcon className="size-5 text-navy" />Search the archive</Link><Link href="/announcements/feed.xml" className="flex items-center gap-3 rounded-control bg-content-bg p-3 text-sm font-semibold text-ink"><span className="flex size-5 items-center justify-center font-bold text-navy">RSS</span>Follow new posts</Link></div></section>
           <section className="rounded-[18px] border border-line bg-card p-5 shadow-sm"><h2 className="font-bold text-ink">How this works</h2><ul className="mt-3 space-y-2 text-sm leading-6 text-muted"><li>• Unread and saved status stays on this device.</li><li>• Open an announcement to mark it as read.</li><li>• School-wide submissions are reviewed before publishing.</li></ul><Link href="/announcements/submit" className="mt-4 inline-flex text-sm font-bold text-navy">Submit for review →</Link></section>
         </aside>
       </div>
+
+      <section id="calendar" className="mt-10 scroll-mt-28" aria-labelledby="calendar-title">
+        <div className="mb-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-powder">Plan ahead</p><h2 id="calendar-title" className="mt-1 text-2xl font-bold text-ink">School calendar</h2></div>
+        <CalendarBoard events={events} />
+      </section>
+
+      <div className="mt-7"><BellSchedule /></div>
     </div>
   );
 }

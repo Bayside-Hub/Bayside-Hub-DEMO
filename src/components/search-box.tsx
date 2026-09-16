@@ -186,8 +186,7 @@ export default function SearchBox() {
                   { href: "/clubs/apply", label: "Apply for a Club" },
                   { href: "/sports", label: "Sports" },
                   { href: "/events", label: "Events" },
-                  { href: "/announcements", label: "Announcements" },
-                  { href: "/calendar", label: "Calendar" },
+                  { href: "/announcements", label: "Updates & Calendar" },
                   { href: "/opportunities", label: "Opportunities" },
                   { href: "/support", label: "Support" },
                 ].map((p) => (
