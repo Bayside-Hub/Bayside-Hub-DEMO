@@ -31,8 +31,8 @@ export const mainNavItems: NavItem[] = [
   { href: "/", label: "Home", icon: HomeIcon },
   { href: "/announcements", label: "Updates & Calendar", icon: MegaphoneIcon, sub: [
     { href: "/announcements", label: "Latest Updates" },
-    { href: "/announcements#calendar", label: "School Calendar" },
-    { href: "/announcements#bell-schedule", label: "Bell Schedule" },
+    { href: "/announcements?view=calendar", label: "School Calendar" },
+    { href: "/announcements?view=schedule", label: "Bell Schedule" },
     { href: "/announcements/submit", label: "Submit for Review" },
   ] },
   {
