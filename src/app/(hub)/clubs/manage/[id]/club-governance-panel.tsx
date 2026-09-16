@@ -9,7 +9,6 @@ import {
   uploadClubImage,
   updateClubPublication,
   updateClubImagePlacement,
-  publishClubAnnouncement,
 } from "../actions";
 import type { ClubAdvisorRow, ClubAuditLogRow, ClubComplianceRow, ClubMediaRow, ClubOfficerRow, Role } from "@/lib/supabase/types";
 import AttendancePanel from "./attendance-panel";
@@ -41,7 +40,7 @@ export default function ClubGovernancePanel({
     <div className="mt-8 grid gap-6 lg:grid-cols-2">
       <Link href={`/clubs/manage/${clubId}/content`} className="rounded-xl border border-line bg-card p-5 font-semibold text-ink lg:col-span-2">Edit or remove existing meetings & club posts →</Link>
       {["staff", "admin"].includes(role) && <section className="card-gradient rounded-[10px] p-6 lg:col-span-2"><h2 className="text-xl font-bold text-cream">Publication status</h2><p className="mt-2 text-sm text-cream/70">Publishing makes the club visible in the public directory. Draft or archived clubs stay out of the directory; existing public photo URLs are not made private.</p><ActionFeedbackForm action={updateClubPublication} className="mt-4 grid gap-3"><input type="hidden" name="club_id" value={clubId} /><label className="text-sm text-cream">Status<select name="status" defaultValue={clubStatus} className={input}><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label><button className="min-h-11 justify-self-start rounded-full bg-cream px-5 font-semibold text-navy">Save publication status</button></ActionFeedbackForm></section>}
-      <section className="card-gradient rounded-[10px] p-6">
+      <section id="governance" className="card-gradient scroll-mt-28 rounded-[18px] p-6">
         <h2 className="font-display text-xl font-bold uppercase text-cream">Board &amp; advisors</h2>
         <p className="mt-2 text-sm text-cream/65">Board access is club-specific. Students keep their student account and may serve on more than one board.</p>
         <div className="mt-4 space-y-2">
@@ -74,7 +73,7 @@ export default function ClubGovernancePanel({
         ) : null}
       </section>
 
-      <section className="card-gradient rounded-[10px] p-6">
+      <section id="media" className="card-gradient scroll-mt-28 rounded-[18px] p-6">
         <h2 className="font-display text-xl font-bold uppercase text-cream">Media library</h2>
         <p className="mt-2 text-sm text-cream/65">New photos are private by default. Choose Gallery or Club cover only for photos approved for public sharing.</p>
         <ActionFeedbackForm action={uploadClubImage} className="mt-4 grid gap-3">
@@ -89,19 +88,7 @@ export default function ClubGovernancePanel({
         {media.length ? <ul className="mt-5 space-y-3">{media.map((item) => <li key={item.id} className="rounded-control border border-line p-3 text-sm"><div><p className="font-semibold text-cream">{item.title ?? "Club photo"}</p><p className="line-clamp-1 text-cream/60">{item.alt_text}</p></div><ActionFeedbackForm action={updateClubImagePlacement} className="mt-3 flex flex-wrap items-end gap-2"><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="media_id" value={item.id} /><label className="text-xs text-cream/70">Placement<select name="visibility" defaultValue={item.visibility} className={`${input} mt-1`}><option value="private">Private</option><option value="gallery">Gallery</option></select></label><label className="flex h-10 items-center gap-2 text-xs text-cream"><input type="checkbox" name="is_cover" defaultChecked={item.is_cover} /> Cover</label><button className="h-10 rounded-full bg-cream px-4 text-xs font-bold text-navy">Save</button></ActionFeedbackForm><ActionFeedbackForm action={deleteClubImage} className="mt-2"><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="media_id" value={item.id} /><button className="text-xs font-semibold text-orange">Delete</button></ActionFeedbackForm></li>)}</ul> : <p className="mt-4 text-sm text-cream/60">No photos uploaded yet.</p>}
       </section>
 
-      <section className="card-gradient rounded-[10px] p-6">
-        <h2 className="font-display text-xl font-bold uppercase text-cream">Club update with image</h2>
-        <p className="mt-2 text-sm text-cream/65">Publish to this Club page and optionally reuse a photo from the media library.</p>
-        <ActionFeedbackForm action={publishClubAnnouncement} className="mt-4 grid gap-3">
-          <input type="hidden" name="club_id" value={clubId} />
-          <input name="title" required minLength={3} maxLength={120} placeholder="Update title" className={input} />
-          <textarea name="body" required minLength={3} maxLength={10000} rows={4} placeholder="Club update" className={`${input} h-auto py-2`} />
-          <label className="text-sm text-cream">Photo<select name="media_id" defaultValue="" className={`${input} mt-1`}><option value="">No photo</option>{media.map((item) => <option key={item.id} value={item.id}>{item.title ?? "Club photo"}</option>)}</select></label>
-          <button className="h-10 rounded-full bg-cream px-5 font-bold text-navy">Publish to Club page</button>
-        </ActionFeedbackForm>
-      </section>
-
-      <section className="card-gradient rounded-[10px] p-6 lg:col-span-2">
+      <section className="card-gradient rounded-[18px] p-6 lg:col-span-2">
         <h2 className="font-display text-xl font-bold uppercase text-cream">Annual club requirements</h2>
         <p className="mt-2 text-sm text-cream/65">Based on the BHS Club Manual. Do not enter student names or S.O. card numbers here.</p>
         <ActionFeedbackForm action={updateClubCompliance} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -121,7 +108,7 @@ export default function ClubGovernancePanel({
         </ActionFeedbackForm>
       </section>
 
-      <section className="card-gradient rounded-[10px] p-6 lg:col-span-2">
+      <section className="card-gradient rounded-[18px] p-6 lg:col-span-2">
         <h2 className="font-display text-xl font-bold uppercase text-cream">Change history</h2>
         <p className="mt-2 text-sm text-cream/65">Append-only records identify what changed and when for review or investigation.</p>
         {history.length ? <ol className="mt-4 divide-y divide-line">{history.map((entry) => <li key={entry.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"><p className="text-cream"><span className="font-semibold capitalize">{entry.action}</span> {entry.entity_type.replaceAll("_", " ")}</p><p className="text-xs text-cream/60">{new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.created_at))}{entry.actor_id ? ` · actor ${entry.actor_id.slice(0, 8)}` : " · system"}</p></li>)}</ol> : <p className="mt-4 text-sm text-cream/60">No recorded changes yet. History starts after the governance migration is applied.</p>}

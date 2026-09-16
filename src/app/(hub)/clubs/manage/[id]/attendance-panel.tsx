@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import QRCode from "qrcode";
 import { headers } from "next/headers";
 import ActionFeedbackForm from "@/components/action-feedback-form";
@@ -35,8 +36,8 @@ export default async function AttendancePanel({ clubId }: { clubId: string }) {
     }),
   })));
 
-  return <section className="mt-8" aria-labelledby="attendance-title">
-    <h2 id="attendance-title" className="font-display text-2xl font-bold uppercase text-cream">Quick attendance</h2>
+  return <section id="attendance" className="mt-8 scroll-mt-28" aria-labelledby="attendance-title">
+    <div className="flex flex-wrap items-center justify-between gap-3"><h2 id="attendance-title" className="font-display text-2xl font-bold uppercase text-cream">Quick attendance</h2><Link href={`/clubs/manage/${clubId}/attendance/export`} className="rounded-full border border-line px-4 py-2 text-xs font-semibold text-powder transition-colors hover:bg-card">Export all records (.csv)</Link></div>
     <p className="mt-2 text-sm text-cream/60">Create a code for one activity, then display its QR code or share the 8-character code with active Club members.</p>
     <ActionFeedbackForm action={createAttendanceSession} className="card-gradient mt-4 grid gap-3 rounded-[10px] p-6 sm:grid-cols-2">
       <input type="hidden" name="club_id" value={clubId} />
