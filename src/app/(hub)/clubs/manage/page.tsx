@@ -30,6 +30,31 @@ export default async function ManageClubsPage() {
 
   const query = supabase.from("clubs").select("id, slug, name, short_description, interest_tags, contact_email, google_classroom_code, active_start_date, active_end_date, status").order("name");
   const { data: clubs } = clubIds ? (clubIds.length ? await query.in("id", clubIds) : { data: [] }) : await query;
+
+  if (user.role === "student" && !clubs?.length) {
+    const shortcuts = [
+      { title: "My joined clubs", description: "See the Clubs you belong to and your membership status.", href: "/profile#clubs", icon: ClubsIcon },
+      { title: "My activities", description: "Check upcoming meetings, events, and dates in one calendar.", href: "/announcements?view=calendar", icon: CalendarIcon },
+      { title: "Quick check-in", description: "Enter an attendance code when you arrive at a Club activity.", href: "/clubs/check-in", icon: UserIcon },
+    ];
+    return (
+      <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-6 lg:py-12">
+        <PageHeader title="My clubs & activities" subtitle="Quick access to the Clubs and activities you participate in." />
+        <section className="mt-7 grid gap-4 md:grid-cols-3" aria-label="Student Club and activity shortcuts">
+          {shortcuts.map((item) => (
+            <Link key={item.href} href={item.href} className="group flex min-h-52 flex-col rounded-[22px] border border-line bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-powder hover:shadow-xl">
+              <span className="flex size-12 items-center justify-center rounded-full bg-navy/10 text-navy"><item.icon className="size-6" /></span>
+              <h2 className="mt-6 text-xl font-bold text-ink">{item.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-muted">{item.description}</p>
+              <span className="mt-auto flex items-center gap-2 pt-5 text-sm font-bold text-navy">Open <ArrowRightIcon className="size-4 transition-transform group-hover:translate-x-1" /></span>
+            </Link>
+          ))}
+        </section>
+        <p className="mt-6 text-center text-sm text-muted">Looking for something new? <Link href="/clubs" className="font-bold text-navy">Explore all Clubs →</Link></p>
+      </div>
+    );
+  }
+
   const ids = (clubs ?? []).map((club) => club.id);
   const empty = { data: [] as { club_id: string }[] };
   const [memberships, meetings, posts] = ids.length
