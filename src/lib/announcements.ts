@@ -66,11 +66,17 @@ export const getAnnouncementsPage = cache(async (
   page = 1,
   tag?: string,
   pageSize = ANNOUNCEMENTS_PAGE_SIZE,
+  search?: string,
 ): Promise<{ announcements: Announcement[]; page: number; pageCount: number }> => {
   const safePageSize = Math.max(1, Math.min(pageSize, 50));
   const safePage = Math.max(1, page);
+  const safeSearch = search?.normalize("NFKC").replace(/[^\p{L}\p{N}\s'-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 80);
   if (!isSupabaseConfigured()) {
-    const filtered = tag ? seedAnnouncements.filter((item) => item.tag === tag) : seedAnnouncements;
+    const filtered = seedAnnouncements.filter((item) => {
+      const matchesTag = !tag || item.tag === tag;
+      const haystack = `${item.title} ${item.excerpt} ${item.tag}`.toLocaleLowerCase();
+      return matchesTag && (!safeSearch || haystack.includes(safeSearch.toLocaleLowerCase()));
+    });
     const pageCount = Math.max(1, Math.ceil(filtered.length / safePageSize));
     const start = (Math.min(safePage, pageCount) - 1) * safePageSize;
     return { announcements: filtered.slice(start, start + safePageSize), page: Math.min(safePage, pageCount), pageCount };
@@ -78,6 +84,7 @@ export const getAnnouncementsPage = cache(async (
   const supabase = await createServerClient();
   let query = supabase.from("announcements").select("id, title, tag, body, created_at, media_id", { count: "exact" }).eq("published", true);
   if (tag) query = query.eq("tag", tag);
+  if (safeSearch) query = query.or(`title.ilike.%${safeSearch}%,body.ilike.%${safeSearch}%`);
   const { data, count, error } = await query
     .order("created_at", { ascending: false })
     .range((safePage - 1) * safePageSize, safePage * safePageSize - 1);

@@ -1,8 +1,10 @@
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import { getAnnouncement, getAnnouncementVersions } from "@/lib/announcements";
-import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import AnnouncementActions from "@/components/announcement-actions";
+import { AnnouncementCard } from "@/components/cards";
+import { getAnnouncement, getAnnouncements, getAnnouncementVersions } from "@/lib/announcements";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -12,79 +14,31 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export const dynamic = "force-dynamic";
 
-export default async function AnnouncementDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function AnnouncementDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const a = await getAnnouncement(id);
-  if (!a) notFound();
-  const versions = await getAnnouncementVersions(id);
+  const [announcement, versions, latest] = await Promise.all([getAnnouncement(id), getAnnouncementVersions(id), getAnnouncements(5)]);
+  if (!announcement) notFound();
+  const related = latest.filter((item) => item.id !== id).slice(0, 2);
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-8 lg:py-12">
-      <article className="rounded-[22px] border border-[#97b4de] bg-[#f0ebe5] p-8 text-[#2a2829] shadow-sm sm:p-12">
-        <div className="flex items-center gap-3 text-xs">
-          <span className="rounded-full bg-navy px-3 py-1 font-semibold text-cream">{a.tag}</span>
-          <time className="text-[#2a2829]/60">{a.date}</time>
+    <div className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-6 lg:py-12">
+      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-muted"><Link href="/announcements" className="font-semibold text-powder hover:text-ink">Announcements</Link><span aria-hidden>/</span><span className="line-clamp-1">{announcement.title}</span></nav>
+
+      <article className="mt-5 overflow-hidden rounded-[26px] border border-line bg-card shadow-sm">
+        {announcement.imageUrl ? <div className="relative aspect-[16/7] w-full"><Image src={announcement.imageUrl} alt={announcement.imageAlt ?? ""} fill priority sizes="(max-width: 1200px) 100vw, 1152px" className="object-cover" /></div> : null}
+        <div className="p-6 sm:p-10 lg:p-12">
+          <div className="flex flex-wrap items-center gap-3 text-xs"><span className="rounded-full bg-navy px-3 py-1 font-semibold text-cream">{announcement.tag}</span><time className="text-muted">Published {announcement.date}</time></div>
+          <h1 className="mt-5 max-w-5xl font-display text-4xl font-bold leading-[1.02] tracking-tight text-ink sm:text-6xl">{announcement.title}</h1>
+          <div className="mt-7 border-y border-line py-4"><AnnouncementActions title={announcement.title} /></div>
+          <div className="prose-announcement mt-8 max-w-3xl whitespace-pre-wrap text-base leading-8 text-muted sm:text-lg">{announcement.excerpt}</div>
         </div>
-        <h1 className="mt-5 font-display text-5xl font-bold uppercase tracking-tight sm:text-7xl">{a.title}</h1>
-        {a.imageUrl ? <Image src={a.imageUrl} alt={a.imageAlt ?? ""} width={1200} height={675} sizes="(max-width: 1024px) 100vw, 960px" className="mt-6 aspect-video w-full rounded-[14px] object-cover" /> : null}
-        <p className="mt-5 leading-8 text-[#2a2829]/75">{a.excerpt}</p>
-        <p className="mt-4 leading-8 text-[#2a2829]/75">
-          Full details are shared by the SO office each morning. This
-          announcement was published through Bayside Hub so nothing slips past
-          you — check back daily for updates.
-        </p>
       </article>
 
-      {versions.length > 0 && (
-        <details className="mt-6 rounded-card border border-line bg-card p-6 shadow-sm">
-          <summary className="cursor-pointer text-lg font-bold text-ink">
-            Version history ({versions.length})
-          </summary>
-          <ol className="mt-4 space-y-3">
-            {versions.map((version) => (
-              <li key={version.id} className="rounded-control border border-line bg-content-bg p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
-                  <strong className="text-ink">Version {version.version_number}</strong>
-                  <time dateTime={version.changed_at}>
-                    {new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(version.changed_at))}
-                  </time>
-                </div>
-                {version.version_note && <p className="mt-2 text-sm font-medium text-powder">{version.version_note}</p>}
-                <p className="mt-2 text-sm leading-6 text-muted">{version.snapshot_content}</p>
-              </li>
-            ))}
-          </ol>
-        </details>
-      )}
+      {versions.length > 0 ? <details className="mt-6 rounded-card border border-line bg-card p-6 shadow-sm"><summary className="cursor-pointer text-lg font-bold text-ink">Version history ({versions.length})</summary><ol className="mt-4 space-y-3">{versions.map((version) => <li key={version.id} className="rounded-control border border-line bg-content-bg p-4"><div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted"><strong className="text-ink">Version {version.version_number}</strong><time dateTime={version.changed_at}>{new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(version.changed_at))}</time></div>{version.version_note ? <p className="mt-2 text-sm font-medium text-powder">{version.version_note}</p> : null}<p className="mt-2 text-sm leading-6 text-muted">{version.snapshot_content}</p></li>)}</ol></details> : null}
 
-      <section className="mt-6 rounded-card border border-line bg-card p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-ink">Stay in the loop</h2>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          Announcements are updated by the SO office throughout the day.
-          Check the <Link href="/announcements/archive" className="font-semibold text-powder hover:text-cream">archive</Link> for
-          past posts, or browse what&apos;s happening this week on the{" "}
-          <Link href="/calendar" className="font-semibold text-powder hover:text-cream">calendar</Link>.
-        </p>
-      </section>
+      {related.length ? <section className="mt-10" aria-labelledby="related-announcements"><div className="flex items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-powder">Keep reading</p><h2 id="related-announcements" className="mt-1 font-display text-2xl font-bold uppercase text-ink">More announcements</h2></div><Link href="/announcements" className="text-sm font-semibold text-navy">View all →</Link></div><div className="mt-4 grid gap-3 lg:grid-cols-2">{related.map((item) => <AnnouncementCard key={item.id} a={item} />)}</div></section> : null}
 
-      <div className="mt-6 flex items-center justify-between text-sm">
-        <Link
-          href="/announcements"
-          className="font-semibold text-powder hover:text-cream"
-        >
-          ← Back to Announcements
-        </Link>
-        <Link
-          href="/announcements/archive"
-          className="font-semibold text-powder hover:text-cream"
-        >
-          View Archive →
-        </Link>
-      </div>
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-sm"><Link href="/announcements" className="font-semibold text-powder hover:text-ink">← Back to announcements</Link><div className="flex gap-4"><Link href="/calendar" className="font-semibold text-muted hover:text-ink">Calendar</Link><Link href="/announcements/archive" className="font-semibold text-muted hover:text-ink">Archive</Link></div></div>
     </div>
   );
 }
