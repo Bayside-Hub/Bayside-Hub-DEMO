@@ -62,6 +62,7 @@ export type Database = {
       club_advisors: TableDefinition<ClubAdvisorRow>;
       club_meetings: TableDefinition<ClubMeetingRow>;
       club_memberships: TableDefinition<ClubMembershipRow>;
+      club_membership_history: TableDefinition<ClubMembershipHistoryRow>;
       club_media: TableDefinition<ClubMediaRow>;
       club_announcements: TableDefinition<ClubAnnouncementRow>;
       club_messages: TableDefinition<ClubMessageRow>;
@@ -117,6 +118,7 @@ export type Database = {
         Returns: ClubAttendanceRecordDetail[];
       };
       get_my_club_attendance: { Args: { p_limit?: number }; Returns: MyClubAttendance[] };
+      reply_to_membership_decision: { Args: { p_membership_id: string; p_reply: string }; Returns: boolean };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -191,6 +193,7 @@ export type ClubRow = {
   google_classroom_code: string | null;
   contact_email: string | null;
   join_policy: "instant" | "approval_required";
+  recruiting_status: "recruiting" | "paused" | "closed";
   status: "draft" | "published" | "archived";
   created_by: string | null;
   created_at: string;
@@ -236,6 +239,21 @@ export type ClubMembershipRow = {
   requested_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
+  rejection_reason: string | null;
+  member_reply: string | null;
+  ended_at: string | null;
+};
+
+export type ClubMembershipHistoryRow = {
+  id: string;
+  membership_id: string;
+  club_id: string;
+  profile_id: string;
+  previous_status: string | null;
+  new_status: string;
+  reason: string | null;
+  changed_by: string | null;
+  created_at: string;
 };
 
 export type ClubMediaRow = {

@@ -61,6 +61,7 @@ function mapDatabaseClub(
     googleClassroomCode: row.google_classroom_code ?? undefined,
     contactEmail: row.contact_email ?? undefined,
     joinPolicy: row.join_policy,
+    recruitingStatus: row.recruiting_status,
     announcements: announcements.map((announcement) => ({
       id: announcement.id,
       title: announcement.title,
@@ -109,7 +110,7 @@ export const getAllClubs = cache(async (limit?: number): Promise<Club[]> => {
   const supabase = await createServerClient();
   let canonicalQuery = supabase
     .from("clubs")
-    .select("id, slug, name, short_description, interest_tags, is_stem, is_community_service, active_start_date, active_end_date, google_classroom_code, contact_email, join_policy, status, created_by, created_at, updated_at")
+    .select("id, slug, name, short_description, interest_tags, is_stem, is_community_service, active_start_date, active_end_date, google_classroom_code, contact_email, join_policy, recruiting_status, status, created_by, created_at, updated_at")
     .eq("status", "published")
     .order("name");
   if (limit !== undefined) canonicalQuery = canonicalQuery.limit(limit);

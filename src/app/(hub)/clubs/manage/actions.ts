@@ -68,6 +68,7 @@ export async function updateManagedClub(formData: FormData) {
     google_classroom_code: String(formData.get("google_classroom_code") ?? "").trim() || null,
     contact_email: contactEmail || null,
     join_policy: formData.get("join_policy") === "instant" ? "instant" : "approval_required",
+    recruiting_status: ["recruiting", "paused", "closed"].includes(String(formData.get("recruiting_status"))) ? formData.get("recruiting_status") as "recruiting" | "paused" | "closed" : "recruiting",
   }).eq("id", clubId).select("id").maybeSingle();
   if (error || !data) return failed;
   revalidatePath(`/clubs/${slug}`);
@@ -223,10 +224,15 @@ export async function reviewClubMembership(formData: FormData) {
   const context = await managerContext(clubId);
   if (!context?.canGovern) return denied;
   if (!["active", "rejected"].includes(status)) return invalid;
+  const rejectionReason = String(formData.get("rejection_reason") ?? "").trim();
+  if (status === "rejected" && (rejectionReason.length < 3 || rejectionReason.length > 1000)) return { ok: false, message: "Add a clear rejection reason (3–1,000 characters)." };
   const { data, error } = await context.supabase.from("club_memberships").update({
     status: status as "active" | "rejected",
     reviewed_at: new Date().toISOString(),
     reviewed_by: context.user.id,
+    rejection_reason: status === "rejected" ? rejectionReason : null,
+    member_reply: null,
+    ended_at: status === "rejected" ? new Date().toISOString() : null,
   }).eq("id", membershipId).eq("club_id", clubId).eq("status", "pending").select("id").maybeSingle();
   if (error || !data) return { ok: false, message: "The request was not changed. It may have been reviewed already." };
   revalidatePath(`/clubs/manage/${clubId}`);

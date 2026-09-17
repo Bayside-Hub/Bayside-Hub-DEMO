@@ -18,6 +18,7 @@ export type Club = {
   googleClassroomCode?: string;
   contactEmail?: string;
   joinPolicy?: "instant" | "approval_required";
+  recruitingStatus?: "recruiting" | "paused" | "closed";
   announcements?: { id: string; title: string; body: string; date: string; image?: string; imageAlt?: string }[];
   media?: { id: string; type: "image" | "video" | "document"; path: string; title?: string; alt?: string }[];
   logo?: string;

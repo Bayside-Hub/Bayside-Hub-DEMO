@@ -127,20 +127,22 @@ export async function toggleClubInterest(formData: FormData): Promise<void> {
 export type MembershipState = {
   available: boolean;
   status: "pending" | "active" | "rejected" | "left" | null;
+  rejectionReason: string | null;
+  memberReply: string | null;
 };
 
 export async function getClubMembershipInfo(clubId?: string): Promise<MembershipState> {
   const user = await getCurrentUser();
-  if (!clubId || !user || !isSupabaseConfigured()) return { available: false, status: null };
+  if (!clubId || !user || !isSupabaseConfigured()) return { available: false, status: null, rejectionReason: null, memberReply: null };
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("club_memberships")
-    .select("status")
+    .select("status, rejection_reason, member_reply")
     .eq("club_id", clubId)
     .eq("profile_id", user.id)
     .maybeSingle();
-  if (error) return { available: false, status: null };
-  return { available: true, status: data?.status ?? null };
+  if (error) return { available: false, status: null, rejectionReason: null, memberReply: null };
+  return { available: true, status: data?.status ?? null, rejectionReason: data?.rejection_reason ?? null, memberReply: data?.member_reply ?? null };
 }
 
 export async function requestClubMembership(formData: FormData): Promise<void> {
@@ -152,15 +154,15 @@ export async function requestClubMembership(formData: FormData): Promise<void> {
   const supabase = await createServerClient();
   const { data: club } = await supabase
     .from("clubs")
-    .select("join_policy")
+    .select("join_policy, recruiting_status")
     .eq("id", clubId)
     .eq("status", "published")
     .maybeSingle();
-  if (!club) return;
+  if (!club || club.recruiting_status !== "recruiting") return;
 
   const status = club.join_policy === "instant" ? "active" : "pending";
   await supabase.from("club_memberships").upsert(
-    { club_id: clubId, profile_id: user.id, status, requested_at: new Date().toISOString() },
+    { club_id: clubId, profile_id: user.id, status, requested_at: new Date().toISOString(), reviewed_at: null, reviewed_by: null, rejection_reason: null, member_reply: null, ended_at: null },
     { onConflict: "club_id,profile_id" },
   );
   revalidatePath(`/clubs/${slug}`);
@@ -175,10 +177,20 @@ export async function leaveClub(formData: FormData): Promise<void> {
   const supabase = await createServerClient();
   await supabase
     .from("club_memberships")
-    .delete()
+    .update({ status: "left", ended_at: new Date().toISOString() })
     .eq("club_id", clubId)
     .eq("profile_id", user.id);
   revalidatePath(`/clubs/${slug}`);
+  revalidatePath("/profile");
+}
+
+export async function replyToMembershipDecision(formData: FormData): Promise<void> {
+  const user = await getCurrentUser();
+  const membershipId = String(formData.get("membership_id") ?? "");
+  const reply = String(formData.get("reply") ?? "").trim();
+  if (!user || !membershipId || !reply || reply.length > 1000 || !isSupabaseConfigured()) return;
+  const supabase = await createServerClient();
+  await supabase.rpc("reply_to_membership_decision", { p_membership_id: membershipId, p_reply: reply });
   revalidatePath("/profile");
 }
 

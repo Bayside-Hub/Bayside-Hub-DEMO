@@ -74,6 +74,7 @@ export default async function ClubDetailPage({
           <h1 className="mt-2 font-display text-5xl font-bold uppercase leading-none sm:text-6xl">{club.name}</h1>
           <p className="mt-4 max-w-4xl text-sm font-medium leading-6">{club.description}</p>
           <div className="mt-5 flex flex-wrap gap-2 text-xs">
+          <span className={`rounded-full px-3 py-1.5 font-bold uppercase ${club.recruitingStatus === "closed" ? "bg-[#2a2829] text-white" : club.recruitingStatus === "paused" ? "bg-[#f78660] text-black" : "bg-[#d8f3df] text-[#176b35]"}`}>{club.recruitingStatus ?? "Recruiting"}</span>
           <span className="rounded-full border border-[#2a2829] px-3 py-1.5">{club.meetingDays.join(", ")}</span>
           <span className="rounded-full border border-[#2a2829] px-3 py-1.5">{club.meetingTime}</span>
           <span className="rounded-full border border-[#2a2829] px-3 py-1.5">{club.location}</span>
@@ -90,7 +91,7 @@ export default async function ClubDetailPage({
           ) : (
             <PrimaryButton href={`/login?next=${encodeURIComponent(`/clubs/${club.slug}`)}`} className="w-full bg-[#97b4de]">Sign in to Join</PrimaryButton>
           )}
-          {membership.available && user && club.id && (
+          {membership.available && user && club.id && (["active", "pending"].includes(membership.status ?? "") || (club.recruitingStatus ?? "recruiting") === "recruiting") && (
             <form action={membership.status === "active" || membership.status === "pending" ? leaveClub : requestClubMembership} className="mt-3">
               <input type="hidden" name="club_id" value={club.id} />
               <input type="hidden" name="slug" value={club.slug} />
@@ -108,6 +109,8 @@ export default async function ClubDetailPage({
               </PendingSubmitButton>
             </form>
           )}
+          {user && membership.status === "rejected" && membership.rejectionReason ? <div className="mt-3 rounded-control bg-[#f78660]/20 px-4 py-3 text-xs text-[#2a2829]"><p className="font-bold">Membership request declined</p><p className="mt-1">{membership.rejectionReason}</p>{membership.memberReply ? <p className="mt-2 border-t border-black/10 pt-2"><strong>Your reply:</strong> {membership.memberReply}</p> : <Link href="/profile#clubs" className="mt-2 inline-block font-bold underline">Reply from My Hub →</Link>}</div> : null}
+          {user && !["active", "pending"].includes(membership.status ?? "") && (club.recruitingStatus ?? "recruiting") !== "recruiting" ? <p className="mt-3 rounded-control bg-black/10 px-4 py-3 text-xs font-medium text-[#2a2829]">Membership is currently {club.recruitingStatus}. You can still review meetings and contact the Club.</p> : null}
           {interest.available && user && (
             <form action={toggleClubInterest} className="mt-3">
               <input type="hidden" name="slug" value={club.slug} />

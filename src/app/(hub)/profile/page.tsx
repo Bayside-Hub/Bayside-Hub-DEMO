@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { leaveClub } from "@/app/(hub)/clubs/actions";
+import { leaveClub, replyToMembershipDecision } from "@/app/(hub)/clubs/actions";
 import { getCurrentUser } from "@/lib/auth";
 import { isEventUpcoming, type EventItem } from "@/lib/data";
 import { getEvents } from "@/lib/events";
@@ -9,7 +9,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
 import type { ClubApplicationRow, MyClubAttendance, SupportRequestRow } from "@/lib/supabase/types";
 
-type ProfileClub = { id: string; slug: string; name: string; status: "pending" | "active"; requestedAt: string; role: string; meetingDay: string; location: string };
+type ProfileClub = { id: string; membershipId: string; slug: string; name: string; status: "pending" | "active" | "rejected" | "left"; requestedAt: string; rejectionReason: string | null; memberReply: string | null; role: string; meetingDay: string; location: string };
 type ProfileData = { clubs: ProfileClub[]; applications: ClubApplicationRow[]; rsvpIds: string[]; support: SupportRequestRow[]; attendance: MyClubAttendance[] };
 
 export const metadata: Metadata = { title: "My Hub" };
@@ -30,7 +30,7 @@ async function getProfileData(userId: string): Promise<ProfileData> {
   if (!isSupabaseConfigured()) return empty;
   const db = await createServerClient();
   const [memberships, officers, advisors, meetings, applications, rsvps, support, attendance] = await Promise.all([
-    db.from("club_memberships").select("club_id, status, requested_at").eq("profile_id", userId).in("status", ["pending", "active"]),
+    db.from("club_memberships").select("id, club_id, status, requested_at, rejection_reason, member_reply").eq("profile_id", userId).order("requested_at", { ascending: false }),
     db.from("club_officers").select("club_id, title").eq("profile_id", userId),
     db.from("club_advisors").select("club_id").eq("profile_id", userId),
     db.from("club_meetings").select("club_id, day_of_week, location").order("day_of_week"),
@@ -51,7 +51,7 @@ async function getProfileData(userId: string): Promise<ProfileData> {
       const club = byId.get(membership.club_id);
       if (!club) return [];
       const meeting = schedules.get(club.id);
-      return [{ ...club, status: membership.status as "pending" | "active", requestedAt: membership.requested_at, role: roles.get(club.id) ?? (advised.has(club.id) ? "Advisor" : "Member"), meetingDay: meeting ? dayNames[meeting.day_of_week] : "Schedule TBA", location: meeting?.location ?? "Location TBA" }];
+      return [{ ...club, membershipId: membership.id, status: membership.status, requestedAt: membership.requested_at, rejectionReason: membership.rejection_reason, memberReply: membership.member_reply, role: roles.get(club.id) ?? (advised.has(club.id) ? "Advisor" : "Member"), meetingDay: meeting ? dayNames[meeting.day_of_week] : "Schedule TBA", location: meeting?.location ?? "Location TBA" }];
     }),
     applications: applications.data ?? [],
     rsvpIds: (rsvps.data ?? []).map((row) => row.event_id),
@@ -94,7 +94,7 @@ export default async function ProfilePage() {
 
     <div className="mt-7 grid gap-7 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,.75fr)]"><main className="min-w-0 space-y-8">
       <section id="clubs"><SectionHeader title="My clubs" action="Browse all clubs" href="/clubs" />
-        {data.clubs.length ? <div className="mt-4 grid gap-3 md:grid-cols-2">{data.clubs.map((club) => <article key={club.id} className="rounded-card border border-line bg-card p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-wider text-powder">{club.role}</p><h3 className="mt-1 font-display text-lg font-bold text-ink">{club.name}</h3></div><span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${club.status === "active" ? "bg-powder/20 text-ink" : "bg-orange/20 text-orange"}`}>{club.status}</span></div><p className="mt-3 text-sm text-muted">{club.meetingDay} · {club.location}</p><div className="mt-4 flex flex-wrap gap-2"><Link href={`/clubs/${club.slug}`} className="rounded-full bg-navy px-3.5 py-2 text-xs font-semibold text-cream">Open club</Link><Link href="/calendar" className="rounded-full border border-line px-3.5 py-2 text-xs font-semibold text-ink">Calendar</Link>{club.status === "active" ? <form action={leaveClub}><input type="hidden" name="club_id" value={club.id} /><input type="hidden" name="slug" value={club.slug} /><button className="rounded-full px-3 py-2 text-xs font-semibold text-muted hover:text-orange">Leave</button></form> : null}</div></article>)}</div> : <div className="mt-4 rounded-card border border-dashed border-line bg-card/70 p-8 text-center text-sm text-muted">You have not joined a Club yet. <Link href="/clubs" className="font-bold text-powder">Explore the directory</Link>.</div>}
+        {data.clubs.length ? <div className="mt-4 grid gap-3 md:grid-cols-2">{data.clubs.map((club) => <article key={club.membershipId} className="rounded-card border border-line bg-card p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-wider text-powder">{club.role}</p><h3 className="mt-1 font-display text-lg font-bold text-ink">{club.name}</h3></div><span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${club.status === "active" ? "bg-powder/20 text-ink" : "bg-orange/20 text-orange"}`}>{club.status}</span></div><p className="mt-3 text-sm text-muted">{club.meetingDay} · {club.location}</p>{club.status === "rejected" && club.rejectionReason ? <div className="mt-3 rounded-control bg-orange/10 p-3 text-sm text-ink"><p><strong>Reason:</strong> {club.rejectionReason}</p>{club.memberReply ? <p className="mt-2 text-muted"><strong>Your reply:</strong> {club.memberReply}</p> : <form action={replyToMembershipDecision} className="mt-3 flex gap-2"><input type="hidden" name="membership_id" value={club.membershipId} /><input name="reply" required maxLength={1000} placeholder="Reply to the Club" className="h-10 min-w-0 flex-1 rounded-control border border-line bg-content-bg px-3 text-sm" /><button className="rounded-full bg-navy px-4 text-xs font-bold text-cream">Reply</button></form>}</div> : null}<div className="mt-4 flex flex-wrap gap-2"><Link href={`/clubs/${club.slug}`} className="rounded-full bg-navy px-3.5 py-2 text-xs font-semibold text-cream">Open club</Link><Link href="/calendar" className="rounded-full border border-line px-3.5 py-2 text-xs font-semibold text-ink">Calendar</Link>{club.status === "active" ? <form action={leaveClub}><input type="hidden" name="club_id" value={club.id} /><input type="hidden" name="slug" value={club.slug} /><button className="rounded-full px-3 py-2 text-xs font-semibold text-muted hover:text-orange">Leave</button></form> : null}</div></article>)}</div> : <div className="mt-4 rounded-card border border-dashed border-line bg-card/70 p-8 text-center text-sm text-muted">You have not joined a Club yet. <Link href="/clubs" className="font-bold text-powder">Explore the directory</Link>.</div>}
       </section>
 
       <section id="attendance"><SectionHeader title="Check-in history" action="Enter a code" href="/clubs/check-in" />
