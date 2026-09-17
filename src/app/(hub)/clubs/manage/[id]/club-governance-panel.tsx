@@ -1,5 +1,4 @@
 import ActionFeedbackForm from "@/components/action-feedback-form";
-import Link from "next/link";
 import {
   addClubAdvisor,
   addClubOfficer,
@@ -36,7 +35,6 @@ export default function ClubGovernancePanel({
 }) {
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-2">
-      <Link href={`/clubs/manage/${clubId}/content`} className="rounded-xl border border-line bg-card p-5 font-semibold text-ink lg:col-span-2">Edit or remove existing meetings & club posts →</Link>
       {["staff", "admin"].includes(role) && <section className="card-gradient rounded-[10px] p-6 lg:col-span-2"><h2 className="text-xl font-bold text-cream">Publication status</h2><p className="mt-2 text-sm text-cream/70">Publishing makes the club visible in the public directory. Draft or archived clubs stay out of the directory; existing public photo URLs are not made private.</p><ActionFeedbackForm action={updateClubPublication} className="mt-4 grid gap-3"><input type="hidden" name="club_id" value={clubId} /><label className="text-sm text-cream">Status<select name="status" defaultValue={clubStatus} className={input}><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label><button className="min-h-11 justify-self-start rounded-full bg-cream px-5 font-semibold text-navy">Save publication status</button></ActionFeedbackForm></section>}
       <section id="governance" className="card-gradient scroll-mt-28 rounded-[18px] p-6">
         <h2 className="font-display text-xl font-bold uppercase text-cream">Board &amp; advisors</h2>
@@ -77,7 +75,7 @@ export default function ClubGovernancePanel({
         <p className="mt-2 text-sm text-cream/65">New photos are private by default. Choose Gallery or Club cover only for photos approved for public sharing.</p>
         <ActionFeedbackForm action={uploadClubImage} className="mt-4 grid gap-3">
           <input type="hidden" name="club_id" value={clubId} />
-          <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" required className="text-sm text-cream" />
+          <label className="text-sm font-semibold text-cream">Choose a photo<input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" required className="mt-2 block w-full rounded-control border border-line bg-black/15 p-2 text-sm text-cream file:mr-3 file:rounded-full file:border-0 file:bg-cream file:px-4 file:py-2 file:font-bold file:text-navy" /></label>
           <input name="title" maxLength={120} placeholder="Photo title (optional)" className={input} />
           <input name="alt_text" required maxLength={240} placeholder="Describe the photo for screen-reader users" className={input} />
           <label className="text-sm text-cream">Initial placement<select name="visibility" defaultValue="private" className={`${input} mt-1`}><option value="private">Private library</option><option value="gallery">Public gallery</option></select></label>

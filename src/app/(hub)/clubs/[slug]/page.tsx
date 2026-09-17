@@ -16,6 +16,8 @@ import {
 import PendingSubmitButton from "@/components/pending-submit-button";
 import type { Metadata } from "next";
 import ClubChat from "./club-chat";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createServerClient } from "@/lib/supabase/server";
 
 // Membership controls and private chat depend on the request's auth cookies.
 // Never reuse a build-time guest version of a Club page for signed-in users.
@@ -59,6 +61,9 @@ export default async function ClubDetailPage({
   const interest = await getClubInterestInfo(club.slug);
   const membership = await getClubMembershipInfo(club.id);
   const communication = await getClubCommunication(club.id);
+  const constitution = club.id && isSupabaseConfigured()
+    ? (await (await createServerClient()).from("club_constitution_versions").select("version_number,body,change_summary,adopted_on").eq("club_id", club.id).order("version_number", { ascending: false }).limit(1).maybeSingle()).data
+    : null;
   const announcements = club.announcements ?? [];
   const announcementsPerPage = 5;
   const announcementPageCount = Math.max(1, Math.ceil(announcements.length / announcementsPerPage));
@@ -159,7 +164,7 @@ export default async function ClubDetailPage({
         </div>
       </section>
 
-      {(club.advisors?.length || club.contactEmail || club.links?.length || club.googleClassroomCode) && (
+      {(club.advisors?.length || club.links?.length || club.googleClassroomCode) && (
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
           {club.advisors?.length ? (
             <div className="card-gradient rounded-[10px] p-5">
@@ -167,12 +172,6 @@ export default async function ClubDetailPage({
               {club.advisors.map((advisor) => <p key={`${advisor.name}-${advisor.email ?? ""}`} className="mt-2 text-sm text-cream/75">{advisor.name}{advisor.email ? ` · ${advisor.email}` : ""}</p>)}
             </div>
           ) : null}
-          {club.contactEmail && (
-            <div className="card-gradient rounded-[10px] p-5">
-              <h2 className="font-display text-lg font-bold uppercase text-cream">Contact</h2>
-              <a href={`mailto:${club.contactEmail}`} className="mt-2 block break-all text-sm text-powder hover:text-cream">{club.contactEmail}</a>
-            </div>
-          )}
           {club.links?.length ? (
             <div className="card-gradient rounded-[10px] p-5 sm:col-span-3">
               <h2 className="font-display text-lg font-bold uppercase text-cream">Club links</h2>
@@ -191,6 +190,12 @@ export default async function ClubDetailPage({
           ) : null}
         </section>
       )}
+
+      {constitution ? <section className="card-gradient mt-8 rounded-[14px] border border-white/10 p-5 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-powder">Governance</p><h2 className="mt-1 font-display text-2xl font-bold uppercase text-cream">Club constitution</h2></div><span className="rounded-full border border-line px-3 py-1 text-xs text-cream/70">Version {constitution.version_number}</span></div>
+        <p className="mt-2 text-sm text-cream/60">{constitution.change_summary}{constitution.adopted_on ? ` · Adopted ${constitution.adopted_on}` : ""}</p>
+        <details className="mt-4"><summary className="cursor-pointer rounded-full border border-line px-4 py-2 text-sm font-semibold text-powder">Read full constitution</summary><p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-cream/75">{constitution.body}</p></details>
+      </section> : null}
 
       <section className="mt-12" aria-labelledby="club-stream-title">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-powder">Class stream</p>
