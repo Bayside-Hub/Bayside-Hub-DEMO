@@ -138,12 +138,19 @@ export async function setApplicationStatus(_prev: ActionState, formData: FormDat
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "");
 
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || user.role !== "admin") return { ok: false, message: "Admins only." };
   if (!isSupabaseConfigured() || !id) return invalid();
   if (!["approved", "rejected"].includes(status)) return invalid();
 
   const supabase = await createServerClient();
   const nextStatus = status as "approved" | "rejected";
+  const { data: application } = await supabase.from("club_applications").select("id, submitted_by, status").eq("id", id).maybeSingle();
+  if (!application || application.status !== "pending") return { ok: false, message: "This pending application is no longer available." };
+  if (nextStatus === "approved") {
+    if (!application.submitted_by) return { ok: false, message: "Only applications submitted by a teacher can be approved." };
+    const { data: applicant } = await supabase.from("profiles").select("role").eq("id", application.submitted_by).maybeSingle();
+    if (applicant?.role !== "teacher") return { ok: false, message: "Only applications submitted by a teacher can be approved." };
+  }
   const { error } = await supabase
     .from("club_applications")
     .update({ status: nextStatus, reviewed_at: new Date().toISOString(), reviewed_by: user.id })
@@ -154,7 +161,7 @@ export async function setApplicationStatus(_prev: ActionState, formData: FormDat
   revalidatePath("/admin/clubs");
   revalidatePath("/admin");
   revalidatePath("/clubs");
-  return { ok: true, message: `Application ${nextStatus}.` };
+  return { ok: true, message: nextStatus === "approved" ? "Application approved. The Club is live and the teacher is now its Advisor." : "Application rejected." };
 }
 
 export async function updateUserRole(_prev: ActionState, formData: FormData): Promise<ActionState> {

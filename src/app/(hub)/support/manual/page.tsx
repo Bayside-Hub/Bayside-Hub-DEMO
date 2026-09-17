@@ -77,10 +77,11 @@ const roles = [
         title: "Getting your club recognized",
         steps: [
           "Prepare a club constitution following the sample in Support.",
-          "Submit the charter application through the Activities & Clubs page.",
-          "Administrators approve charters in the Manage Clubs queue.",
+          "A Bayside teacher submits the charter application through the Activities & Clubs page.",
+          "An Admin approves or rejects the proposal in the Manage Clubs queue.",
+          "Approval publishes the Club and assigns the submitting teacher as its Advisor automatically.",
         ],
-        note: "Once approved, your club appears on the public Activities & Clubs list.",
+        note: "The Advisor can open Manage My Clubs immediately after approval to complete the profile, members, content, attendance, finance, and operations.",
       },
       {
         title: "Keeping club information current",

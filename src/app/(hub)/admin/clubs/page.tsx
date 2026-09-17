@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui";
-import { requireStaff } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
 import Pagination from "@/components/pagination";
@@ -24,7 +24,7 @@ export default async function AdminClubsPage({
 }: {
   searchParams: Promise<{ status?: string; page?: string }>;
 }) {
-  await requireStaff();
+  await requireAdmin();
   const { status, page: pageParam } = await searchParams;
   const tab = statusTabs.find((t) => t.key === status)?.key ?? "pending";
   const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
@@ -51,7 +51,7 @@ export default async function AdminClubsPage({
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader
         title="Manage Clubs"
-        subtitle="Review new charter applications. Admin authority can edit every existing Club and Team without listing the Admin as an advisor."
+        subtitle="Review teacher-submitted Club proposals. Approval publishes the Club and assigns the submitting teacher as its Advisor automatically."
       />
       <div className="mb-5 flex justify-end"><Link href="/clubs/manage" className="rounded-full bg-navy px-5 py-2.5 text-sm font-bold text-cream">Manage all Clubs &amp; Teams →</Link></div>
 
@@ -88,7 +88,7 @@ export default async function AdminClubsPage({
             </p>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted">
               {configured
-                ? "New club applications will show up here as students submit them."
+                ? "New Club applications will show up here when teachers submit them."
                 : "Connect Supabase and run the SQL migration to load the review queue."}
             </p>
           </div>
@@ -121,7 +121,7 @@ export default async function AdminClubsPage({
               <p className="mt-3 text-sm leading-6 text-muted">{row.description}</p>
               {row.contact_email && (
                 <p className="mt-2 text-xs text-muted">
-                  Contact: <span className="font-medium text-ink">{row.contact_email}</span>
+                  Applicant / future Advisor: <span className="font-medium text-ink">{row.contact_email}</span>
                 </p>
               )}
             </article>

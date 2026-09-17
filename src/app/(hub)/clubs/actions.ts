@@ -16,7 +16,10 @@ export async function submitClubApplication(
 ): Promise<ActionState> {
   const user = await getCurrentUser();
   if (!user) {
-    return { ok: false, message: "Please sign in with your NYC student account first." };
+    return { ok: false, message: "Please sign in with your Bayside teacher account first." };
+  }
+  if (user.role !== "teacher") {
+    return { ok: false, message: "New Club applications can only be submitted by a teacher." };
   }
   if (!isSupabaseConfigured()) {
     return {
@@ -29,7 +32,7 @@ export async function submitClubApplication(
   const category = String(formData.get("category") ?? "Other").trim();
   const description = String(formData.get("description") ?? "").trim();
   const meetingDays = String(formData.get("meeting_days") ?? "").trim();
-  const contactEmail = String(formData.get("contact_email") ?? "").trim();
+  const contactEmail = user.email;
 
   if (clubName.length < 3 || clubName.length > 120) {
     return { ok: false, message: "Club name is required (3–120 characters)." };
@@ -51,6 +54,14 @@ export async function submitClubApplication(
   }
 
   const supabase = await createServerClient();
+  const { data: existing } = await supabase.from("club_applications")
+    .select("id")
+    .eq("submitted_by", user.id)
+    .eq("status", "pending")
+    .ilike("club_name", clubName)
+    .limit(1)
+    .maybeSingle();
+  if (existing) return { ok: false, message: "You already have a pending application for a Club with this name." };
   const { error } = await supabase.from("club_applications").insert({
     club_name: clubName,
     category,
@@ -69,7 +80,7 @@ export async function submitClubApplication(
   revalidatePath("/admin");
   return {
     ok: true,
-    message: "Application submitted! An administrator will review it soon.",
+    message: "Application submitted. If an Admin approves it, the Club will be published and added to your managed Clubs automatically.",
   };
 }
 

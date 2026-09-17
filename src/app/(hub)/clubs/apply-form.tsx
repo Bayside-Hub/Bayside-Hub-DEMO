@@ -74,16 +74,18 @@ export default function ApplyForm({
         </div>
         <div>
           <label htmlFor="contact_email" className="mb-1.5 block text-sm font-semibold text-cream">
-            Contact email
+            Advisor email
           </label>
           <input
             id="contact_email"
             name="contact_email"
             type="email"
             defaultValue={defaultEmail}
-            placeholder="you@nycstudents.net"
+            readOnly
+            aria-describedby="advisor-email-help"
             className={inputClasses}
           />
+          <p id="advisor-email-help" className="mt-1.5 text-xs leading-5 text-cream/60">Your signed-in teacher account will become this Club&apos;s Advisor after approval.</p>
         </div>
       </div>
 
