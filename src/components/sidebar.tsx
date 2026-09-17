@@ -122,7 +122,7 @@ const railAssets: Record<string, string> = {
   "/": "home", "/announcements": "mail", "/clubs": "users",
   "/opportunities": "briefcase",
   "/support": "question", "/about": "form", "/admin": "shield",
-  "/clubs/manage": "users",
+  "/clubs/manage": "manage",
 };
 
 function RailIcon({ name }: { name: string }) {

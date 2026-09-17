@@ -56,6 +56,26 @@ export function CalendarIcon(props: IconProps) {
   );
 }
 
+export function MediaIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden {...props}>
+      <rect x="2.5" y="3" width="15" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="13.5" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="m4.5 15 4.1-4 2.5 2.2 1.7-1.6 2.7 3.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function AttendanceIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden {...props}>
+      <rect x="3" y="2.5" width="14" height="15" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M7 2.5h6v3H7z" fill="currentColor" opacity=".25" />
+      <path d="m6.2 11 2.1 2.1 5.5-5.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function NotificationIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="none" aria-hidden {...props}>

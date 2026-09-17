@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import ActionFeedbackForm from "@/components/action-feedback-form";
-import { CalendarIcon, ClubsIcon, GearIcon, MegaphoneIcon, UserIcon } from "@/components/icons";
+import { AttendanceIcon, CalendarIcon, GearIcon, MediaIcon, MegaphoneIcon, UserIcon } from "@/components/icons";
 import { getCurrentUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
@@ -66,8 +66,8 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
     { href: "#stream", label: "Stream", icon: MegaphoneIcon },
     { href: `/clubs/manage/${id}/content`, label: "Content", icon: CalendarIcon },
     { href: "#members", label: "People", icon: UserIcon },
-    { href: "#media", label: "Media", icon: ClubsIcon },
-    { href: "#attendance", label: "Attendance", icon: ClubsIcon },
+    { href: "#media", label: "Media", icon: MediaIcon },
+    { href: "#attendance", label: "Attendance", icon: AttendanceIcon },
     { href: `/clubs/manage/${id}/finance`, label: "Finance", icon: GearIcon },
     { href: `/clubs/manage/${id}/operations`, label: "Constitution", icon: CalendarIcon },
     { href: "#settings", label: "Settings", icon: GearIcon },
