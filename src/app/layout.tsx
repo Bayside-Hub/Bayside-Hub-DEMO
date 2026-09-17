@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Montserrat, Lexend } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import PwaRegistration from "@/components/pwa-registration";
+import ProductAnalytics from "@/components/product-analytics";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -57,6 +58,7 @@ export default function RootLayout({
       <body className="h-full bg-content-bg text-ink">
         {children}
         <PwaRegistration />
+        <ProductAnalytics />
         <Analytics />
       </body>
     </html>

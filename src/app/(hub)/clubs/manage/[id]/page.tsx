@@ -66,6 +66,7 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
     { href: "#media", label: "Media", icon: ClubsIcon },
     { href: "#attendance", label: "Attendance", icon: ClubsIcon },
     { href: `/clubs/manage/${id}/finance`, label: "Finance", icon: GearIcon },
+    { href: `/clubs/manage/${id}/operations`, label: "Operations", icon: CalendarIcon },
     { href: "#settings", label: "Settings", icon: GearIcon },
   ];
 
@@ -85,6 +86,7 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
             <Link href={`/clubs/${club.slug}`} className="rounded-full border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-semibold backdrop-blur hover:bg-white/20">View Club page</Link>
             <Link href={`/clubs/manage/${id}/content`} className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#263a99]">Manage content</Link>
             <Link href={`/clubs/manage/${id}/finance`} className="rounded-full border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-semibold backdrop-blur hover:bg-white/20">Treasury &amp; fundraising</Link>
+            <Link href={`/clubs/manage/${id}/operations`} className="rounded-full border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-semibold backdrop-blur hover:bg-white/20">Trips &amp; approvals</Link>
           </div>
         </div>
       </header>

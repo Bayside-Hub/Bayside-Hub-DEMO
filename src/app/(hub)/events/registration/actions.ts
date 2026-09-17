@@ -1,0 +1,3 @@
+"use server";
+import {revalidatePath} from "next/cache";import {getCurrentUser} from "@/lib/auth";import {createServerClient} from "@/lib/supabase/server";
+export async function registerForApprovedEvent(fd:FormData){const user=await getCurrentUser();if(!user)return;const db=await createServerClient();const approvalId=String(fd.get("approval_id")??"");const event=await db.from("event_approval_requests").select("id,capacity,status").eq("id",approvalId).eq("status","approved").maybeSingle();if(!event.data)return;await db.from("event_registrations").upsert({approval_id:approvalId,profile_id:user.id,status:"pending",reviewed_by:null,review_note:null},{onConflict:"approval_id,profile_id"});revalidatePath("/events/registration");}

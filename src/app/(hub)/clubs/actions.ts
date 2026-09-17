@@ -161,10 +161,14 @@ export async function requestClubMembership(formData: FormData): Promise<void> {
   if (!club || club.recruiting_status !== "recruiting") return;
 
   const status = club.join_policy === "instant" ? "active" : "pending";
-  await supabase.from("club_memberships").upsert(
+  const membership = await supabase.from("club_memberships").upsert(
     { club_id: clubId, profile_id: user.id, status, requested_at: new Date().toISOString(), reviewed_at: null, reviewed_by: null, rejection_reason: null, member_reply: null, ended_at: null },
     { onConflict: "club_id,profile_id" },
   );
+  if (!membership.error) {
+    await supabase.rpc("record_analytics_event", { p_event_name: "club_join_started", p_route: `/clubs/${slug}`, p_entity_id: clubId, p_metadata: { status } });
+    if (status === "active") await supabase.rpc("record_analytics_event", { p_event_name: "club_join_completed", p_route: `/clubs/${slug}`, p_entity_id: clubId, p_metadata: { mode: "instant" } });
+  }
   revalidatePath(`/clubs/${slug}`);
   revalidatePath("/profile");
 }

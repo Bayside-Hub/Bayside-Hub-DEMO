@@ -1,7 +1,7 @@
 import { parseOptionalDateOnly } from "./input-validation.ts";
 
 export type AuditSearch = { kind?: string; actor?: string; from?: string; to?: string; resource?: string; operation?: string; q?: string; page?: string };
-export const auditResources = ["clubs", "club_memberships", "club_applications", "club_fundraisers", "club_finance_transactions", "events", "opportunities", "support_requests", "support_request_updates", "custom_roles", "custom_role_assignments", "site_content"];
+export const auditResources = ["clubs", "club_memberships", "club_applications", "club_fundraisers", "club_finance_transactions", "club_trips", "trip_consents", "club_constitution_versions", "club_elections", "club_budgets", "club_reimbursements", "facility_permits", "event_approval_requests", "event_registrations", "events", "opportunities", "support_requests", "support_request_updates", "custom_roles", "custom_role_assignments", "site_content"];
 
 /** Reject malformed filters before querying; dates represent complete UTC days. */
 export function parseAuditSearch(search: AuditSearch) {

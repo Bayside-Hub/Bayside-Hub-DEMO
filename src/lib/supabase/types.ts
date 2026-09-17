@@ -79,6 +79,16 @@ export type Database = {
       club_compliance: TableDefinition<ClubComplianceRow>;
       club_finance_transactions: TableDefinition<ClubFinanceTransactionRow>;
       club_fundraisers: TableDefinition<ClubFundraiserRow>;
+      club_trips: TableDefinition<ClubTripRow>;
+      trip_consents: TableDefinition<TripConsentRow>;
+      club_constitution_versions: TableDefinition<ConstitutionVersionRow>;
+      club_elections: TableDefinition<ClubElectionRow>;
+      club_budgets: TableDefinition<ClubBudgetRow>;
+      club_reimbursements: TableDefinition<ClubReimbursementRow>;
+      facility_permits: TableDefinition<FacilityPermitRow>;
+      event_approval_requests: TableDefinition<EventApprovalRow>;
+      event_registrations: TableDefinition<EventRegistrationRow>;
+      analytics_events: TableDefinition<AnalyticsEventRow>;
     };
     Views: {
       approved_clubs: {
@@ -128,6 +138,7 @@ export type Database = {
       can_approve_club_finance: { Args: { p_club_id: string }; Returns: boolean };
       review_club_fundraiser: { Args: { p_fundraiser_id: string; p_approve: boolean; p_note: string }; Returns: boolean };
       close_club_fundraiser: { Args: { p_fundraiser_id: string; p_statement: string; p_proceeds_cents: number; p_expenses_cents: number }; Returns: boolean };
+      record_analytics_event: { Args: { p_event_name: string; p_route?: string | null; p_entity_id?: string | null; p_metric_value?: number | null; p_metadata?: Record<string, unknown>; p_session_id?: string | null }; Returns: undefined };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -225,6 +236,8 @@ export type ClubRow = {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  category?: string | null;
+  school_year?: string | null;
 };
 
 export type ClubOfficerRow = {
@@ -488,3 +501,14 @@ export type ClubFundraiserRow = {
   closed_by: string | null;
   closed_at: string | null;
 };
+
+export type ClubTripRow = { id: string; club_id: string; title: string; trip_date: string; destination: string; plan: string; consent_required: boolean; status: "draft" | "submitted" | "approved" | "rejected" | "completed"; submitted_by: string; reviewed_by: string | null; review_note: string | null; created_at: string };
+export type TripConsentRow = { id: string; trip_id: string; profile_id: string; status: "pending" | "received" | "declined" | "not_required"; updated_by: string | null; updated_at: string };
+export type ConstitutionVersionRow = { id: string; club_id: string; version_number: number; body: string; change_summary: string; adopted_on: string | null; created_by: string; created_at: string };
+export type ClubElectionRow = { id: string; club_id: string; title: string; election_date: string; positions: string[]; status: "planned" | "open" | "completed" | "cancelled"; result_summary: string | null; created_by: string; created_at: string };
+export type ClubBudgetRow = { id: string; club_id: string; school_year: string; allocated_cents: number; notes: string | null; updated_by: string; updated_at: string };
+export type ClubReimbursementRow = { id: string; club_id: string; school_year: string; amount_cents: number; purpose: string; receipt_reference: string; status: "pending" | "approved" | "rejected" | "paid"; submitted_by: string; reviewed_by: string | null; review_note: string | null; created_at: string };
+export type FacilityPermitRow = { id: string; club_id: string | null; event_id: string | null; title: string; event_date: string; start_time: string | null; end_time: string | null; room: string | null; needs_security: boolean; needs_library: boolean; needs_av: boolean; room_status: string; security_status: string; library_status: string; av_status: string; overall_status: "pending" | "approved" | "rejected"; submitted_by: string; review_note: string | null; created_at: string };
+export type EventApprovalRow = { id: string; club_id: string | null; title: string; description: string; start_at: string; end_at: string | null; location: string | null; capacity: number | null; status: "pending" | "approved" | "rejected"; submitted_by: string; reviewed_by: string | null; review_note: string | null; created_at: string };
+export type EventRegistrationRow = { id: string; approval_id: string; profile_id: string; status: "pending" | "approved" | "waitlisted" | "rejected" | "cancelled"; reviewed_by: string | null; review_note: string | null; created_at: string };
+export type AnalyticsEventRow = { id: number; event_name: string; route: string | null; entity_id: string | null; metric_value: number | null; metadata: Record<string, unknown>; user_id: string | null; session_id: string | null; created_at: string };

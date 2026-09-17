@@ -235,6 +235,7 @@ export async function reviewClubMembership(formData: FormData) {
     ended_at: status === "rejected" ? new Date().toISOString() : null,
   }).eq("id", membershipId).eq("club_id", clubId).eq("status", "pending").select("id").maybeSingle();
   if (error || !data) return { ok: false, message: "The request was not changed. It may have been reviewed already." };
+  if (status === "active") await context.supabase.rpc("record_analytics_event", { p_event_name: "club_join_completed", p_route: `/clubs/manage/${clubId}`, p_entity_id: clubId, p_metadata: { mode: "approved" } });
   revalidatePath(`/clubs/manage/${clubId}`);
   revalidatePath("/profile");
   return saved;

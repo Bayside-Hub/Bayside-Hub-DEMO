@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SearchIcon, MegaphoneIcon, ClubsIcon, CalendarIcon, OpportunitiesIcon } from "./icons";
 import type { SearchResult as Result } from "@/lib/search";
+import { sendProductEvent } from "./product-analytics";
 
 const kindIcon: Record<Result["kind"], (props: React.SVGProps<SVGSVGElement>) => React.ReactNode> = {
   Club: ClubsIcon,
@@ -118,6 +119,7 @@ export default function SearchBox() {
   }, [open]);
 
   function openResult(href: string) {
+    if (href.startsWith("/clubs/")) sendProductEvent("search_result_click", href.split("/").filter(Boolean).at(-1));
     setOpen(false);
     setQuery("");
     router.push(href);

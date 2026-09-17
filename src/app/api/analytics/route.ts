@@ -1,0 +1,16 @@
+import { NextResponse } from "next/server";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createServerClient } from "@/lib/supabase/server";
+
+export async function POST(request: Request) {
+  if (!isSupabaseConfigured()) return new Response(null, { status: 204 });
+  let body: Record<string, unknown>;
+  try { body = await request.json() as Record<string, unknown>; } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
+  const eventName = String(body.eventName ?? "");
+  if (!["page_view", "search_result_click", "LCP", "INP", "CLS"].includes(eventName)) return NextResponse.json({ error: "Unsupported event" }, { status: 400 });
+  const value = body.value == null ? null : Number(body.value);
+  if (value !== null && !Number.isFinite(value)) return NextResponse.json({ error: "Invalid metric" }, { status: 400 });
+  const db = await createServerClient();
+  await db.rpc("record_analytics_event", { p_event_name: eventName, p_route: String(body.route ?? "").slice(0, 300), p_entity_id: body.entityId ? String(body.entityId).slice(0, 120) : null, p_metric_value: value, p_metadata: {}, p_session_id: body.sessionId ? String(body.sessionId).slice(0, 80) : null });
+  return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+}

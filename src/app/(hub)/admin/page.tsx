@@ -97,6 +97,7 @@ export default async function AdminPage() {
                 { label: "Post Announcement", href: "/admin/announcements" },
                 { label: "Manage Clubs", href: "/admin/clubs" },
                 { label: "Support Queue", href: "/admin/support" },
+                { label: "Approval Workflows", href: "/admin/workflows" },
                 { label: "View Reports", href: "/admin/reports" },
                 { label: "Club Content & Governance", href: "/clubs/manage" },
                 { label: "Opportunities", href: "/admin/opportunities" },
@@ -107,6 +108,7 @@ export default async function AdminPage() {
                   { label: "Site Text", href: "/manage/site" },
                   { label: "Management Audit", href: "/admin/audit" },
                   { label: "Operations Dashboard", href: "/admin/operations" },
+                  { label: "CSV & Bulk Tools", href: "/admin/data" },
                 ] : []),
               ].map((t) => (
                 <Link
