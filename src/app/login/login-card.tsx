@@ -6,11 +6,16 @@ import { createBrowserClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { safeNextPath } from "@/lib/navigation";
 import EmailAccount from "./email-account";
+import { LogoMark } from "@/components/icons";
+
+function LoginBrand() {
+  return <div className="flex items-center gap-3"><LogoMark className="h-14 w-14" variant="light" /><p className="text-3xl font-bold text-[#4285f4]">Bayside Hub</p></div>;
+}
 
 export function LoginCardSkeleton() {
   return (
     <div>
-      <p className="text-3xl font-bold text-[#4285f4]">Bayside Hub</p>
+      <LoginBrand />
       <h1 className="mt-12 text-5xl font-bold text-black">Log In</h1>
       <p className="mt-3 text-sm text-[#5f6368]">
         Sign in with your NYC student account to get started.
@@ -48,7 +53,7 @@ export default function LoginCard() {
 
   return (
     <div>
-      <p className="text-3xl font-bold text-[#4285f4]">Bayside Hub</p>
+      <LoginBrand />
       <p className="mt-5 text-base text-black">Welcome back!</p>
       <h1 className="mt-5 text-5xl font-bold text-black sm:text-6xl">Log In</h1>
       <p className="mt-4 text-sm leading-6 text-[#5f6368]">Sign in with your school email or Google, or create a new school account below.</p>

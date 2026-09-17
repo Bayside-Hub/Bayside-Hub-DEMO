@@ -31,7 +31,13 @@ export const metadata: Metadata = {
     "Bayside Hub — your one-stop home for announcements, clubs, events, and opportunities at Bayside High School.",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "Bayside Hub", statusBarStyle: "black-translucent" },
-  icons: { icon: "/app-icon.svg", apple: "/app-icon.svg" },
+  icons: {
+    icon: [
+      { url: "/brand-logo-light.png", type: "image/png", media: "(prefers-color-scheme: light)" },
+      { url: "/brand-logo-dark.png", type: "image/png", media: "(prefers-color-scheme: dark)" },
+    ],
+    apple: "/brand-logo-light.png",
+  },
 };
 
 export default function RootLayout({

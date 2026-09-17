@@ -4,7 +4,7 @@ import { LogoMark } from "@/components/icons";
 export default function NotFound() {
   return (
     <div className="theme-dark flex min-h-full flex-col items-center justify-center bg-content-bg px-6 py-20 text-center">
-      <LogoMark className="h-12 w-14 text-cream" />
+      <LogoMark className="h-20 w-20" variant="dark" />
       <h1 className="mt-6 font-display text-4xl font-bold uppercase tracking-wide text-cream sm:text-5xl">
         Lost at sea
       </h1>

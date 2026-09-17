@@ -195,7 +195,7 @@ export default function Sidebar({ role = "student" }: { role?: Role; name?: stri
   ];
   return (
     <aside aria-label="Primary navigation" className="figma-rail">
-      <Link href="/" aria-label="Bayside Hub home" title="Bayside Hub" className="rail-brand"><LogoMark className="h-6 w-6" /></Link>
+      <Link href="/" aria-label="Bayside Hub home" title="Bayside Hub" className="rail-brand"><LogoMark className="h-10 w-10" /></Link>
       <nav aria-label="Main navigation" className="rail-groups" onScroll={() => {
         document.querySelectorAll<HTMLElement>(".rail-popover:popover-open").forEach(node => node.hidePopover());
       }}>

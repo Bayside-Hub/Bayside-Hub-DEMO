@@ -1,15 +1,15 @@
 import type { SVGProps } from "react";
+import Image from "next/image";
 
 type IconProps = SVGProps<SVGSVGElement>;
+type LogoProps = { className?: string; variant?: "auto" | "light" | "dark" };
 
-export function LogoMark(props: IconProps) {
+export function LogoMark({ className = "", variant = "auto" }: LogoProps) {
   return (
-    <svg viewBox="0 0 25 22" fill="none" aria-hidden {...props}>
-      <rect x="2" y="0.5" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2" />
-      <rect x="16" y="0.5" width="7" height="5" rx="1.5" stroke="currentColor" strokeWidth="2" />
-      <rect x="2" y="14.5" width="7" height="5" rx="1.5" stroke="currentColor" strokeWidth="2" />
-      <rect x="16" y="13" width="7" height="8" rx="1.5" stroke="currentColor" strokeWidth="2" />
-    </svg>
+    <span className={`brand-logo brand-logo-variant-${variant} ${className}`} aria-hidden>
+      <Image src="/brand-logo-light.png" alt="" width={512} height={512} className="brand-logo-light" priority />
+      <Image src="/brand-logo-dark.png" alt="" width={512} height={512} className="brand-logo-dark" priority />
+    </span>
   );
 }
 

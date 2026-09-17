@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import LoginCard, { LoginCardSkeleton } from "./login-card";
+import { LogoMark } from "@/components/icons";
 
 export const metadata: Metadata = { title: "Sign In" };
 
@@ -9,7 +10,7 @@ export default function LoginPage() {
   return (
     <div className="login-gradient fixed inset-0 z-50 min-h-full w-full overflow-y-auto px-4 py-6 sm:px-8 lg:px-14">
       <nav className="relative z-10 mx-auto flex w-full max-w-[1800px] items-center justify-between text-[#f7f8f0]">
-        <Link href="/" className="text-sm font-bold tracking-wide">BAYSIDE HUB</Link>
+        <Link href="/" aria-label="Bayside Hub home" className="flex items-center gap-3 text-sm font-bold tracking-wide"><LogoMark className="h-12 w-12" variant="dark" /><span>BAYSIDE HUB</span></Link>
         <Link href="/support#technical-support" className="rounded-full border border-white/30 px-5 py-2 text-xs font-semibold hover:bg-white/10">NEED HELP?</Link>
       </nav>
       <div className="login-intro-orb pointer-events-none absolute left-[22%] top-1/2 size-[250px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f7f8f0] shadow-[0_4px_100px_rgba(255,255,255,0.94)]" aria-hidden />
