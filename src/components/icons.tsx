@@ -56,6 +56,15 @@ export function CalendarIcon(props: IconProps) {
   );
 }
 
+export function NotificationIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden {...props}>
+      <path d="M5.2 8.2a4.8 4.8 0 0 1 9.6 0v2.5c0 .9.3 1.8.9 2.5l.8.9H3.5l.8-.9c.6-.7.9-1.6.9-2.5V8.2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 16a2.2 2.2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function OpportunitiesIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="none" aria-hidden {...props}>

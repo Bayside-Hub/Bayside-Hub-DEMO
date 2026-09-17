@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogoMark } from "./icons";
+import { LogoMark, NotificationIcon } from "./icons";
 import SearchBox from "./search-box";
 import type { SessionUser } from "@/lib/supabase/types";
 import ThemeToggle from "./theme-toggle";
@@ -38,7 +38,7 @@ export default function Topbar({ user }: { user: SessionUser | null }) {
         <ThemeToggle />
         {user ? (
           <>
-            <Link href="/notifications" title="Notifications" aria-label="Notifications" className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-card text-lg text-ink">🔔</Link>
+            <Link href="/notifications" title="Notifications" aria-label="Notifications" className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-card text-ink transition-colors hover:bg-content-bg hover:text-navy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy"><NotificationIcon className="size-5" /></Link>
             <div className="hidden text-right sm:block">
               <p className="text-xs font-medium text-ink">Welcome, {user.name}</p>
               <p className="text-[11px] text-muted">

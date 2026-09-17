@@ -26,6 +26,14 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
 
   return (
     <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-6 lg:py-12">
+      <nav aria-label="Updates and calendar sections" className="sticky top-[72px] z-20 -mx-1 mb-6 flex gap-2 overflow-x-auto rounded-[18px] border border-line bg-card/95 p-2 shadow-sm backdrop-blur-xl sm:static sm:mx-0 sm:w-fit">
+        {([
+          { value: "updates", label: "Updates", href: "/announcements" },
+          { value: "calendar", label: "Calendar", href: "/announcements?view=calendar" },
+          { value: "schedule", label: "Bell Schedule", href: "/announcements?view=schedule" },
+        ] as const).map((item) => <Link key={item.value} href={item.href} aria-current={view === item.value ? "page" : undefined} className={`shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold ${view === item.value ? "bg-navy text-cream" : "text-muted hover:bg-content-bg hover:text-ink"}`}>{item.label}</Link>)}
+      </nav>
+
       <header className="flex flex-col gap-5 border-b border-line pb-7 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-powder">Your school day at a glance</p>
@@ -34,14 +42,6 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
         </div>
         <div className="flex flex-wrap gap-2"><Link href="/announcements/submit" className="inline-flex h-11 items-center rounded-full bg-navy px-5 text-sm font-bold text-cream">Submit announcement</Link><Link href="/announcements/archive" className="inline-flex h-11 items-center rounded-full border border-line bg-card px-5 text-sm font-bold text-ink">Archive</Link></div>
       </header>
-
-      <nav aria-label="Updates and calendar sections" className="sticky top-[72px] z-20 -mx-1 mt-5 flex gap-2 overflow-x-auto rounded-[18px] border border-line bg-card/95 p-2 shadow-sm backdrop-blur-xl sm:static sm:mx-0 sm:w-fit">
-        {([
-          { value: "updates", label: "Updates", href: "/announcements" },
-          { value: "calendar", label: "Calendar", href: "/announcements?view=calendar" },
-          { value: "schedule", label: "Bell Schedule", href: "/announcements?view=schedule" },
-        ] as const).map((item) => <Link key={item.value} href={item.href} aria-current={view === item.value ? "page" : undefined} className={`shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold ${view === item.value ? "bg-navy text-cream" : "text-muted hover:bg-content-bg hover:text-ink"}`}>{item.label}</Link>)}
-      </nav>
 
       {view === "updates" ? <>
       <section className="mt-6 rounded-[18px] border border-line bg-card p-4 shadow-sm sm:p-5" aria-label="Search and filter announcements">
