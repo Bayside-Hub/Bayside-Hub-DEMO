@@ -14,6 +14,8 @@ export default function LoginPage() {
         <Link href="/support#technical-support" className="rounded-full border border-white/30 px-5 py-2 text-xs font-semibold hover:bg-white/10">NEED HELP?</Link>
       </nav>
       <div className="login-intro-orb pointer-events-none absolute left-[22%] top-1/2 size-[250px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f7f8f0] shadow-[0_4px_100px_rgba(255,255,255,0.94)]" aria-hidden />
+      <div className="login-ambient login-ambient-one pointer-events-none absolute hidden rounded-full xl:block" aria-hidden />
+      <div className="login-ambient login-ambient-two pointer-events-none absolute hidden rounded-full xl:block" aria-hidden />
       <main className="relative z-10 mx-auto grid min-h-[calc(100vh-76px)] w-full max-w-[1500px] items-center gap-12 py-10 lg:grid-cols-[1fr_520px]">
         <section className="login-intro-copy hidden max-w-2xl text-[#f7f8f0] lg:block">
           <p className="text-xs font-bold tracking-[0.28em] text-[#c0dbea]">ONE SCHOOL · ONE HUB</p>

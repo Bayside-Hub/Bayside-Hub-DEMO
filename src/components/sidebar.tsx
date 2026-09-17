@@ -119,7 +119,7 @@ export function isSubItemActive(pathname: string, href: string) {
 
 /** Figma rail icons are committed exports, not approximated glyphs. */
 const railAssets: Record<string, string> = {
-  "/": "home", "/announcements": "mail", "/clubs": "users",
+  "/": "home", "/announcements": "mail", "/clubs": "activities",
   "/opportunities": "briefcase",
   "/support": "question", "/about": "form", "/admin": "shield",
   "/clubs/manage": "manage",

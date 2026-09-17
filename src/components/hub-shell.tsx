@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { getCurrentUser } from "@/lib/auth";
-import BetaBanner from "./beta-banner";
 import Sidebar from "./sidebar";
 import Topbar from "./topbar";
 import SiteFooter from "./site-footer";
@@ -16,7 +15,6 @@ export default async function HubShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="theme-dark flex h-full flex-col overflow-hidden bg-content-bg">
-      <BetaBanner />
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <a
           href="#main-content"

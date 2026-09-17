@@ -25,9 +25,6 @@
   --rail-surface: rgba(30, 50, 121, 0.08);
   --page-glow: rgba(71, 114, 170, 0.2);
   --page-accent: rgba(255, 142, 104, 0.16);
-  --banner-shell: #e7ecf4;
-  --banner-bg: #ffd59c;
-  --banner-ink: #352315;
 }
 
 /* One global theme controls every surface. The attribute is set before paint. */
@@ -45,9 +42,6 @@
   --rail-surface: rgba(255, 255, 255, 0.08);
   --page-glow: rgba(88, 154, 239, 0.24);
   --page-accent: rgba(255, 142, 104, 0.14);
-  --banner-shell: #090b12;
-  --banner-bg: #f07f4f;
-  --banner-ink: #17191a;
 }
 
 [data-theme="light"] {
@@ -130,8 +124,6 @@ body {
   transition: background-color 220ms ease, color 220ms ease;
 }
 
-.beta-banner-shell { background: var(--banner-shell); transition: background-color 220ms ease; }
-.beta-banner-card { background: var(--banner-bg); color: var(--banner-ink); transition: background-color 220ms ease, color 220ms ease; }
 
 ::selection { background: var(--powder); color: #111111; }
 
@@ -191,14 +183,24 @@ body {
   to { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes login-ambient-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.22; }
+  50% { transform: translate3d(54px, -34px, 0) scale(1.14); opacity: 0.42; }
+  100% { transform: translate3d(-28px, 42px, 0) scale(0.92); opacity: 0.25; }
+}
+
 .login-intro-orb { animation: login-orb-intro 900ms cubic-bezier(.2,.8,.2,1) both; }
 .login-intro-card { animation: login-card-intro 600ms 260ms ease-out both; }
 .login-intro-copy { animation: login-copy-intro 700ms 180ms ease-out both; }
+.login-ambient { filter: blur(8px); animation: login-ambient-drift 9s ease-in-out infinite alternate; }
+.login-ambient-one { left: 4%; top: 10%; width: 18rem; height: 18rem; background: rgba(96, 150, 180, .28); box-shadow: 0 0 110px rgba(96, 150, 180, .5); }
+.login-ambient-two { right: 5%; bottom: 4%; width: 22rem; height: 22rem; background: rgba(41, 69, 168, .3); box-shadow: 0 0 130px rgba(151, 180, 222, .34); animation-delay: -4s; animation-duration: 12s; }
 
 @media (prefers-reduced-motion: reduce) {
   .login-intro-orb,
   .login-intro-card { animation: none; }
   .login-intro-copy { animation: none; }
+  .login-ambient { animation: none; }
 }
 
 /* Cream glow used on the profile name banner */

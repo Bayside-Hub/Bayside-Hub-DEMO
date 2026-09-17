@@ -35,11 +35,11 @@ export function MegaphoneIcon(props: IconProps) {
 export function ClubsIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 20 20" fill="none" aria-hidden {...props}>
-      <path d="M10 4.8A3.4 3.4 0 1 1 13.4 8 3.4 3.4 0 1 1 10 4.8Z" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M4.2 11.6A2 2 0 1 0 6.5 12.6 2 2 0 1 0 4.2 11.6Z" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M15.8 11.6A2 2 0 1 1 13.5 12.6 2 2 0 1 1 15.8 11.6Z" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M10 8.2l2.8 4.4H7.2 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <circle cx="10" cy="12.4" r="1" fill="currentColor" />
+      <circle cx="10" cy="6" r="2.7" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="4.7" cy="8.3" r="1.8" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="15.3" cy="8.3" r="1.8" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M4 16.5c.3-3.1 2.4-5 6-5s5.7 1.9 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M1.8 15.7c.1-2.2 1.3-3.5 3.4-3.8M18.2 15.7c-.1-2.2-1.3-3.5-3.4-3.8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
   );
 }
