@@ -1,17 +1,14 @@
-import { isValidOptionalTime } from "./input-validation.ts";
+import { bellPeriodByNumber } from "./bell-schedule.ts";
 
 /** Share limits between create and edit so updates cannot bypass validation. */
 export function parseMeetingInput(form: FormData) {
   const day = Number(form.get("day_of_week"));
-  const start = String(form.get("start_time") ?? "");
-  const end = String(form.get("end_time") ?? "");
+  const period = Number(form.get("period"));
   const location = String(form.get("location") ?? "").trim();
   const note = String(form.get("recurrence_note") ?? "").trim();
-  if (!Number.isInteger(day) || day < 1 || day > 7 || !isValidOptionalTime(start) || !isValidOptionalTime(end)) return null;
-  const normalizedStart = start.length === 5 ? `${start}:00` : start;
-  const normalizedEnd = end.length === 5 ? `${end}:00` : end;
-  if ((start && end && normalizedEnd <= normalizedStart) || location.length > 240 || note.length > 500) return null;
-  return { day_of_week: day, start_time: start || null, end_time: end || null, location: location || null, recurrence_note: note || null };
+  const selectedPeriod = bellPeriodByNumber(period);
+  if (!Number.isInteger(day) || day < 1 || day > 7 || !selectedPeriod || location.length > 240 || note.length > 500) return null;
+  return { day_of_week: day, start_time: selectedPeriod.startTime, end_time: selectedPeriod.endTime, location: location || null, recurrence_note: note || null };
 }
 
 export function parseClubPostInput(form: FormData) {

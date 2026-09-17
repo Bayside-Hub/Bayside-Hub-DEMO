@@ -13,6 +13,7 @@ import type {
   ClubRow,
 } from "@/lib/supabase/types";
 import { preferLiveData } from "./live-data";
+import { bellPeriodFromStartTime } from "./bell-schedule";
 
 const dayNames = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -39,6 +40,7 @@ function mapDatabaseClub(
   const firstMeeting = meetings[0];
   const start = shortTime(firstMeeting?.start_time ?? null);
   const end = shortTime(firstMeeting?.end_time ?? null);
+  const bellPeriod = bellPeriodFromStartTime(firstMeeting?.start_time);
   const cover = media.find((item) => item.is_cover);
   return {
     id: row.id,
@@ -48,7 +50,7 @@ function mapDatabaseClub(
     description: row.short_description,
     meetingDays: [...new Set(meetings.map((meeting) => dayNames[meeting.day_of_week]).filter(Boolean))],
     meetingDate: firstMeeting?.recurrence_note ?? (meetings.length ? "Weekly" : "Schedule TBA"),
-    meetingTime: start ? `${start}${end ? ` – ${end}` : ""}` : "TBA",
+    meetingTime: bellPeriod ? `Period ${bellPeriod.period}` : start ? `${start}${end ? ` – ${end}` : ""}` : "TBA",
     location: firstMeeting?.location ?? "TBA",
     commitment: 0,
     communityService: row.is_community_service,

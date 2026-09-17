@@ -14,6 +14,23 @@ export const bellPeriods = [
   { period: 11, start: "3:34 PM", end: "4:21 PM", startMinutes: 934, endMinutes: 981, length: 47, bathroom: "3:45–4:10 PM" },
 ] as const;
 
+export function bellPeriodByNumber(period: number) {
+  const item = bellPeriods.find((candidate) => candidate.period === period);
+  if (!item) return null;
+  const toSqlTime = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}:00`;
+  return { ...item, startTime: toSqlTime(item.startMinutes), endTime: toSqlTime(item.endMinutes) };
+}
+
+export function bellPeriodFromStartTime(value: string | null | undefined) {
+  if (!value) return null;
+  const normalized = value.slice(0, 5);
+  return bellPeriods.find((item) => {
+    const hour = Math.floor(item.startMinutes / 60);
+    const minute = item.startMinutes % 60;
+    return normalized === `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  }) ?? null;
+}
+
 export function getCurrentBellPeriod(now: Date) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: BAYSIDE_TIME_ZONE,

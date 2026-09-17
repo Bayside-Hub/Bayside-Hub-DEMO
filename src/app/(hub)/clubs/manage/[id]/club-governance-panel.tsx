@@ -6,12 +6,11 @@ import {
   deleteClubImage,
   removeClubOfficer,
   removeClubAdvisor,
-  updateClubCompliance,
   uploadClubImage,
   updateClubPublication,
   updateClubImagePlacement,
 } from "../actions";
-import type { ClubAdvisorRow, ClubAuditLogRow, ClubComplianceRow, ClubMediaRow, ClubOfficerRow, Role } from "@/lib/supabase/types";
+import type { ClubAdvisorRow, ClubAuditLogRow, ClubMediaRow, ClubOfficerRow, Role } from "@/lib/supabase/types";
 import AttendancePanel from "./attendance-panel";
 
 const input = "h-10 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink";
@@ -25,7 +24,6 @@ export default function ClubGovernancePanel({
   advisors,
   media,
   history,
-  compliance,
 }: {
   clubId: string;
   clubStatus: string;
@@ -35,7 +33,6 @@ export default function ClubGovernancePanel({
   advisors: ClubAdvisorRow[];
   media: ClubMediaRow[];
   history: ClubAuditLogRow[];
-  compliance: ClubComplianceRow | null;
 }) {
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -90,32 +87,12 @@ export default function ClubGovernancePanel({
         {media.length ? <ul className="mt-5 space-y-3">{media.map((item) => <li key={item.id} className="rounded-control border border-line p-3 text-sm"><div><p className="font-semibold text-cream">{item.title ?? "Club photo"}</p><p className="line-clamp-1 text-cream/60">{item.alt_text}</p></div><ActionFeedbackForm action={updateClubImagePlacement} className="mt-3 flex flex-wrap items-end gap-2"><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="media_id" value={item.id} /><label className="text-xs text-cream/70">Placement<select name="visibility" defaultValue={item.visibility} className={`${input} mt-1`}><option value="private">Private</option><option value="gallery">Gallery</option></select></label><label className="flex h-10 items-center gap-2 text-xs text-cream"><input type="checkbox" name="is_cover" defaultChecked={item.is_cover} /> Cover</label><button className="h-10 rounded-full bg-cream px-4 text-xs font-bold text-navy">Save</button></ActionFeedbackForm><ActionFeedbackForm action={deleteClubImage} className="mt-2"><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="media_id" value={item.id} /><button className="text-xs font-semibold text-orange">Delete</button></ActionFeedbackForm></li>)}</ul> : <p className="mt-4 text-sm text-cream/60">No photos uploaded yet.</p>}
       </section>
 
-      <section className="card-gradient rounded-[18px] p-6 lg:col-span-2">
-        <h2 className="font-display text-xl font-bold uppercase text-cream">Annual club requirements</h2>
-        <p className="mt-2 text-sm text-cream/65">Based on the BHS Club Manual. Do not enter student names or S.O. card numbers here.</p>
-        <ActionFeedbackForm action={updateClubCompliance} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <input type="hidden" name="club_id" value={clubId} />
-          <label className="text-sm text-cream">School year<input name="school_year" required pattern="[0-9]{4}-[0-9]{4}" placeholder="2026-2027" defaultValue={compliance?.school_year ?? "2026-2027"} className={`${input} mt-1`} /></label>
-          <label className="text-sm text-cream">Roster count<input type="number" name="roster_count" required min={0} max={10000} defaultValue={compliance?.roster_count ?? 0} className={`${input} mt-1`} /><span className="mt-1 block text-xs text-cream/50">A charter requires at least 10 interested students.</span></label>
-          <div className="grid gap-2 text-sm text-cream sm:col-span-2 lg:col-span-1">
-            {[
-              ["constitution_on_file", "Constitution on file", compliance?.constitution_on_file],
-              ["college_alignment_on_file", "College Alignment Form on file", compliance?.college_alignment_on_file],
-              ["annual_event_completed", "Annual event completed", compliance?.annual_event_completed],
-              ["community_service_completed", "Community service completed", compliance?.community_service_completed],
-              ["fundraiser_completed", "Fundraiser completed", compliance?.fundraiser_completed],
-            ].map(([name, label, checked]) => <label key={String(name)} className="flex items-center gap-2"><input type="checkbox" name={String(name)} defaultChecked={Boolean(checked)} /> {String(label)}</label>)}
-          </div>
-          <button className="h-10 rounded-full bg-cream px-5 font-bold text-black sm:col-span-2 lg:col-span-3">Save annual checklist</button>
-        </ActionFeedbackForm>
-      </section>
-
+      <div className="lg:col-span-2"><AttendancePanel clubId={clubId} /></div>
       <section className="card-gradient rounded-[18px] p-6 lg:col-span-2">
         <h2 className="font-display text-xl font-bold uppercase text-cream">Change history</h2>
         <p className="mt-2 text-sm text-cream/65">Append-only records identify what changed and when for review or investigation.</p>
-        {history.length ? <ol className="mt-4 divide-y divide-line">{history.map((entry) => <li key={entry.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"><p className="text-cream"><span className="font-semibold capitalize">{entry.action}</span> {entry.entity_type.replaceAll("_", " ")}</p><p className="text-xs text-cream/60">{new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.created_at))}{entry.actor_id ? ` · actor ${entry.actor_id.slice(0, 8)}` : " · system"}</p></li>)}</ol> : <p className="mt-4 text-sm text-cream/60">No recorded changes yet. History starts after the governance migration is applied.</p>}
+        {history.length ? <details className="mt-4"><summary className="cursor-pointer rounded-control border border-line px-4 py-3 text-sm font-semibold text-cream">Show {history.length} recent changes</summary><ol className="mt-3 max-h-[32rem] divide-y divide-line overflow-y-auto pr-2">{history.map((entry) => <li key={entry.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"><p className="text-cream"><span className="font-semibold capitalize">{entry.action}</span> {entry.entity_type.replaceAll("_", " ")}</p><p className="text-xs text-cream/60">{new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.created_at))}{entry.actor_id ? ` · actor ${entry.actor_id.slice(0, 8)}` : " · system"}</p></li>)}</ol></details> : <p className="mt-4 text-sm text-cream/60">No recorded changes yet. History starts after the governance migration is applied.</p>}
       </section>
-      <div className="lg:col-span-2"><AttendancePanel clubId={clubId} /></div>
     </div>
   );
 }

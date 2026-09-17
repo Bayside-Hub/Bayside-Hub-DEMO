@@ -5,6 +5,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import ActionFeedbackForm from "@/components/action-feedback-form";
 import Pagination from "@/components/pagination";
 import { editClubMeeting, deleteClubMeeting, editClubPost, deleteClubPost } from "../../actions";
+import { bellPeriodFromStartTime, bellPeriods } from "@/lib/bell-schedule";
 
 const field = "min-h-11 w-full min-w-0 rounded-lg border border-line bg-content-bg px-3 py-2 text-ink";
 const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -45,11 +46,11 @@ export default async function ClubContentPage({ params, searchParams }: {
     {result?.error ? <p role="alert">Content could not be loaded. No changes were made.</p> : <>
       {!result?.data?.length && <p>No records on this page. <Link href={`${basePath}?tab=${tab}`} className="underline">Go to first page</Link>.</p>}
       {meetings?.data?.map(meeting => <details key={meeting.id} className="rounded-xl border border-line bg-card p-5">
-        <summary className="cursor-pointer break-words font-semibold">{weekdays[meeting.day_of_week - 1]} · {meeting.start_time?.slice(0, 5) ?? "Time TBD"} · {meeting.location ?? "Location TBD"}</summary>
+        <summary className="cursor-pointer break-words font-semibold">{weekdays[meeting.day_of_week - 1]} · {bellPeriodFromStartTime(meeting.start_time)?.period ? `Period ${bellPeriodFromStartTime(meeting.start_time)?.period}` : "Period TBD"} · {meeting.location ?? "Location TBD"}</summary>
         <ActionFeedbackForm action={editClubMeeting} className="mt-5 grid gap-3">
           <RecordFields clubId={id} id={meeting.id} />
           <label>Weekday<select name="day_of_week" defaultValue={meeting.day_of_week} className={field}>{weekdays.map((day, index) => <option value={index + 1} key={day}>{day}</option>)}</select></label>
-          <div className="grid gap-3 sm:grid-cols-2"><label>Starts<input type="time" name="start_time" defaultValue={meeting.start_time?.slice(0, 5) ?? ""} className={field} /></label><label>Ends<input type="time" name="end_time" defaultValue={meeting.end_time?.slice(0, 5) ?? ""} className={field} /></label></div>
+          <label>Period<select name="period" defaultValue={bellPeriodFromStartTime(meeting.start_time)?.period ?? 1} className={field}>{bellPeriods.map((period) => <option key={period.period} value={period.period}>Period {period.period} · {period.start}–{period.end}</option>)}</select></label>
           <label>Location<input name="location" maxLength={240} defaultValue={meeting.location ?? ""} className={field} /></label>
           <label>Recurrence note<input name="recurrence_note" maxLength={500} defaultValue={meeting.recurrence_note ?? ""} className={field} /></label>
           <button className="min-h-11 rounded-full bg-navy px-5 text-cream">Save meeting</button>

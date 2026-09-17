@@ -67,6 +67,7 @@ export async function recordFinanceTransaction(formData: FormData) {
   const clubId = String(formData.get("club_id") ?? "");
   const context = await financeContext(clubId);
   if (!context) return denied;
+  if (!["staff", "admin"].includes(context.user.role)) return { ok: false, message: "Only Staff or Admin can add official ledger entries." };
   const schoolYear = String(formData.get("school_year") ?? "").trim();
   const entryType = formData.get("entry_type") === "income" ? "income" : "expense";
   const amountCents = parseMoneyToCents(formData.get("amount"));
