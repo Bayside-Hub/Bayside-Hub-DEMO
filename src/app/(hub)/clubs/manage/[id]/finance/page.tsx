@@ -1,0 +1,69 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import ActionFeedbackForm from "@/components/action-feedback-form";
+import { daysBetween } from "@/lib/club-finance";
+import { getCurrentUser } from "@/lib/auth";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createServerClient } from "@/lib/supabase/server";
+import { closeFundraiser, createFundraiser, recordFinanceTransaction, reviewFundraiser } from "./actions";
+
+const input = "h-11 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink outline-none focus:border-powder focus:ring-2 focus:ring-powder/20";
+const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+const shortDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
+async function requestDate() { return new Date().toISOString().slice(0, 10); }
+function dollars(cents: number | null) { return money.format((cents ?? 0) / 100); }
+
+export default async function ClubFinancePage({ params }: { params: Promise<{ id: string }> }) {
+  const user = await getCurrentUser();
+  const { id } = await params;
+  if (!user) redirect(`/login?next=/clubs/manage/${id}/finance`);
+  if (!isSupabaseConfigured()) redirect("/clubs/manage");
+  const db = await createServerClient();
+  const access = await db.rpc("can_manage_club", { p_club_id: id });
+  if (!access.data) redirect("/clubs/manage");
+
+  const [clubResult, approval, fundraisers, transactions] = await Promise.all([
+    db.from("clubs").select("id,name,slug").eq("id", id).maybeSingle(),
+    db.rpc("can_approve_club_finance", { p_club_id: id }),
+    db.from("club_fundraisers").select("*").eq("club_id", id).order("submitted_at", { ascending: false }),
+    db.from("club_finance_transactions").select("*").eq("club_id", id).order("occurred_on", { ascending: false }).order("created_at", { ascending: false }).limit(250),
+  ]);
+  const club = clubResult.data;
+  if (!club) notFound();
+  const migrationMissing = Boolean(approval.error || fundraisers.error || transactions.error);
+  const ledger = transactions.data ?? [];
+  const income = ledger.filter(item => item.entry_type === "income").reduce((sum, item) => sum + item.amount_cents, 0);
+  const expenses = ledger.filter(item => item.entry_type === "expense").reduce((sum, item) => sum + item.amount_cents, 0);
+  const today = await requestDate();
+  const defaultYear = Number(today.slice(5, 7)) >= 7 ? `${today.slice(0, 4)}-${Number(today.slice(0, 4)) + 1}` : `${Number(today.slice(0, 4)) - 1}-${today.slice(0, 4)}`;
+
+  return <div className="mx-auto w-full max-w-7xl space-y-7 px-5 py-8 sm:px-6">
+    <div><Link href={`/clubs/manage/${id}`} className="text-sm font-semibold text-powder">← {club.name} workspace</Link><div className="mt-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-powder">Board finance</p><h1 className="mt-2 font-display text-4xl font-bold uppercase text-ink">Fundraising &amp; Treasury</h1><p className="mt-2 max-w-3xl text-muted">Private to current club board members, Advisors, Staff, and Admin. Fundraisers move through Treasurer review and a final statement.</p></div><span className="rounded-full border border-line bg-card px-4 py-2 text-sm font-semibold text-ink">{approval.data ? "Treasurer review enabled" : "Board view"}</span></div></div>
+    {migrationMissing && <div role="alert" className="rounded-card border border-orange/40 bg-card p-5 text-sm text-ink">Finance is not ready in this environment. Run <code>supabase/club_finance.sql</code> in Supabase and reload this page.</div>}
+
+    <section className="grid gap-4 sm:grid-cols-3" aria-label="Finance summary">
+      {[["Available balance", income - expenses], ["Recorded income", income], ["Recorded spending", expenses]].map(([label, value]) => <article key={String(label)} className="rounded-card border border-line bg-card p-5 shadow-sm"><p className="text-sm font-medium text-muted">{label}</p><p className={`mt-2 text-3xl font-bold ${Number(value) < 0 ? "text-orange" : "text-ink"}`}>{dollars(Number(value))}</p><p className="mt-1 text-xs text-muted">From the append-only ledger shown below</p></article>)}
+    </section>
+
+    <div className="grid gap-6 xl:grid-cols-2">
+      <section className="rounded-[20px] border border-line bg-card p-6 shadow-sm"><p className="text-xs font-bold uppercase tracking-[.16em] text-powder">New request</p><h2 className="mt-1 text-2xl font-bold text-ink">Plan a fundraiser</h2><p className="mt-2 text-sm text-muted">Submit at least 30 days before the start when possible. Short-notice requests are clearly flagged for the Treasurer.</p>
+        <ActionFeedbackForm action={createFundraiser} className="mt-5 grid gap-3 sm:grid-cols-2"><input type="hidden" name="club_id" value={id} /><label className="text-sm font-medium text-ink sm:col-span-2">Fundraiser name<input name="title" required minLength={3} maxLength={120} className={`${input} mt-1`} /></label><label className="text-sm font-medium text-ink">School year<input name="school_year" required defaultValue={defaultYear} pattern="[0-9]{4}-[0-9]{4}" className={`${input} mt-1`} /></label><label className="text-sm font-medium text-ink">Target amount<input name="target_amount" required inputMode="decimal" placeholder="500.00" className={`${input} mt-1`} /></label><label className="text-sm font-medium text-ink">Starts<input type="date" name="planned_start" required className={`${input} mt-1`} /></label><label className="text-sm font-medium text-ink">Ends<input type="date" name="planned_end" required className={`${input} mt-1`} /></label><label className="text-sm font-medium text-ink sm:col-span-2">Purpose and plan<textarea name="purpose" required minLength={10} maxLength={2000} rows={4} className={`${input} mt-1 h-auto py-3`} /></label><button className="h-11 rounded-full bg-navy px-5 font-bold text-cream sm:col-span-2">Send to Treasurer</button></ActionFeedbackForm>
+      </section>
+
+      <section className="rounded-[20px] border border-line bg-card p-6 shadow-sm"><p className="text-xs font-bold uppercase tracking-[.16em] text-powder">Ledger</p><h2 className="mt-1 text-2xl font-bold text-ink">Record money received or used</h2><p className="mt-2 text-sm text-muted">Entries cannot be silently edited or deleted. Add a correcting entry if something needs to be reversed.</p>
+        <ActionFeedbackForm action={recordFinanceTransaction} className="mt-5 grid gap-3 sm:grid-cols-2"><input type="hidden" name="club_id" value={id} /><label className="text-sm font-medium text-ink">Type<select name="entry_type" className={`${input} mt-1`}><option value="income">Income</option><option value="expense">Expense</option></select></label><label className="text-sm font-medium text-ink">Amount<input name="amount" required inputMode="decimal" placeholder="25.00" className={`${input} mt-1`} /></label><label className="text-sm font-medium text-ink">School year<input name="school_year" required defaultValue={defaultYear} pattern="[0-9]{4}-[0-9]{4}" className={`${input} mt-1`} /></label><label className="text-sm font-medium text-ink">Date<input type="date" name="occurred_on" required defaultValue={today} className={`${input} mt-1`} /></label><label className="text-sm font-medium text-ink">Category<input name="category" required minLength={2} maxLength={80} placeholder="Supplies, dues, fundraising…" className={`${input} mt-1`} /></label><label className="text-sm font-medium text-ink">Related fundraiser<select name="fundraiser_id" className={`${input} mt-1`}><option value="">None</option>{(fundraisers.data ?? []).map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label><label className="text-sm font-medium text-ink sm:col-span-2">How the money was used<input name="description" required minLength={3} maxLength={1000} className={`${input} mt-1`} /></label><label className="text-sm font-medium text-ink sm:col-span-2">Receipt or reference link<input name="receipt_reference" maxLength={500} placeholder="Receipt URL, invoice number, or check reference" className={`${input} mt-1`} /></label><button className="h-11 rounded-full bg-navy px-5 font-bold text-cream sm:col-span-2">Add ledger entry</button></ActionFeedbackForm>
+      </section>
+    </div>
+
+    <section className="rounded-[20px] border border-line bg-card p-6 shadow-sm"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-powder">Workflow</p><h2 className="mt-1 text-2xl font-bold text-ink">Fundraising requests</h2></div><p className="text-sm text-muted">30-day notice → Treasurer → final statement</p></div>
+      {fundraisers.data?.length ? <div className="mt-5 space-y-4">{fundraisers.data.map(item => { const notice = daysBetween(today, item.planned_start); const finalDue = item.status === "approved" && item.planned_end < today; return <article key={item.id} className="rounded-card border border-line bg-content-bg p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-bold text-ink">{item.title}</h3><p className="mt-1 text-sm text-muted">{shortDate.format(new Date(`${item.planned_start}T12:00:00Z`))}–{shortDate.format(new Date(`${item.planned_end}T12:00:00Z`))} · target {dollars(item.target_cents)}</p></div><span className="rounded-full border border-line bg-card px-3 py-1 text-xs font-bold uppercase text-ink">{finalDue ? "final statement due" : item.status.replaceAll("_", " ")}</span></div><p className="mt-3 text-sm leading-6 text-muted">{item.purpose}</p>{notice < 30 && item.planned_start >= today ? <p className="mt-3 rounded-control bg-orange/15 px-3 py-2 text-sm font-semibold text-ink">Short notice: {Math.max(0, notice)} days before start.</p> : null}{item.review_note && <p className="mt-3 text-sm text-muted">Treasurer note: {item.review_note}</p>}
+          {approval.data && item.status === "pending_treasurer" ? <ActionFeedbackForm action={reviewFundraiser} className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto_auto]"><input type="hidden" name="club_id" value={id} /><input type="hidden" name="fundraiser_id" value={item.id} /><input name="note" maxLength={1000} placeholder="Approval conditions or rejection reason" className={input} /><button name="decision" value="approve" className="rounded-full bg-navy px-4 py-2 text-sm font-bold text-cream">Approve</button><button name="decision" value="reject" className="rounded-full border border-line px-4 py-2 text-sm font-bold text-ink">Reject</button></ActionFeedbackForm> : null}
+          {["approved", "final_statement_due"].includes(item.status) ? <details className="mt-4"><summary className="cursor-pointer text-sm font-bold text-navy">File final statement</summary><ActionFeedbackForm action={closeFundraiser} className="mt-3 grid gap-3 sm:grid-cols-2"><input type="hidden" name="club_id" value={id} /><input type="hidden" name="fundraiser_id" value={item.id} /><label className="text-sm text-ink">Gross proceeds<input name="proceeds" required inputMode="decimal" defaultValue="0.00" className={`${input} mt-1`} /></label><label className="text-sm text-ink">Fundraiser expenses<input name="expenses" required inputMode="decimal" defaultValue="0.00" className={`${input} mt-1`} /></label><label className="text-sm text-ink sm:col-span-2">Final statement<textarea name="statement" required minLength={10} maxLength={4000} rows={4} className={`${input} mt-1 h-auto py-3`} /></label><button className="h-11 rounded-full bg-navy px-5 font-bold text-cream sm:col-span-2">Close fundraiser</button></ActionFeedbackForm></details> : null}
+          {item.status === "closed" && <div className="mt-4 grid gap-2 rounded-control border border-line bg-card p-4 text-sm sm:grid-cols-3"><p><span className="block text-xs text-muted">Proceeds</span>{dollars(item.proceeds_cents)}</p><p><span className="block text-xs text-muted">Expenses</span>{dollars(item.expenses_cents)}</p><p><span className="block text-xs text-muted">Net</span>{dollars((item.proceeds_cents ?? 0) - (item.expenses_cents ?? 0))}</p><p className="text-muted sm:col-span-3">{item.final_statement}</p></div>}</article>; })}</div> : <p className="mt-5 text-sm text-muted">No fundraiser requests yet.</p>}
+    </section>
+
+    <section className="rounded-[20px] border border-line bg-card p-6 shadow-sm"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-powder">Amount &amp; usage history</p><h2 className="mt-1 text-2xl font-bold text-ink">Financial ledger</h2></div><span className="text-sm text-muted">Latest 250 entries</span></div>
+      {ledger.length ? <div className="mt-5 overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="border-b border-line text-xs uppercase text-muted"><tr><th className="px-3 py-3">Date</th><th className="px-3 py-3">Use / description</th><th className="px-3 py-3">Category</th><th className="px-3 py-3">Reference</th><th className="px-3 py-3 text-right">Amount</th></tr></thead><tbody className="divide-y divide-line">{ledger.map(item => <tr key={item.id}><td className="px-3 py-4 text-muted">{shortDate.format(new Date(`${item.occurred_on}T12:00:00Z`))}</td><td className="px-3 py-4 font-medium text-ink">{item.description}</td><td className="px-3 py-4 text-muted">{item.category}</td><td className="max-w-56 truncate px-3 py-4 text-muted">{item.receipt_reference ?? "—"}</td><td className={`px-3 py-4 text-right font-bold ${item.entry_type === "income" ? "text-[#23864c]" : "text-orange"}`}>{item.entry_type === "income" ? "+" : "−"}{dollars(item.amount_cents)}</td></tr>)}</tbody></table></div> : <p className="mt-5 text-sm text-muted">No financial entries recorded yet.</p>}
+    </section>
+  </div>;
+}

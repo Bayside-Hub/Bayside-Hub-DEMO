@@ -77,6 +77,8 @@ export type Database = {
       support_request_updates: TableDefinition<SupportRequestUpdateRow>;
       club_audit_log: TableDefinition<ClubAuditLogRow>;
       club_compliance: TableDefinition<ClubComplianceRow>;
+      club_finance_transactions: TableDefinition<ClubFinanceTransactionRow>;
+      club_fundraisers: TableDefinition<ClubFundraiserRow>;
     };
     Views: {
       approved_clubs: {
@@ -123,6 +125,9 @@ export type Database = {
       reply_to_membership_decision: { Args: { p_membership_id: string; p_reply: string }; Returns: boolean };
       record_search_analytics: { Args: { p_query: string; p_result_count: number }; Returns: undefined };
       record_system_error: { Args: { p_source: string; p_message: string; p_context?: Record<string, unknown> }; Returns: undefined };
+      can_approve_club_finance: { Args: { p_club_id: string }; Returns: boolean };
+      review_club_fundraiser: { Args: { p_fundraiser_id: string; p_approve: boolean; p_note: string }; Returns: boolean };
+      close_club_fundraiser: { Args: { p_fundraiser_id: string; p_statement: string; p_proceeds_cents: number; p_expenses_cents: number }; Returns: boolean };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -444,4 +449,42 @@ export type ClubComplianceRow = {
   fundraiser_completed: boolean;
   updated_by: string | null;
   updated_at: string;
+};
+
+export type ClubFinanceTransactionRow = {
+  id: string;
+  club_id: string;
+  school_year: string;
+  entry_type: "income" | "expense";
+  amount_cents: number;
+  category: string;
+  description: string;
+  occurred_on: string;
+  receipt_reference: string | null;
+  fundraiser_id: string | null;
+  created_by: string;
+  created_at: string;
+};
+
+export type ClubFundraiserRow = {
+  id: string;
+  club_id: string;
+  school_year: string;
+  title: string;
+  purpose: string;
+  target_cents: number;
+  planned_start: string;
+  planned_end: string;
+  status: "pending_treasurer" | "approved" | "rejected" | "final_statement_due" | "closed";
+  submitted_by: string;
+  submitted_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+  final_statement_due_at: string;
+  final_statement: string | null;
+  proceeds_cents: number | null;
+  expenses_cents: number | null;
+  closed_by: string | null;
+  closed_at: string | null;
 };
