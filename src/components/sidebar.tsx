@@ -174,7 +174,7 @@ function RailItem({ item, pathname, role }: { item: NavItem; pathname: string; r
           setExpanded(isOpen);
           if (isOpen) position();
         }}>
-        <p className="px-3 pb-2 pt-1 text-xs font-medium tracking-wide text-white/60">{item.label}</p>
+        <p className="px-3 pb-2 pt-1 text-xs font-medium tracking-wide text-muted">{item.label}</p>
         {item.sub.filter(sub => !sub.roles || sub.roles.includes(role)).map(sub => (
           <Link key={sub.href} href={sub.href} aria-current={isSubItemActive(pathname, sub.href) ? "page" : undefined}
             onClick={() => panel.current?.hidePopover()}

@@ -86,7 +86,7 @@ export default function ClubChat({
   }, [clubId, refreshMessages]);
 
   return (
-    <section className="mt-12 overflow-hidden rounded-[18px] border border-[#97b4de]/40 bg-[#080d20]" aria-labelledby="club-chat-title">
+    <section className="theme-fixed-dark mt-12 overflow-hidden rounded-[18px] border border-[#97b4de]/40 bg-[#080d20]" aria-labelledby="club-chat-title">
       <header className="border-b border-white/10 px-5 py-4 sm:px-6">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-powder">Members only</p>
         <h2 id="club-chat-title" className="mt-1 font-display text-2xl font-semibold uppercase text-cream">Club chat</h2>

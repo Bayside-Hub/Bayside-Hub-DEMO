@@ -157,6 +157,14 @@ body {
 [data-theme="light"] .hub-unified-backdrop .bg-navy.text-cream,
 [data-theme="light"] .hub-unified-backdrop .bg-navy .text-cream { color: #fcf1dd !important; }
 
+/* Some tools intentionally keep a dark canvas in both site themes. */
+[data-theme="light"] .hub-unified-backdrop .theme-fixed-dark [class~="text-cream"] {
+  color: var(--cream) !important;
+}
+[data-theme="light"] .hub-unified-backdrop .theme-fixed-dark [class*="text-cream/"] {
+  color: color-mix(in srgb, var(--cream) 72%, transparent) !important;
+}
+
 @media (hover: hover) {
   .card-gradient { transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease; }
   .card-gradient:hover { border-color: rgba(151, 191, 244, 0.36); box-shadow: 0 24px 60px -34px rgba(151, 191, 244, 0.95); }

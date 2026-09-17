@@ -20,11 +20,11 @@
 [data-theme="light"] .figma-rail .rail-control img { filter: brightness(0) saturate(100%) invert(17%) sepia(20%) saturate(1220%) hue-rotate(185deg); opacity: .78; }
 .figma-rail .rail-brand .brand-logo img { filter: none; opacity: 1; }
 .rail-control:focus-visible, .rail-brand:focus-visible, .rail-avatar:focus-visible,
-.rail-sub-link:focus-visible { outline: 2px solid #c9a4ff; outline-offset: 3px; }
+.rail-sub-link:focus-visible { outline: 2px solid var(--powder); outline-offset: 3px; }
 .rail-search { margin: 18px 0 12px; border-radius: 50%; background: var(--rail-surface); flex-shrink: 0; }
 .rail-groups { width: 100%; min-height: 0; flex: 1; overflow-y: auto; scrollbar-width: thin; }
-.rail-group { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0 18px; margin: 0 14px; border-bottom: 1px solid #ffffff1a; }
-.rail-group h2 { font-size: 12px; font-weight: 400; color: #ffffff99; margin-bottom: 6px; }
+.rail-group { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0 18px; margin: 0 14px; border-bottom: 1px solid var(--line); }
+.rail-group h2 { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
 .rail-account { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 12px; }
 .rail-avatar { width: 34px; height: 34px; background: #dfcaff; color: #261336; font-size: 12px; font-weight: 700; }
 /* Popover top-layer escapes both the rail's scroll clipping and main-card z-index. */
@@ -36,7 +36,7 @@
   box-shadow: 0 16px 48px #0008; font-size: 14px;
 }
 .rail-sub-link { display: block; padding: 10px 12px; border-radius: 5px; }
-.rail-sub-link:hover, .rail-sub-link[aria-current="page"] { background: #ffffff1a; }
+.rail-sub-link:hover, .rail-sub-link[aria-current="page"] { background: var(--rail-surface); }
 @media (max-height: 760px) {
   .figma-rail { padding-top: 12px; }
   .rail-group { gap: 2px; padding: 8px 0; }
