@@ -26,12 +26,12 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
 
   return (
     <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-6 lg:py-12">
-      <nav aria-label="Updates and calendar sections" className="sticky top-[72px] z-20 -mx-1 mb-6 flex gap-2 overflow-x-auto rounded-[18px] border border-line bg-card/95 p-2 shadow-sm backdrop-blur-xl sm:static sm:mx-0 sm:w-fit">
+      <nav aria-label="Updates and calendar sections" className="sticky top-[72px] z-20 mb-6 grid w-full grid-cols-3 gap-1 overflow-hidden rounded-[18px] border border-line bg-card/95 p-2 shadow-sm backdrop-blur-xl sm:static sm:w-fit sm:gap-2">
         {([
           { value: "updates", label: "Updates", href: "/announcements" },
           { value: "calendar", label: "Calendar", href: "/announcements?view=calendar" },
           { value: "schedule", label: "Bell Schedule", href: "/announcements?view=schedule" },
-        ] as const).map((item) => <Link key={item.value} href={item.href} aria-current={view === item.value ? "page" : undefined} className={`shrink-0 rounded-xl px-5 py-2.5 text-sm font-bold ${view === item.value ? "bg-navy text-cream" : "text-muted hover:bg-content-bg hover:text-ink"}`}>{item.label}</Link>)}
+        ] as const).map((item) => <Link key={item.value} href={item.href} aria-current={view === item.value ? "page" : undefined} className={`min-w-0 whitespace-nowrap rounded-xl px-1 py-2.5 text-center text-xs font-bold sm:px-5 sm:text-sm ${view === item.value ? "bg-navy text-cream" : "text-muted hover:bg-content-bg hover:text-ink"}`}>{item.label}</Link>)}
       </nav>
 
       <header className="flex flex-col gap-5 border-b border-line pb-7 lg:flex-row lg:items-end lg:justify-between">
