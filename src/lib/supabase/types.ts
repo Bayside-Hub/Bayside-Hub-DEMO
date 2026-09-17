@@ -21,7 +21,9 @@ export type SessionUser = {
 export type Database = {
   public: {
     Tables: {
-      management_audit: TableDefinition<{ id: string; actor_id: string | null; resource: string; operation: string; before_data: unknown; after_data: unknown; created_at: string }>;
+      management_audit: TableDefinition<{ id: string; actor_id: string | null; resource: string; operation: string; before_data: unknown; after_data: unknown; search_text: string; search_vector: string; created_at: string }>;
+      search_analytics: TableDefinition<SearchAnalyticsRow>;
+      system_errors: TableDefinition<SystemErrorRow>;
       account_role_audit: TableDefinition<{ id: string; actor_id: string | null; profile_id: string | null; previous_role: string | null; new_role: string | null; club_id: string | null; created_at: string }>;
       custom_roles: TableDefinition<{ id: string; name: string; permissions: string[]; created_at: string }>;
       custom_role_assignments: TableDefinition<{ id: string; role_id: string; profile_id: string; club_id: string | null; created_at: string }>;
@@ -119,10 +121,30 @@ export type Database = {
       };
       get_my_club_attendance: { Args: { p_limit?: number }; Returns: MyClubAttendance[] };
       reply_to_membership_decision: { Args: { p_membership_id: string; p_reply: string }; Returns: boolean };
+      record_search_analytics: { Args: { p_query: string; p_result_count: number }; Returns: undefined };
+      record_system_error: { Args: { p_source: string; p_message: string; p_context?: Record<string, unknown> }; Returns: undefined };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
+};
+
+export type SearchAnalyticsRow = {
+  id: number;
+  query: string;
+  normalized_query: string;
+  result_count: number;
+  user_id: string | null;
+  created_at: string;
+};
+
+export type SystemErrorRow = {
+  id: number;
+  source: string;
+  message: string;
+  context: Record<string, unknown>;
+  resolved_at: string | null;
+  created_at: string;
 };
 
 export type AnnouncementRow = {

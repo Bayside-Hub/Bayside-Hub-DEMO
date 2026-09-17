@@ -106,6 +106,7 @@ export default async function AdminPage() {
                   { label: "Custom Roles", href: "/admin/roles" },
                   { label: "Site Text", href: "/manage/site" },
                   { label: "Management Audit", href: "/admin/audit" },
+                  { label: "Operations Dashboard", href: "/admin/operations" },
                 ] : []),
               ].map((t) => (
                 <Link

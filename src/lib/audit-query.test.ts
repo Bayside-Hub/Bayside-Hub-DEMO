@@ -23,3 +23,9 @@ test("audit page and selectable filters stay within supported values", () => {
     assert.equal(result.operation, "");
   }
 });
+test("audit full-text search is normalized and bounded", () => {
+  const result = parseAuditSearch({ kind: "changes", q: `  Club\uFF11 ${"x".repeat(140)}  ` });
+  assert.ok(!("error" in result));
+  assert.equal(result.q.startsWith("Club1 "), true);
+  assert.equal(result.q.length, 120);
+});
