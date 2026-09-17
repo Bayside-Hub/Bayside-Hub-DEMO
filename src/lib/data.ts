@@ -16,6 +16,7 @@ export type Club = {
   activeStartDate?: string;
   activeEndDate?: string;
   googleClassroomCode?: string;
+  links?: { id: string; platform: string; label: string; value: string }[];
   contactEmail?: string;
   joinPolicy?: "instant" | "approval_required";
   recruitingStatus?: "recruiting" | "paused" | "closed";

@@ -65,7 +65,6 @@ export async function updateManagedClub(formData: FormData) {
     is_community_service: formData.get("is_community_service") === "on",
     active_start_date: activeStartDate,
     active_end_date: activeEndDate,
-    google_classroom_code: String(formData.get("google_classroom_code") ?? "").trim() || null,
     contact_email: contactEmail || null,
     join_policy: formData.get("join_policy") === "instant" ? "instant" : "approval_required",
     recruiting_status: ["recruiting", "paused", "closed"].includes(String(formData.get("recruiting_status"))) ? formData.get("recruiting_status") as "recruiting" | "paused" | "closed" : "recruiting",
@@ -326,6 +325,52 @@ export async function removeClubAdvisor(formData: FormData) {
   revalidatePath(`/clubs/manage/${clubId}`);
   revalidatePath("/clubs");
   return { ok: true, message: "Advisor removed. Their account role and Admin permissions were not changed." };
+}
+
+const linkPlatforms = ["google_classroom", "instagram", "discord", "whatsapp", "youtube", "tiktok", "website", "other"] as const;
+
+export async function addClubLink(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context) return denied;
+  const platform = String(formData.get("platform") ?? "");
+  const label = String(formData.get("label") ?? "").trim();
+  const value = String(formData.get("value") ?? "").trim();
+  if (!linkPlatforms.includes(platform as (typeof linkPlatforms)[number]) || label.length < 1 || label.length > 80 || value.length < 1 || value.length > 500) return invalid;
+  if (platform !== "google_classroom") {
+    try {
+      const url = new URL(value);
+      if (!["https:", "http:"].includes(url.protocol)) return invalid;
+    } catch {
+      return { ok: false, message: "Enter a complete http:// or https:// link." };
+    }
+  }
+  const count = await context.supabase.from("club_links").select("id", { count: "exact", head: true }).eq("club_id", clubId);
+  if ((count.count ?? 0) >= 50) return { ok: false, message: "A Club can publish up to 50 links." };
+  const { error } = await context.supabase.from("club_links").insert({
+    club_id: clubId,
+    platform: platform as (typeof linkPlatforms)[number],
+    label,
+    value,
+    sort_order: count.count ?? 0,
+    created_by: context.user.id,
+  });
+  if (error) return failed;
+  revalidatePath(`/clubs/manage/${clubId}`);
+  revalidatePath("/clubs", "layout");
+  return saved;
+}
+
+export async function removeClubLink(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const linkId = String(formData.get("link_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context || !linkId) return denied;
+  const { data, error } = await context.supabase.from("club_links").delete().eq("id", linkId).eq("club_id", clubId).select("id").maybeSingle();
+  if (error || !data) return failed;
+  revalidatePath(`/clubs/manage/${clubId}`);
+  revalidatePath("/clubs", "layout");
+  return saved;
 }
 
 export async function uploadClubImage(formData: FormData) {

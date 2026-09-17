@@ -5,7 +5,7 @@ import { CalendarIcon, ClubsIcon, GearIcon, MegaphoneIcon, UserIcon } from "@/co
 import { getCurrentUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
-import { addClubMeeting, publishClubAnnouncement, reviewClubMembership, updateManagedClub } from "../actions";
+import { addClubLink, addClubMeeting, publishClubAnnouncement, removeClubLink, reviewClubMembership, updateManagedClub } from "../actions";
 import ClubGovernancePanel from "./club-governance-panel";
 
 const input = "h-11 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink outline-none focus:border-powder focus:ring-2 focus:ring-powder/20";
@@ -34,6 +34,7 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
     { data: media },
     { data: history },
     { data: compliance },
+    { data: clubLinks },
     activeMembers,
     postCount,
     recentPosts,
@@ -47,6 +48,7 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
     supabase.from("club_media").select("*").eq("club_id", id).eq("media_type", "image").order("created_at", { ascending: false }),
     supabase.from("club_audit_log").select("*").eq("club_id", id).order("created_at", { ascending: false }).limit(50),
     supabase.from("club_compliance").select("*").eq("club_id", id).order("school_year", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("club_links").select("*").eq("club_id", id).order("sort_order").order("created_at"),
     supabase.from("club_memberships").select("id", { count: "exact", head: true }).eq("club_id", id).eq("status", "active"),
     supabase.from("club_announcements").select("id", { count: "exact", head: true }).eq("club_id", id),
     supabase.from("club_announcements").select("id,title,body,published,created_at").eq("club_id", id).order("created_at", { ascending: false }).limit(4),
@@ -153,12 +155,52 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
               <label className="text-sm font-medium text-ink">Interest tags<input name="interest_tags" defaultValue={club.interest_tags.join(", ")} className={`${input} mt-1`} /></label>
               <div className="grid gap-2 text-sm text-ink"><label className="flex items-center gap-2"><input type="checkbox" name="is_stem" defaultChecked={club.is_stem} /> STEM</label><label className="flex items-center gap-2"><input type="checkbox" name="is_community_service" defaultChecked={club.is_community_service} /> Community service</label></div>
               <label className="text-sm font-medium text-ink">Contact email<input type="email" name="contact_email" defaultValue={club.contact_email ?? ""} className={`${input} mt-1`} /></label>
-              <label className="text-sm font-medium text-ink">Google Classroom code<input name="google_classroom_code" defaultValue={club.google_classroom_code ?? ""} className={`${input} mt-1`} /></label>
               <div className="grid grid-cols-2 gap-3"><label className="text-sm font-medium text-ink">Active from<input type="date" name="active_start_date" defaultValue={club.active_start_date ?? ""} className={`${input} mt-1`} /></label><label className="text-sm font-medium text-ink">Active until<input type="date" name="active_end_date" defaultValue={club.active_end_date ?? ""} className={`${input} mt-1`} /></label></div>
               <label className="text-sm font-medium text-ink">Join policy<select name="join_policy" defaultValue={club.join_policy} className={`${input} mt-1`}><option value="instant">Instant</option><option value="approval_required">Approval required</option></select></label>
               <label className="text-sm font-medium text-ink">Recruiting status<select name="recruiting_status" defaultValue={club.recruiting_status} className={`${input} mt-1`}><option value="recruiting">Recruiting</option><option value="paused">Paused</option><option value="closed">Closed</option></select></label>
               <button className="h-11 rounded-full bg-navy px-5 font-bold text-cream">Save profile</button>
             </ActionFeedbackForm>
+          </section>
+
+          <section id="links" className="scroll-mt-28 rounded-[20px] border border-line bg-card p-5 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-powder">Links</p>
+            <h2 className="mt-1 text-xl font-bold text-ink">Club links</h2>
+            <p className="mt-2 text-sm leading-6 text-muted">Add Google Classroom, social media, or any useful Club resource. Each link can be removed independently.</p>
+            <ActionFeedbackForm action={addClubLink} className="mt-4 grid gap-3">
+              <input type="hidden" name="club_id" value={club.id} />
+              <label className="text-sm font-medium text-ink">Platform
+                <select name="platform" defaultValue="google_classroom" className={`${input} mt-1`}>
+                  <option value="google_classroom">Google Classroom</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="discord">Discord</option>
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="tiktok">TikTok</option>
+                  <option value="website">Website</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <label className="text-sm font-medium text-ink">Display name<input name="label" required minLength={1} maxLength={60} placeholder="e.g. Instagram updates" className={`${input} mt-1`} /></label>
+              <label className="text-sm font-medium text-ink">Code or URL<input name="value" required maxLength={500} placeholder="Classroom code or https://…" className={`${input} mt-1`} /></label>
+              <button className="h-11 rounded-full bg-navy px-5 font-bold text-cream">Add link</button>
+            </ActionFeedbackForm>
+            {clubLinks?.length ? (
+              <ul className="mt-5 space-y-2">
+                {clubLinks.map((link) => (
+                  <li key={link.id} className="flex items-center justify-between gap-3 rounded-control border border-line bg-content-bg p-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-ink">{link.label}</p>
+                      <p className="mt-0.5 truncate text-xs text-muted">{link.value}</p>
+                    </div>
+                    <ActionFeedbackForm action={removeClubLink}>
+                      <input type="hidden" name="club_id" value={club.id} />
+                      <input type="hidden" name="link_id" value={link.id} />
+                      <button className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink">Remove</button>
+                    </ActionFeedbackForm>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="mt-4 rounded-control bg-content-bg p-4 text-sm text-muted">No Club links have been added yet.</p>}
           </section>
         </aside>
       </div>

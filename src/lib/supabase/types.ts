@@ -62,6 +62,7 @@ export type Database = {
       clubs: TableDefinition<ClubRow>;
       club_officers: TableDefinition<ClubOfficerRow>;
       club_advisors: TableDefinition<ClubAdvisorRow>;
+      club_links: TableDefinition<ClubLinkRow>;
       club_meetings: TableDefinition<ClubMeetingRow>;
       club_memberships: TableDefinition<ClubMembershipRow>;
       club_membership_history: TableDefinition<ClubMembershipHistoryRow>;
@@ -268,6 +269,16 @@ export type ClubAdvisorRow = {
   profile_id: string;
   display_name: string | null;
   contact_email: string | null;
+  created_at: string;
+};
+export type ClubLinkRow = {
+  id: string;
+  club_id: string;
+  platform: "google_classroom" | "instagram" | "discord" | "whatsapp" | "youtube" | "tiktok" | "website" | "other";
+  label: string;
+  value: string;
+  sort_order: number;
+  created_by: string | null;
   created_at: string;
 };
 

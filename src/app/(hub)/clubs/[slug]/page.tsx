@@ -21,6 +21,18 @@ import ClubChat from "./club-chat";
 // Never reuse a build-time guest version of a Club page for signed-in users.
 export const dynamic = "force-dynamic";
 
+function clubLinkHref(platform: string, value: string) {
+  if (platform === "google_classroom" && !/^https?:\/\//i.test(value)) {
+    return `https://classroom.google.com/?emr=0&authuser=0#join-code=${encodeURIComponent(value)}`;
+  }
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 export function generateStaticParams() {
   return clubs.map((club) => ({ slug: club.slug }));
 }
@@ -147,7 +159,7 @@ export default async function ClubDetailPage({
         </div>
       </section>
 
-      {(club.advisors?.length || club.contactEmail || club.googleClassroomCode) && (
+      {(club.advisors?.length || club.contactEmail || club.links?.length || club.googleClassroomCode) && (
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
           {club.advisors?.length ? (
             <div className="card-gradient rounded-[10px] p-5">
@@ -161,12 +173,22 @@ export default async function ClubDetailPage({
               <a href={`mailto:${club.contactEmail}`} className="mt-2 block break-all text-sm text-powder hover:text-cream">{club.contactEmail}</a>
             </div>
           )}
-          {club.googleClassroomCode && (
+          {club.links?.length ? (
+            <div className="card-gradient rounded-[10px] p-5 sm:col-span-3">
+              <h2 className="font-display text-lg font-bold uppercase text-cream">Club links</h2>
+              <div className="mt-3 flex flex-wrap gap-2">{club.links.map((item) => {
+                const href = clubLinkHref(item.platform, item.value);
+                return href
+                  ? <a key={item.id} href={href} target="_blank" rel="noopener noreferrer" className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-powder hover:text-cream">{item.label} ↗</a>
+                  : <span key={item.id} className="rounded-full border border-line px-4 py-2 text-sm text-cream/75">{item.label}: {item.value}</span>;
+              })}</div>
+            </div>
+          ) : club.googleClassroomCode ? (
             <div className="card-gradient rounded-[10px] p-5">
               <h2 className="font-display text-lg font-bold uppercase text-cream">Google Classroom</h2>
               <p className="mt-2 font-mono text-sm text-cream/75">{club.googleClassroomCode}</p>
             </div>
-          )}
+          ) : null}
         </section>
       )}
 

@@ -5,6 +5,7 @@ import { clubs as staticClubs, slugify, type Club } from "./data";
 import type {
   ApprovedClubRow,
   ClubAdvisorRow,
+  ClubLinkRow,
   ClubAnnouncementRow,
   ClubMediaRow,
   ClubMeetingRow,
@@ -31,6 +32,7 @@ function mapDatabaseClub(
   advisors: ClubAdvisorRow[],
   announcements: ClubAnnouncementRow[],
   media: ClubMediaRow[],
+  links: ClubLinkRow[],
 ): Club {
   // Every data source is normalized to one small public view model so pages do
   // not depend directly on database/legacy column shapes.
@@ -59,6 +61,7 @@ function mapDatabaseClub(
     activeStartDate: row.active_start_date ?? undefined,
     activeEndDate: row.active_end_date ?? undefined,
     googleClassroomCode: row.google_classroom_code ?? undefined,
+    links: links.map((link) => ({ id: link.id, platform: link.platform, label: link.label, value: link.value })),
     contactEmail: row.contact_email ?? undefined,
     joinPolicy: row.join_policy,
     recruitingStatus: row.recruiting_status,
@@ -119,12 +122,13 @@ export const getAllClubs = cache(async (limit?: number): Promise<Club[]> => {
   if (!canonicalError && canonicalRows?.length) {
     // Fetch relations in parallel to avoid one database round trip per club.
     const ids = canonicalRows.map((row) => row.id);
-    const [meetingResult, officerResult, advisorResult, announcementResult, mediaResult] = await Promise.all([
+    const [meetingResult, officerResult, advisorResult, announcementResult, mediaResult, linkResult] = await Promise.all([
       supabase.from("club_meetings").select("*").in("club_id", ids).order("day_of_week"),
       supabase.from("club_officers").select("*").in("club_id", ids).order("title"),
       supabase.from("club_advisors").select("*").in("club_id", ids),
       supabase.from("club_announcements").select("*").in("club_id", ids).eq("published", true).order("created_at", { ascending: false }),
       supabase.from("club_media").select("*").in("club_id", ids).order("created_at", { ascending: false }),
+      supabase.from("club_links").select("*").in("club_id", ids).order("sort_order"),
     ]);
     const canonical = canonicalRows.map((row) => mapDatabaseClub(
       row,
@@ -138,6 +142,7 @@ export const getAllClubs = cache(async (limit?: number): Promise<Club[]> => {
           ...item,
           storage_path: supabase.storage.from("club-media").getPublicUrl(item.storage_path).data.publicUrl,
         })),
+      (linkResult.data ?? []).filter((item) => item.club_id === row.id),
     ));
     return canonical;
   }
