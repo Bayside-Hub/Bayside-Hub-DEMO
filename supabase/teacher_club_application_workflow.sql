@@ -1,6 +1,20 @@
 -- Teacher-led Club creation: teachers apply, Admins decide, approval publishes
 -- the Club and assigns the submitting teacher as its first Advisor.
 
+create or replace function public.is_teacher()
+returns boolean
+language sql
+stable
+security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid() and p.role = 'teacher'
+  );
+$$;
+revoke all on function public.is_teacher() from public, anon, authenticated;
+grant execute on function public.is_teacher() to authenticated;
+
 drop policy if exists "Members can submit applications" on public.club_applications;
 drop policy if exists "Members submit applications" on public.club_applications;
 drop policy if exists "Teachers submit Club applications" on public.club_applications;
@@ -8,10 +22,7 @@ create policy "Teachers submit Club applications"
   on public.club_applications for insert
   with check (
     auth.uid() = submitted_by
-    and exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid() and p.role = 'teacher'
-    )
+    and public.is_teacher()
     and status = 'pending'
     and reviewed_at is null
     and reviewed_by is null
@@ -24,6 +35,8 @@ create policy "Admins review Club applications"
   on public.club_applications for all
   using (public.is_admin())
   with check (public.is_admin());
+
+grant select, insert, update on public.club_applications to authenticated;
 
 create or replace function public.promote_approved_club_application()
 returns trigger

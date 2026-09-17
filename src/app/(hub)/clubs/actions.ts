@@ -72,7 +72,20 @@ export async function submitClubApplication(
   });
 
   if (error) {
-    return { ok: false, message: "Couldn't submit your application. Try again." };
+    console.error("Club application submission failed", { code: error.code, message: error.message });
+    if (error.code === "42501" || /row-level security|permission denied/i.test(error.message)) {
+      return { ok: false, message: "The database blocked this submission. Ask an Admin to run teacher_club_application_workflow.sql and confirm your account role is Teacher." };
+    }
+    if (error.code === "23514") {
+      return { ok: false, message: "One of the application fields does not match the database rules. Check the category and text lengths, then try again." };
+    }
+    if (error.code === "23502") {
+      return { ok: false, message: "The Club application database schema is out of date. An Admin needs to apply the latest Supabase migrations." };
+    }
+    if (error.code === "23505") {
+      return { ok: false, message: "A matching Club application already exists." };
+    }
+    return { ok: false, message: `The application could not be submitted (database code ${error.code || "unknown"}). Contact an Admin if it happens again.` };
   }
 
   revalidatePath("/clubs/apply");
