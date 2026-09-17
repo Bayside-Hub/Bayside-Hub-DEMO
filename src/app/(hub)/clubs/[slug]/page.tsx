@@ -33,10 +33,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ClubDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ updatesPage?: string }>;
 }) {
   const { slug } = await params;
+  const { updatesPage: rawUpdatesPage } = await searchParams;
   const club = await getClubBySlug(slug);
   if (!club) notFound();
   const user = await getCurrentUser();
@@ -44,6 +47,12 @@ export default async function ClubDetailPage({
   const interest = await getClubInterestInfo(club.slug);
   const membership = await getClubMembershipInfo(club.id);
   const communication = await getClubCommunication(club.id);
+  const announcements = club.announcements ?? [];
+  const announcementsPerPage = 5;
+  const announcementPageCount = Math.max(1, Math.ceil(announcements.length / announcementsPerPage));
+  const requestedAnnouncementPage = Number.parseInt(rawUpdatesPage ?? "1", 10);
+  const announcementPage = Math.min(Math.max(Number.isFinite(requestedAnnouncementPage) ? requestedAnnouncementPage : 1, 1), announcementPageCount);
+  const visibleAnnouncements = announcements.slice((announcementPage - 1) * announcementsPerPage, announcementPage * announcementsPerPage);
   const commitmentLabel = club.commitment > 0
     ? `About ${club.commitment} hour${club.commitment === 1 ? "" : "s"}/week`
     : "Flexible commitment";
@@ -162,9 +171,9 @@ export default async function ClubDetailPage({
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-powder">Class stream</p>
         <h2 id="club-stream-title" className="mt-1 font-display text-3xl font-semibold uppercase tracking-wide text-cream">Club announcements</h2>
         <p className="mt-2 max-w-2xl text-sm text-cream/60">Official updates from the Club board and Advisor.</p>
-        {club.announcements?.length ? (
+        {announcements.length ? (
           <div className="mt-5 space-y-4">
-            {club.announcements.map((announcement) => (
+            {visibleAnnouncements.map((announcement) => (
               <article key={announcement.id} className="card-gradient rounded-[14px] border border-white/10 p-5 sm:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <h3 className="font-display text-lg font-bold uppercase text-cream">{announcement.title}</h3>
@@ -176,6 +185,13 @@ export default async function ClubDetailPage({
                 {announcement.image ? <Image src={announcement.image} alt={announcement.imageAlt ?? ""} width={960} height={540} sizes="(max-width: 1024px) 100vw, 70vw" className="mt-4 aspect-video w-full rounded-[10px] object-cover" /> : null}
               </article>
             ))}
+            {announcementPageCount > 1 ? (
+              <nav aria-label="Club announcement pages" className="flex items-center justify-between gap-3 pt-2">
+                {announcementPage > 1 ? <Link href={`/clubs/${club.slug}?updatesPage=${announcementPage - 1}#club-stream-title`} className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-cream hover:bg-white/5">← Newer</Link> : <span />}
+                <span className="text-xs font-semibold text-cream/55">Page {announcementPage} of {announcementPageCount}</span>
+                {announcementPage < announcementPageCount ? <Link href={`/clubs/${club.slug}?updatesPage=${announcementPage + 1}#club-stream-title`} className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-cream hover:bg-white/5">Older →</Link> : <span />}
+              </nav>
+            ) : null}
           </div>
         ) : (
           <p className="mt-5 rounded-[14px] border border-dashed border-white/15 px-5 py-8 text-center text-sm text-cream/50">No Club announcements yet.</p>
@@ -183,7 +199,7 @@ export default async function ClubDetailPage({
       </section>
 
       {communication.available && club.id ? (
-        <ClubChat clubId={club.id} slug={club.slug} messages={communication.messages} />
+        <ClubChat clubId={club.id} slug={club.slug} messages={communication.messages} currentUser={{ id: user!.id, name: user!.name, avatarUrl: user!.avatarUrl }} />
       ) : user && club.id ? (
         <section className="mt-12 rounded-[18px] border border-dashed border-white/15 p-6 text-center">
           <h2 className="font-display text-xl font-semibold uppercase text-cream">Member chat</h2>

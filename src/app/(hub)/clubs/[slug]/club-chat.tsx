@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createBrowserClient } from "@/lib/supabase/client";
 import type { ClubChatMessage } from "@/lib/supabase/types";
 import {
@@ -23,18 +22,52 @@ export default function ClubChat({
   clubId,
   slug,
   messages,
+  currentUser,
 }: {
   clubId: string;
   slug: string;
   messages: ClubChatMessage[];
+  currentUser: { id: string; name: string; avatarUrl: string | null };
 }) {
-  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const [state, action, pending] = useActionState(postClubMessage, null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [liveMessages, setLiveMessages] = useState(messages);
+  const [visibleCount, setVisibleCount] = useState(25);
+  const refreshMessages = useCallback(async () => {
+    const supabase = createBrowserClient();
+    const { data } = await supabase.rpc("get_club_chat_messages", { p_club_id: clubId, p_limit: 200 });
+    if (data) setLiveMessages(data);
+  }, [clubId]);
+  const [state, action, pending] = useActionState(async (previous: Awaited<ReturnType<typeof postClubMessage>>, formData: FormData) => {
+    const body = String(formData.get("body") ?? "").trim();
+    const temporaryId = `pending-${Date.now()}`;
+    if (body) {
+      setLiveMessages((current) => [...current, {
+        id: temporaryId,
+        club_id: clubId,
+        author_id: currentUser.id,
+        author_name: currentUser.name,
+        author_avatar_url: currentUser.avatarUrl,
+        body,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        can_delete: false,
+      }]);
+    }
+    const result = await postClubMessage(previous, formData);
+    if (!result?.ok) setLiveMessages((current) => current.filter((message) => message.id !== temporaryId));
+    else await refreshMessages();
+    return result;
+  }, null);
+  const visibleMessages = useMemo(() => liveMessages.slice(-visibleCount), [liveMessages, visibleCount]);
 
   useEffect(() => {
     if (state?.ok) formRef.current?.reset();
   }, [state]);
+
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
+  }, [liveMessages.length]);
 
   useEffect(() => {
     const supabase = createBrowserClient();
@@ -43,14 +76,14 @@ export default function ClubChat({
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "club_messages", filter: `club_id=eq.${clubId}` },
-        () => router.refresh(),
+        () => void refreshMessages(),
       )
       .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [clubId, router]);
+  }, [clubId, refreshMessages]);
 
   return (
     <section className="mt-12 overflow-hidden rounded-[18px] border border-[#97b4de]/40 bg-[#080d20]" aria-labelledby="club-chat-title">
@@ -60,8 +93,9 @@ export default function ClubChat({
         <p className="mt-1 text-sm text-cream/60">A private conversation for approved members and Club leadership.</p>
       </header>
 
-      <div className="max-h-[30rem] space-y-4 overflow-y-auto px-5 py-5 sm:px-6" aria-live="polite">
-        {messages.length ? messages.map((message) => (
+      <div ref={listRef} className="max-h-[30rem] space-y-4 overflow-y-auto px-5 py-5 sm:px-6" aria-live="polite">
+        {liveMessages.length > visibleCount ? <div className="text-center"><button type="button" onClick={() => setVisibleCount((count) => count + 25)} className="rounded-full border border-white/15 px-4 py-2 text-xs font-bold text-cream/70 hover:bg-white/5 hover:text-cream">Load 25 older messages</button></div> : null}
+        {visibleMessages.length ? visibleMessages.map((message) => (
           <article key={message.id} className="flex gap-3">
             {message.author_avatar_url ? (
               <Image src={message.author_avatar_url} alt="" width={36} height={36} className="size-9 shrink-0 rounded-full object-cover" />
@@ -109,7 +143,7 @@ export default function ClubChat({
             {pending ? "Sending…" : "Send"}
           </button>
         </div>
-        {state ? <p role="status" className={`mt-2 text-xs ${state.ok ? "text-powder" : "text-[#f78660]"}`}>{state.message}</p> : null}
+        <div className="mt-2 flex items-center justify-between gap-3"><p role="status" className={`text-xs ${state?.ok ? "text-powder" : "text-[#f78660]"}`}>{state?.message ?? "New messages appear automatically."}</p><span className="text-[11px] text-cream/35">Showing {visibleMessages.length} of {liveMessages.length}</span></div>
       </form>
     </section>
   );

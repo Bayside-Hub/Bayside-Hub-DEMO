@@ -197,7 +197,7 @@ export async function getClubCommunication(clubId?: string): Promise<ClubCommuni
   const supabase = await createServerClient();
   const { data, error } = await supabase.rpc("get_club_chat_messages", {
     p_club_id: clubId,
-    p_limit: 100,
+    p_limit: 200,
   });
   if (error) return { available: false, messages: [] };
   return { available: true, messages: data ?? [] };
