@@ -38,6 +38,7 @@ export default function Topbar({ user }: { user: SessionUser | null }) {
         <ThemeToggle />
         {user ? (
           <>
+            <Link href="/notifications" title="Notifications" aria-label="Notifications" className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-card text-lg text-ink">🔔</Link>
             <div className="hidden text-right sm:block">
               <p className="text-xs font-medium text-ink">Welcome, {user.name}</p>
               <p className="text-[11px] text-muted">

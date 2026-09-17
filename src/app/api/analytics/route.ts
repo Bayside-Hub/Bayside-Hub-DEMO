@@ -11,6 +11,9 @@ export async function POST(request: Request) {
   const value = body.value == null ? null : Number(body.value);
   if (value !== null && !Number.isFinite(value)) return NextResponse.json({ error: "Invalid metric" }, { status: 400 });
   const db = await createServerClient();
-  await db.rpc("record_analytics_event", { p_event_name: eventName, p_route: String(body.route ?? "").slice(0, 300), p_entity_id: body.entityId ? String(body.entityId).slice(0, 120) : null, p_metric_value: value, p_metadata: {}, p_session_id: body.sessionId ? String(body.sessionId).slice(0, 80) : null });
+  const inputMetadata = body.metadata && typeof body.metadata === "object" ? body.metadata as Record<string, unknown> : {};
+  const device = ["mobile", "tablet", "desktop"].includes(String(inputMetadata.device)) ? String(inputMetadata.device) : "unknown";
+  const connection = String(inputMetadata.connection ?? "unknown").slice(0, 20);
+  await db.rpc("record_analytics_event", { p_event_name: eventName, p_route: String(body.route ?? "").slice(0, 300), p_entity_id: body.entityId ? String(body.entityId).slice(0, 120) : null, p_metric_value: value, p_metadata: { device, connection }, p_session_id: body.sessionId ? String(body.sessionId).slice(0, 80) : null });
   return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
 }

@@ -1,0 +1,3 @@
+"use server";import {revalidatePath} from "next/cache";import {getCurrentUser} from "@/lib/auth";import {createServerClient} from "@/lib/supabase/server";
+export async function markNotificationRead(fd:FormData){const user=await getCurrentUser();if(!user)return;const db=await createServerClient();await db.from("notifications").update({read_at:new Date().toISOString()}).eq("id",String(fd.get("id")??"")).eq("user_id",user.id);revalidatePath("/notifications");}
+export async function markAllNotificationsRead(){const user=await getCurrentUser();if(!user)return;const db=await createServerClient();await db.from("notifications").update({read_at:new Date().toISOString()}).eq("user_id",user.id).is("read_at",null);revalidatePath("/notifications");}

@@ -7,14 +7,17 @@ import { createServerClient } from "@/lib/supabase/server";
 const date = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
 async function requestTime() { return Date.now(); }
 
-export default async function OperationsPage() {
+export default async function OperationsPage({ searchParams }: { searchParams: Promise<{ days?: string; device?: string }> }) {
   await requireAdmin();
   if (!isSupabaseConfigured()) return <main className="p-8"><p role="alert">Operations data is unavailable until Supabase is configured.</p></main>;
   const db = await createServerClient();
+  const filters = await searchParams;
+  const rangeDays = Math.min(365, Math.max(1, Number(filters.days) || 30));
+  const device = ["mobile", "tablet", "desktop"].includes(filters.device ?? "") ? filters.device! : "all";
   const now = await requestTime();
   const weekAgo = new Date(now - 7 * 86400000).toISOString();
   const dayAgo = new Date(now - 86400000).toISOString();
-  const monthAgo = new Date(now - 30 * 86400000).toISOString();
+  const monthAgo = new Date(now - rangeDays * 86400000).toISOString();
   const staleBefore = new Date(now - 120 * 86400000).toISOString();
 
   const [stale, applications, announcements, support, errors, profiles, memberships, searches, zeroSearches] = await Promise.all([
@@ -28,8 +31,8 @@ export default async function OperationsPage() {
     db.from("search_analytics").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
     db.from("search_analytics").select("normalized_query,created_at").eq("result_count", 0).gte("created_at", monthAgo).order("created_at", { ascending: false }).limit(1000),
   ]);
-  const analytics = await db.from("analytics_events").select("event_name,user_id,session_id,metric_value,created_at").gte("created_at", monthAgo).limit(10000);
-  const analyticsRows = analytics.data ?? [];
+  const analytics = await db.from("analytics_events").select("event_name,user_id,session_id,metric_value,metadata,created_at").gte("created_at", monthAgo).limit(10000);
+  const analyticsRows = (analytics.data ?? []).filter(row => device === "all" || (row.metadata as Record<string,unknown>)?.device === device);
   const dailyActive = new Set(analyticsRows.filter(row => row.created_at >= dayAgo).map(row => row.user_id ?? row.session_id).filter(Boolean)).size;
   const searchToClub = analyticsRows.filter(row => row.event_name === "search_result_click").length;
   const joinStarted = analyticsRows.filter(row => row.event_name === "club_join_started").length;
@@ -51,6 +54,7 @@ export default async function OperationsPage() {
 
   return <div className="mx-auto w-full max-w-6xl space-y-8 px-6 py-8">
     <PageHeader title="Admin Operations" subtitle="Monitor stale content, work queues, errors, usage, and searches that returned no results." />
+    <form className="flex flex-wrap items-end gap-3 rounded-card border border-line bg-card p-4"><label className="text-xs font-semibold text-muted">Date range<select name="days" defaultValue={String(rangeDays)} className="mt-1 block h-10 rounded-control border border-line bg-content-bg px-3 text-ink"><option value="7">7 days</option><option value="30">30 days</option><option value="90">90 days</option><option value="365">1 year</option></select></label><label className="text-xs font-semibold text-muted">Device<select name="device" defaultValue={device} className="mt-1 block h-10 rounded-control border border-line bg-content-bg px-3 text-ink"><option value="all">All devices</option><option value="mobile">Mobile</option><option value="tablet">Tablet</option><option value="desktop">Desktop</option></select></label><button className="h-10 rounded-full bg-navy px-5 text-sm font-bold text-cream">Apply</button><a href={`/admin/operations/export?days=${rangeDays}`} className="ml-auto inline-flex h-10 items-center rounded-full border border-line px-5 text-sm font-semibold text-ink">Export CSV</a></form>
     {migrationUnavailable && <div role="alert" className="rounded-card border border-orange-400/40 bg-card p-4 text-sm text-ink">Operational intelligence is not fully available. Run <code>supabase/operational_intelligence.sql</code> in Supabase, then reload.</div>}
     <section aria-label="Operations summary" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {stats.map(([label, value, note]) => <article key={label} className="rounded-card border border-line bg-card p-5 shadow-sm"><p className="text-sm font-semibold text-muted">{label}</p><p className="mt-2 text-3xl font-bold text-ink">{value ?? "—"}</p><p className="mt-1 text-xs text-muted">{value == null ? "Data unavailable" : note}</p></article>)}
@@ -77,8 +81,9 @@ export default async function OperationsPage() {
         {errors.error ? <p className="mt-5 text-sm text-muted">Error tracking needs the operational migration.</p> : errors.data?.length ? <ul className="mt-4 divide-y divide-line">{errors.data.map(error => <li key={error.id} className="py-3"><p className="font-semibold text-ink">{error.source}</p><p className="line-clamp-2 text-sm text-muted">{error.message}</p><time className="text-xs text-muted" dateTime={error.created_at}>{new Date(error.created_at).toLocaleString("en-US")}</time></li>)}</ul> : <p className="mt-5 text-sm text-muted">No unresolved operational errors.</p>}
       </section>
     </div>
-    <section className="rounded-card border border-line bg-card p-6 shadow-sm"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-widest text-muted">Product analytics</p><h2 className="mt-1 text-xl font-bold text-ink">DAU, discovery, join funnel &amp; Core Web Vitals</h2></div><span className="text-xs text-muted">Rolling 30 days · DAU uses last 7 days</span></div>{analytics.error ? <p className="mt-5 text-sm text-muted">Run <code>supabase/school_operations.sql</code> to begin collecting product analytics.</p> : <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Metric label="Active users / sessions" value={String(dailyActive)} /><Metric label="Search → Club" value={String(searchToClub)} /><Metric label="Join funnel" value={`${joinCompleted}/${joinStarted}`} note={joinStarted ? `${Math.round(joinCompleted / joinStarted * 100)}% completion` : "No starts yet"} /><Metric label="LCP p75" value={p75("LCP") == null ? "—" : `${Math.round(p75("LCP")!)} ms`} /><Metric label="INP p75" value={p75("INP") == null ? "—" : `${Math.round(p75("INP")!)} ms`} /><Metric label="CLS p75" value={p75("CLS") == null ? "—" : p75("CLS")!.toFixed(3)} /></div>}</section>
+    <section className="rounded-card border border-line bg-card p-6 shadow-sm"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-widest text-muted">Product analytics</p><h2 className="mt-1 text-xl font-bold text-ink">DAU, discovery, join funnel &amp; Core Web Vitals</h2></div><span className="text-xs text-muted">{rangeDays} days · {device} devices · DAU uses last 24 hours</span></div>{analytics.error ? <p className="mt-5 text-sm text-muted">Run <code>supabase/school_operations.sql</code> to begin collecting product analytics.</p> : <><div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Metric label="Active users / sessions" value={String(dailyActive)} /><Metric label="Search → Club" value={String(searchToClub)} /><Metric label="Join funnel" value={`${joinCompleted}/${joinStarted}`} note={joinStarted ? `${Math.round(joinCompleted / joinStarted * 100)}% completion` : "No starts yet"} /><Metric label="LCP p75" value={p75("LCP") == null ? "—" : `${Math.round(p75("LCP")!)} ms`} /><Metric label="INP p75" value={p75("INP") == null ? "—" : `${Math.round(p75("INP")!)} ms`} /><Metric label="CLS p75" value={p75("CLS") == null ? "—" : p75("CLS")!.toFixed(3)} /></div><Trend rows={analyticsRows}/></>}</section>
   </div>;
 }
 
 function Metric({ label, value, note }: { label: string; value: string; note?: string }) { return <article className="rounded-control bg-content-bg p-4"><p className="text-xs font-semibold text-muted">{label}</p><p className="mt-1 text-2xl font-bold text-ink">{value}</p>{note && <p className="mt-1 text-xs text-muted">{note}</p>}</article>; }
+function Trend({rows}:{rows:{created_at:string}[]}){const counts=new Map<string,number>();for(const row of rows){const key=row.created_at.slice(0,10);counts.set(key,(counts.get(key)??0)+1)}const values=[...counts].sort().slice(-30);const max=Math.max(1,...values.map(x=>x[1]));return <div className="mt-6"><p className="text-xs font-semibold text-muted">Daily event trend</p><div className="mt-3 flex h-28 items-end gap-1" aria-label="Daily analytics trend">{values.map(([day,count])=><div key={day} title={`${day}: ${count}`} className="min-w-1 flex-1 rounded-t bg-navy" style={{height:`${Math.max(4,count/max*100)}%`}}/>)}</div></div>}
