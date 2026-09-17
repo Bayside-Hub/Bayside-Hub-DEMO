@@ -80,7 +80,10 @@ export async function submitClubApplication(
       return { ok: false, message: "One of the application fields does not match the database rules. Check the category and text lengths, then try again." };
     }
     if (error.code === "23502") {
-      return { ok: false, message: "The Club application database schema is out of date. An Admin needs to apply the latest Supabase migrations." };
+      const missingColumn = error.message.match(/column ["']([^"']+)["']/i)?.[1];
+      return { ok: false, message: missingColumn
+        ? `The database still requires an obsolete field (${missingColumn}). Ask an Admin to rerun the latest teacher_club_application_workflow.sql migration.`
+        : "The Club application database schema is out of date. An Admin needs to rerun the latest teacher_club_application_workflow.sql migration." };
     }
     if (error.code === "23505") {
       return { ok: false, message: "A matching Club application already exists." };

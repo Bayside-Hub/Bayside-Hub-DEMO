@@ -15,6 +15,32 @@ $$;
 revoke all on function public.is_teacher() from public, anon, authenticated;
 grant execute on function public.is_teacher() to authenticated;
 
+-- Legacy deployments may contain additional application columns that are no
+-- longer part of the canonical write model but are still marked NOT NULL.
+-- Relax only those superseded columns; canonical required fields remain
+-- protected by their existing NOT NULL and content constraints.
+do $$
+declare
+  legacy_column record;
+begin
+  for legacy_column in
+    select column_name
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'club_applications'
+      and is_nullable = 'NO'
+      and column_name not in (
+        'id', 'club_name', 'category', 'description', 'status', 'created_at'
+      )
+  loop
+    execute format(
+      'alter table public.club_applications alter column %I drop not null',
+      legacy_column.column_name
+    );
+  end loop;
+end;
+$$;
+
 -- Some production databases still retain required legacy columns from the
 -- original dashboard schema. Populate those columns from the canonical fields
 -- before constraints run. jsonb_populate_record safely ignores keys that do
