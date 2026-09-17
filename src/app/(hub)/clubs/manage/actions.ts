@@ -303,7 +303,7 @@ export async function addClubAdvisor(formData: FormData) {
   if (!context || !["staff", "admin"].includes(context.user.role)) return denied;
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const { data: profile } = await context.supabase.from("profiles").select("id, full_name, email, role").eq("email", email).maybeSingle();
-  if (!profile || !["teacher", "advisor", "staff", "admin"].includes(profile.role)) return { ok: false, message: "Choose a registered Teacher, Advisor, Staff or Admin account." };
+  if (!profile || !["teacher", "advisor"].includes(profile.role)) return { ok: false, message: "Choose a registered Teacher or Advisor account. Admin access does not make someone a Club advisor." };
   const { error } = await context.supabase.from("club_advisors").upsert({
     club_id: clubId,
     profile_id: profile.id,
@@ -314,6 +314,18 @@ export async function addClubAdvisor(formData: FormData) {
   revalidatePath(`/clubs/manage/${clubId}`);
   revalidatePath("/clubs");
   return saved;
+}
+
+export async function removeClubAdvisor(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const advisorId = String(formData.get("advisor_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context || !["staff", "admin"].includes(context.user.role) || !advisorId) return denied;
+  const { data, error } = await context.supabase.from("club_advisors").delete().eq("id", advisorId).eq("club_id", clubId).select("id").maybeSingle();
+  if (error || !data) return failed;
+  revalidatePath(`/clubs/manage/${clubId}`);
+  revalidatePath("/clubs");
+  return { ok: true, message: "Advisor removed. Their account role and Admin permissions were not changed." };
 }
 
 export async function uploadClubImage(formData: FormData) {

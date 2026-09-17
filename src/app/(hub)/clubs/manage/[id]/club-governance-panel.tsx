@@ -5,6 +5,7 @@ import {
   addClubOfficer,
   deleteClubImage,
   removeClubOfficer,
+  removeClubAdvisor,
   updateClubCompliance,
   uploadClubImage,
   updateClubPublication,
@@ -50,7 +51,7 @@ export default function ClubGovernancePanel({
               {canGovern ? <ActionFeedbackForm action={removeClubOfficer}><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="officer_id" value={officer.id} /><button className="text-xs font-semibold text-orange">Remove</button></ActionFeedbackForm> : null}
             </div>
           ))}
-          {advisors.map((advisor) => <div key={advisor.id} className="rounded-control border border-line p-3 text-sm"><p className="font-semibold text-cream">{advisor.display_name ?? "Faculty advisor"}</p><p className="text-cream/60">Advisor{advisor.contact_email ? ` · ${advisor.contact_email}` : ""}</p></div>)}
+          {advisors.map((advisor) => <div key={advisor.id} className="flex items-center justify-between gap-3 rounded-control border border-line p-3 text-sm"><div className="min-w-0"><p className="truncate font-semibold text-cream">{advisor.display_name ?? "Faculty advisor"}</p><p className="truncate text-cream/60">Advisor{advisor.contact_email ? ` · ${advisor.contact_email}` : ""}</p></div>{["staff", "admin"].includes(role) ? <ActionFeedbackForm action={removeClubAdvisor}><input type="hidden" name="club_id" value={clubId}/><input type="hidden" name="advisor_id" value={advisor.id}/><button className="text-xs font-semibold text-orange">Remove</button></ActionFeedbackForm> : null}</div>)}
         </div>
         {canGovern ? (
           <ActionFeedbackForm action={addClubOfficer} className="mt-5 grid gap-3 border-t border-line pt-5">
@@ -66,6 +67,7 @@ export default function ClubGovernancePanel({
         {["staff", "admin"].includes(role) ? (
           <ActionFeedbackForm action={addClubAdvisor} className="mt-5 grid gap-3 border-t border-line pt-5">
             <h3 className="font-semibold text-cream">Add faculty advisor</h3>
+            <p className="text-xs text-cream/60">Only Teacher or Advisor accounts may be listed. Admin permission remains separate and is never displayed as an advisor.</p>
             <input type="hidden" name="club_id" value={clubId} />
             <input type="email" name="email" required placeholder="Faculty school email" className={input} />
             <button className="h-10 rounded-full border border-cream px-5 font-bold text-cream">Add advisor</button>

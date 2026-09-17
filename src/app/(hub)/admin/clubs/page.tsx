@@ -51,8 +51,9 @@ export default async function AdminClubsPage({
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader
         title="Manage Clubs"
-        subtitle="Review club charter applications and event approvals. Approve or reject right from the queue."
+        subtitle="Review new charter applications. Admin authority can edit every existing Club and Team without listing the Admin as an advisor."
       />
+      <div className="mb-5 flex justify-end"><Link href="/clubs/manage" className="rounded-full bg-navy px-5 py-2.5 text-sm font-bold text-cream">Manage all Clubs &amp; Teams →</Link></div>
 
       {!configured && (
         <div className="mb-6 rounded-card border border-orange/30 bg-orange/10 p-4 text-sm leading-6 text-ink">
