@@ -26,7 +26,7 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
 
   return (
     <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-6 lg:py-12">
-      <nav aria-label="Updates and calendar sections" className="sticky top-[72px] z-20 mb-6 grid w-full grid-cols-3 gap-1 overflow-hidden rounded-[18px] border border-line bg-card/95 p-2 shadow-sm backdrop-blur-xl sm:static sm:w-fit sm:gap-2">
+      <nav aria-label="Updates and calendar sections" className="sticky top-0 z-20 mb-6 grid w-full grid-cols-3 gap-1 overflow-hidden rounded-[18px] border border-line bg-card/95 p-2 shadow-sm backdrop-blur-xl sm:static sm:w-fit sm:gap-2">
         {([
           { value: "updates", label: "Updates", href: "/announcements" },
           { value: "calendar", label: "Calendar", href: "/announcements?view=calendar" },
