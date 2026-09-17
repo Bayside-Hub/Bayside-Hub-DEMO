@@ -15,6 +15,37 @@ $$;
 revoke all on function public.is_teacher() from public, anon, authenticated;
 grant execute on function public.is_teacher() to authenticated;
 
+-- Some production databases still retain required legacy columns from the
+-- original dashboard schema. Populate those columns from the canonical fields
+-- before constraints run. jsonb_populate_record safely ignores keys that do
+-- not exist on newer installations.
+create or replace function public.sync_club_application_legacy_columns()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  new := jsonb_populate_record(
+    new,
+    jsonb_build_object(
+      'club_category', new.category,
+      'club_description', new.description,
+      'meeting_dates', coalesce(new.meeting_days, ''),
+      'club_appsStatus', new.status
+    )
+  );
+  return new;
+end;
+$$;
+
+drop trigger if exists sync_club_application_legacy_columns on public.club_applications;
+create trigger sync_club_application_legacy_columns
+  before insert or update of category, description, meeting_days, status
+  on public.club_applications
+  for each row execute function public.sync_club_application_legacy_columns();
+
+revoke all on function public.sync_club_application_legacy_columns() from public, anon, authenticated;
+
 drop policy if exists "Members can submit applications" on public.club_applications;
 drop policy if exists "Members submit applications" on public.club_applications;
 drop policy if exists "Teachers submit Club applications" on public.club_applications;
