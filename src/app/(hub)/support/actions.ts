@@ -58,3 +58,19 @@ export async function submitSupportRequest(
   revalidatePath("/profile");
   return { ok: true, message: "Request submitted. You can track its status below." };
 }
+
+export async function addSupportReply(_previous: SupportActionState, formData: FormData): Promise<SupportActionState> {
+  const user = await getCurrentUser();
+  const requestId = String(formData.get("request_id") ?? "");
+  const body = String(formData.get("body") ?? "").trim();
+  if (!user) return { ok: false, message: "Sign in before replying." };
+  if (!isSupabaseConfigured() || !requestId || body.length < 1 || body.length > 4000) return { ok: false, message: "Enter a reply up to 4,000 characters." };
+  const db = await createServerClient();
+  const { error } = await db.from("support_request_updates").insert({ request_id: requestId, author_id: user.id, body, internal: false });
+  if (error) return { ok: false, message: "Reply could not be sent. Check that you can access this request." };
+  await db.from("support_requests").update({ updated_at: new Date().toISOString() }).eq("id", requestId);
+  revalidatePath(`/support/${requestId}`);
+  revalidatePath("/support");
+  revalidatePath("/admin/support");
+  return { ok: true, message: "Reply sent." };
+}

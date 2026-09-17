@@ -58,6 +58,7 @@ export default async function AdminSupportPage({
                       Requested for {new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(request.requested_for))}
                     </p>
                   )}
+                  <Link href={`/support/${request.id}`} className="mt-3 inline-flex text-sm font-bold text-navy">Open conversation →</Link>
                 </div>
                 <SupportStatusForm id={request.id} status={request.status} />
               </div>
