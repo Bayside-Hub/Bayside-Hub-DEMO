@@ -16,6 +16,7 @@ const requestTypes = [
   "fundraising_finance",
   "charter",
 ] as const;
+const reportTypes = ["report_outdated", "report_broken_link", "report_incorrect", "report_other"] as const;
 
 export async function submitSupportRequest(
   _previous: SupportActionState,
@@ -25,14 +26,18 @@ export async function submitSupportRequest(
   if (!user) return { ok: false, message: "Sign in before submitting a request." };
   if (!isSupabaseConfigured()) return { ok: false, message: "Support requests are unavailable until Supabase is configured." };
 
-  const requestType = String(formData.get("request_type") ?? "technical");
-  const subject = String(formData.get("subject") ?? "").trim();
+  const requestedType = String(formData.get("request_type") ?? "technical");
+  const isContentReport = reportTypes.includes(requestedType as (typeof reportTypes)[number]);
+  const requestType = isContentReport ? "technical" : requestedType;
+  const reportLabel = requestedType.replace("report_", "").replaceAll("_", " ");
+  const rawSubject = String(formData.get("subject") ?? "").trim();
+  const subject = isContentReport ? `[Content report: ${reportLabel}] ${rawSubject}` : rawSubject;
   const details = String(formData.get("details") ?? "").trim();
   const requestedFor = String(formData.get("requested_for") ?? "").trim();
   if (!requestTypes.includes(requestType as (typeof requestTypes)[number])) {
     return { ok: false, message: "Choose a valid request type." };
   }
-  if (subject.length < 3 || subject.length > 120 || details.length < 10 || details.length > 4000) {
+  if (rawSubject.length < 3 || subject.length > 120 || details.length < 10 || details.length > 4000) {
     return { ok: false, message: "Enter a subject and 10–4000 characters of details." };
   }
   const requestedForIso = parseOptionalIsoDateTime(requestedFor);

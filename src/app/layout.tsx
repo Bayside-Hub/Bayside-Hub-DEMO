@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Montserrat, Lexend } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import PwaRegistration from "@/components/pwa-registration";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,6 +29,9 @@ export const metadata: Metadata = {
   title: { default: "Bayside Hub", template: "%s | Bayside Hub" },
   description:
     "Bayside Hub — your one-stop home for announcements, clubs, events, and opportunities at Bayside High School.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Bayside Hub", statusBarStyle: "black-translucent" },
+  icons: { icon: "/app-icon.svg", apple: "/app-icon.svg" },
 };
 
 export default function RootLayout({
@@ -46,6 +50,7 @@ export default function RootLayout({
       </head>
       <body className="h-full bg-content-bg text-ink">
         {children}
+        <PwaRegistration />
         <Analytics />
       </body>
     </html>

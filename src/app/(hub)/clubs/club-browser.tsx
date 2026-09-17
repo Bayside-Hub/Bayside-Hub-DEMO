@@ -8,16 +8,19 @@ import { clubCategories, type Club } from "@/lib/data";
 
 const meetingDays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
-export default function ClubBrowser({ clubs }: { clubs: Club[] }) {
+export default function ClubBrowser({ clubs, joinedClubSlugs, signedIn }: { clubs: Club[]; joinedClubSlugs: string[]; signedIn: boolean }) {
+  const [scope, setScope] = useState<"all" | "mine">("all");
   const [category, setCategory] = useState<string>("All");
   const [day, setDay] = useState<string>("Any");
   const [commitment, setCommitment] = useState(0);
   const [query, setQuery] = useState("");
   const [grouped, setGrouped] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const joined = useMemo(() => new Set(joinedClubSlugs), [joinedClubSlugs]);
 
   const filtered = useMemo(() => {
     return clubs.filter((club) => {
+      if (scope === "mine" && !joined.has(club.slug)) return false;
       if (category !== "All" && club.category !== category) return false;
       if (day !== "Any" && !club.meetingDays.includes(day)) return false;
       if (commitment > 0 && club.commitment < commitment) return false;
@@ -30,7 +33,7 @@ export default function ClubBrowser({ clubs }: { clubs: Club[] }) {
         return false;
       return true;
     });
-  }, [clubs, category, day, commitment, query]);
+  }, [clubs, category, day, commitment, query, scope, joined]);
 
   const byCategory = useMemo(() => {
     const map = new Map<string, Club[]>();
@@ -54,8 +57,8 @@ export default function ClubBrowser({ clubs }: { clubs: Club[] }) {
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader
-        title="Activities &amp; Clubs"
-        subtitle={`Explore ${clubs.length} currently listed club${clubs.length === 1 ? "" : "s"}. Filter by interest, meeting day, or commitment.`}
+        title="Clubs &amp; Teams"
+        subtitle={`Explore ${clubs.length} school Clubs, athletic teams, and student groups.`}
         actions={
           <div className="flex flex-wrap items-center gap-3">
             <div
@@ -99,6 +102,11 @@ export default function ClubBrowser({ clubs }: { clubs: Club[] }) {
           </div>
         }
       />
+
+      <nav aria-label="Club directory scope" className="mb-6 flex w-fit rounded-full border border-line bg-card p-1">
+        <button type="button" onClick={() => setScope("all")} aria-pressed={scope === "all"} className={`rounded-full px-5 py-2 text-sm font-bold ${scope === "all" ? "bg-navy text-cream" : "text-muted hover:text-ink"}`}>All Clubs &amp; Teams</button>
+        <button type="button" onClick={() => setScope("mine")} aria-pressed={scope === "mine"} className={`rounded-full px-5 py-2 text-sm font-bold ${scope === "mine" ? "bg-navy text-cream" : "text-muted hover:text-ink"}`}>My Clubs</button>
+      </nav>
 
       <div className="mb-4 sm:hidden">
         <button
@@ -204,8 +212,9 @@ export default function ClubBrowser({ clubs }: { clubs: Club[] }) {
 
       {filtered.length === 0 ? (
         <div className="rounded-card border border-dashed border-line bg-card/60 px-6 py-14 text-center">
-          <p className="text-base font-semibold text-ink">No clubs match your filters</p>
-          <p className="mt-1 text-sm text-muted">Try removing a filter to see more results.</p>
+          <p className="text-base font-semibold text-ink">{scope === "mine" ? "No joined Clubs yet" : "No Clubs or teams match your filters"}</p>
+          <p className="mt-1 text-sm text-muted">{scope === "mine" ? signedIn ? "Join a Club or team and it will appear here." : "Sign in to see the Clubs and teams you joined." : "Try removing a filter to see more results."}</p>
+          {scope === "mine" ? signedIn ? <button type="button" onClick={() => setScope("all")} className="mt-4 rounded-full bg-navy px-5 py-2 text-sm font-bold text-cream">Explore all Clubs</button> : <Link href="/login?next=/clubs" className="mt-4 inline-flex rounded-full bg-navy px-5 py-2 text-sm font-bold text-cream">Sign in</Link> : null}
         </div>
       ) : grouped ? (
         <div className="space-y-10">

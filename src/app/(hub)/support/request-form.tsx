@@ -10,6 +10,10 @@ const options = [
   ["room_reservation", "Room reservation"],
   ["funding", "Funding request"],
   ["fundraising_finance", "Fundraising and finance"],
+  ["report_outdated", "Report outdated information"],
+  ["report_broken_link", "Report a broken link"],
+  ["report_incorrect", "Report incorrect information"],
+  ["report_other", "Other content report"],
 ] as const;
 
 export default function SupportRequestForm() {
