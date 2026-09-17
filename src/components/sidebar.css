@@ -17,7 +17,8 @@
   color: var(--ink); transition: background-color 120ms, color 120ms;
 }
 .rail-control:hover, .rail-control-active, .rail-control[aria-expanded="true"] { background: var(--rail-surface); }
-[data-theme="light"] .figma-rail img { filter: brightness(0) saturate(100%) invert(17%) sepia(20%) saturate(1220%) hue-rotate(185deg); opacity: .78; }
+[data-theme="light"] .figma-rail .rail-control img { filter: brightness(0) saturate(100%) invert(17%) sepia(20%) saturate(1220%) hue-rotate(185deg); opacity: .78; }
+.figma-rail .rail-brand .brand-logo img { filter: none; opacity: 1; }
 .rail-control:focus-visible, .rail-brand:focus-visible, .rail-avatar:focus-visible,
 .rail-sub-link:focus-visible { outline: 2px solid #c9a4ff; outline-offset: 3px; }
 .rail-search { margin: 18px 0 12px; border-radius: 50%; background: var(--rail-surface); flex-shrink: 0; }
