@@ -82,7 +82,7 @@ begin
     message.id,
     message.club_id,
     message.author_id,
-    coalesce(nullif(profile.full_name, ''), 'Club member') as author_name,
+    coalesce(nullif(btrim(profile.full_name), ''), nullif(split_part(profile.email, '@', 1), ''), 'Club member') as author_name,
     profile.avatar_url as author_avatar_url,
     message.body,
     message.created_at,

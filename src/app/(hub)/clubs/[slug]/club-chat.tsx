@@ -18,6 +18,12 @@ function messageTime(value: string) {
   }).format(new Date(value));
 }
 
+function applyCurrentUserName(messages: ClubChatMessage[], currentUser: { id: string; name: string; avatarUrl: string | null }) {
+  return messages.map(message => message.author_id === currentUser.id && message.author_name === "Club member"
+    ? { ...message, author_name: currentUser.name, author_avatar_url: message.author_avatar_url ?? currentUser.avatarUrl }
+    : message);
+}
+
 export default function ClubChat({
   clubId,
   slug,
@@ -31,13 +37,13 @@ export default function ClubChat({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const [liveMessages, setLiveMessages] = useState(messages);
+  const [liveMessages, setLiveMessages] = useState(() => applyCurrentUserName(messages, currentUser));
   const [visibleCount, setVisibleCount] = useState(25);
   const refreshMessages = useCallback(async () => {
     const supabase = createBrowserClient();
     const { data } = await supabase.rpc("get_club_chat_messages", { p_club_id: clubId, p_limit: 200 });
-    if (data) setLiveMessages(data);
-  }, [clubId]);
+    if (data) setLiveMessages(applyCurrentUserName(data, currentUser));
+  }, [clubId, currentUser]);
   const [state, action, pending] = useActionState(async (previous: Awaited<ReturnType<typeof postClubMessage>>, formData: FormData) => {
     const body = String(formData.get("body") ?? "").trim();
     const temporaryId = `pending-${Date.now()}`;
