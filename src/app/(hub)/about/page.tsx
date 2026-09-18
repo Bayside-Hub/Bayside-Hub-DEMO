@@ -44,8 +44,8 @@ export default async function AboutPage() {
             text: "Developed and maintained by the Bayside student dev team, guided by advisors and the SO office.",
           },
           {
-            title: "Open to everyone",
-            text: "Any student can browse, join clubs, and find opportunities with their NYC student account.",
+            title: "Open to All Baysider",
+            text: "Any Baysider can browse, join clubs, and find opportunities with their NYC account.",
           },
         ].map((c) => (
           <div key={c.title} className="card-gradient rounded-[10px] p-6">
