@@ -189,7 +189,7 @@ export default function ClubBrowser({ clubs, joinedClubSlugs, signedIn }: { club
               className="h-2 w-40 cursor-pointer appearance-none rounded-full bg-content-bg accent-powder"
             />
             <span className="w-8 text-sm font-semibold text-powder">
-              {commitment > 0 ? `${commitment}+` : "Any"}h
+              {commitment > 0 ? `${commitment}+hours` : "Any"}
             </span>
           </div>
         </div>
