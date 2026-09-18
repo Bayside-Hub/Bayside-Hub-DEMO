@@ -15,12 +15,12 @@ export default async function OpportunityCategoryPage({ config, query }: { confi
   const opportunities = all.filter((item) => config.types.includes(item.type)).filter((item) => matchesQuery(item, query));
 
   return (
-    <div className="opportunity-backdrop relative min-h-full overflow-hidden bg-black px-5 py-7 text-[#f0ebe5] sm:px-8 lg:px-12">
+    <div className="opportunity-backdrop relative min-h-full overflow-hidden bg-black px-5 py-7 text-ink sm:px-8 lg:px-12">
       <div className="relative mx-auto w-full max-w-[1812px]">
-        <Link href="/opportunities" className="text-xs font-bold uppercase tracking-wide text-[#97b4de] hover:text-[#f0ebe5]">← Dashboard</Link>
+        <Link href="/opportunities" className="text-xs font-bold uppercase tracking-wide text-powder hover:text-ink">← Dashboard</Link>
         <section className="grid items-center gap-8 py-10 lg:grid-cols-[0.95fr_1.05fr] lg:px-7 lg:py-16">
-          <div className="overflow-hidden rounded-[20px] border-4 border-[#f0ebe5] bg-[#263a99]"><Image src={config.image} alt={config.imageAlt} width={808} height={250} priority className="aspect-[808/250] w-full object-cover" /></div>
-          <div><p className="text-xs font-bold uppercase tracking-[0.14em] text-[#97b4de]">{config.label}</p><h1 className="mt-3 whitespace-pre-line text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl">{config.heading}</h1><p className="mt-4 max-w-3xl text-base leading-7 text-[#dcd0be] sm:text-lg">{config.description}</p></div>
+          <div className="overflow-hidden rounded-[20px] border-4 border-ink bg-[#263a99]"><Image src={config.image} alt={config.imageAlt} width={808} height={250} priority className="aspect-[808/250] w-full object-cover" /></div>
+          <div><p className="text-xs font-bold uppercase tracking-[0.14em] text-powder">{config.label}</p><h1 className="mt-3 whitespace-pre-line text-5xl font-bold leading-[1.05] tracking-tight text-ink sm:text-6xl">{config.heading}</h1><p className="mt-4 max-w-3xl text-base leading-7 text-muted sm:text-lg">{config.description}</p></div>
         </section>
 
         <section className="rounded-[20px] bg-[#dcd0be]/95 p-5 text-[#2a2829] sm:p-8 lg:p-10" aria-labelledby="category-results-title">
@@ -32,7 +32,7 @@ export default async function OpportunityCategoryPage({ config, query }: { confi
           </form>
           {opportunities.length ? <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{opportunities.map((opportunity) => <OpportunityResultCard key={opportunity.id} opportunity={opportunity} />)}</div> : <div className="mt-6 rounded-[10px] border border-dashed border-[#2a2829]/25 bg-[#f0ebe5]/60 px-6 py-12 text-center"><p className="font-semibold">{query ? "No matching opportunities" : `No active ${config.label.toLocaleLowerCase()} are posted yet.`}</p><p className="mt-2 text-sm text-[#6f6a6b]">{query ? "Try a broader search." : "Check back soon or ask your guidance counselor for current options."}</p></div>}
         </section>
-        <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium"><span>{config.label.toUpperCase()}</span><span className="h-px flex-1 bg-[#f0ebe5]" /><span className="text-[#dcd0be]">BAYSIDE HUB</span></footer>
+        <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium text-ink"><span>{config.label.toUpperCase()}</span><span className="h-px flex-1 bg-ink" /><span className="text-muted">BAYSIDE HUB</span></footer>
       </div>
     </div>
   );

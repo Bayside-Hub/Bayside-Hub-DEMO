@@ -139,6 +139,8 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
             </ActionFeedbackForm>
             {meetings?.length ? <div className="mt-5 flex flex-wrap gap-2">{meetings.map((meeting) => { const period = bellPeriodFromStartTime(meeting.start_time); return <span key={meeting.id} className="rounded-full border border-line bg-content-bg px-3 py-1.5 text-xs font-medium text-ink">{["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][meeting.day_of_week - 1]} · {period ? `Period ${period.period}` : "Period TBD"} · {meeting.location ?? "TBD"}</span>; })}</div> : null}
           </section>
+
+          <ClubGovernancePanel clubId={club.id} clubStatus={club.status} role={user.role} canGovern={canGovern} officers={officers ?? []} advisors={advisors ?? []} media={media ?? []} history={history ?? []} />
         </main>
 
         <aside className="space-y-6">
@@ -209,7 +211,6 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
         </aside>
       </div>
 
-      <ClubGovernancePanel clubId={club.id} clubStatus={club.status} role={user.role} canGovern={canGovern} officers={officers ?? []} advisors={advisors ?? []} media={media ?? []} history={history ?? []} />
     </div>
   );
 }

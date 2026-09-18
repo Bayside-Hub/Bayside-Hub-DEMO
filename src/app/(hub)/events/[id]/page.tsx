@@ -30,7 +30,7 @@ export default async function EventDetailPage({
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8 lg:py-12">
-      <article className="relative overflow-hidden rounded-[26px] border border-[#97b4de] bg-[#f0ebe5] p-8 text-[#2a2829] shadow-sm sm:p-12">
+      <article className="relative overflow-hidden rounded-[26px] border border-[#97b4de] bg-[#d4cbbc] p-8 text-[#2a2829] shadow-sm sm:p-12">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded-full bg-navy px-3 py-1 font-semibold capitalize text-cream">
             {event.category === "spirit-week" ? "Spirit Week" : event.category}
@@ -63,14 +63,10 @@ export default async function EventDetailPage({
                 <input type="hidden" name="event_id" value={event.id} />
                 <PendingSubmitButton
                   pendingLabel="Saving RSVP…"
-                  className={`inline-flex h-10 items-center gap-2 rounded-[22px] border px-6 text-sm font-semibold transition-colors ${
-                    rsvp.joined
-                      ? "border-[#263a99] bg-[#97b4de]/30 text-[#263a99]"
-                      : "border-[#2a2829] text-[#2a2829] hover:bg-white"
-                  }`}
+                  className="inline-flex h-10 items-center gap-2 rounded-[22px] border border-black bg-black px-6 text-sm font-semibold text-white transition-colors hover:bg-black/80"
                 >
                   {rsvp.joined ? "✓ I'm going" : "Count me in"}
-                  <span className="text-xs text-muted">({rsvp.count} going)</span>
+                  <span className="text-xs text-white/75">({rsvp.count} going)</span>
                 </PendingSubmitButton>
               </form>
             ) : (

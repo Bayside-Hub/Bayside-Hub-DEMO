@@ -36,7 +36,7 @@ export default async function SpiritWeekPage() {
             <span className="text-xs font-bold uppercase tracking-wider opacity-70">
               {d.day}
             </span>
-            <span className="mt-1 text-3xl font-black opacity-20">{i + 1}</span>
+            <span className="mt-1 text-3xl font-black text-black">{i + 1}</span>
             <span className="mt-2 font-bold">{d.name}</span>
           </li>
         ))}
