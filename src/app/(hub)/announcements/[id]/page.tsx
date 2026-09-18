@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import AnnouncementActions from "@/components/announcement-actions";
 import { AnnouncementCard } from "@/components/cards";
-import { getAnnouncement, getAnnouncements, getAnnouncementVersions } from "@/lib/announcements";
+import { getAnnouncement, getAnnouncements } from "@/lib/announcements";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AnnouncementDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [announcement, versions, latest] = await Promise.all([getAnnouncement(id), getAnnouncementVersions(id), getAnnouncements(5)]);
+  const [announcement, latest] = await Promise.all([getAnnouncement(id), getAnnouncements(5)]);
   if (!announcement) notFound();
   const related = latest.filter((item) => item.id !== id).slice(0, 2);
 
@@ -33,8 +33,6 @@ export default async function AnnouncementDetailPage({ params }: { params: Promi
           <div className="prose-announcement mt-8 max-w-3xl whitespace-pre-wrap text-base leading-8 text-muted sm:text-lg">{announcement.excerpt}</div>
         </div>
       </article>
-
-      {versions.length > 0 ? <details className="mt-6 rounded-card border border-line bg-card p-6 shadow-sm"><summary className="cursor-pointer text-lg font-bold text-ink">Version history ({versions.length})</summary><ol className="mt-4 space-y-3">{versions.map((version) => <li key={version.id} className="rounded-control border border-line bg-content-bg p-4"><div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted"><strong className="text-ink">Version {version.version_number}</strong><time dateTime={version.changed_at}>{new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(version.changed_at))}</time></div>{version.version_note ? <p className="mt-2 text-sm font-medium text-powder">{version.version_note}</p> : null}<p className="mt-2 text-sm leading-6 text-muted">{version.snapshot_content}</p></li>)}</ol></details> : null}
 
       {related.length ? <section className="mt-10" aria-labelledby="related-announcements"><div className="flex items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-powder">Keep reading</p><h2 id="related-announcements" className="mt-1 font-display text-2xl font-bold uppercase text-ink">More announcements</h2></div><Link href="/announcements" className="text-sm font-semibold text-navy">View all →</Link></div><div className="mt-4 grid gap-3 lg:grid-cols-2">{related.map((item) => <AnnouncementCard key={item.id} a={item} />)}</div></section> : null}
 

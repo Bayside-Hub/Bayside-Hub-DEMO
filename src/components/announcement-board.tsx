@@ -21,7 +21,7 @@ function loadIds(key: string) {
 export default function AnnouncementBoard({ announcements }: { announcements: Announcement[] }) {
   const [read, setRead] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState<Set<string>>(new Set());
-  const [view, setView] = useState<View>("all");
+  const [view, setView] = useState<View>("unread");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
