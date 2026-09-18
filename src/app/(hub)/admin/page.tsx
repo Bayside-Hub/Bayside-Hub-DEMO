@@ -38,7 +38,7 @@ export default async function AdminPage() {
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader
         title="Admin"
-        subtitle="Admin Home Page — monitor activity, review reports, and manage the platform."
+        subtitle="Review what needs attention now, then open the appropriate management workspace."
       />
 
       <section aria-label="Dashboard" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -53,11 +53,10 @@ export default async function AdminPage() {
 
       <section className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="rounded-card border border-black/5 bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-ink">Administration checklist</h2>
+          <h2 className="text-lg font-bold text-ink">Today&apos;s priorities</h2>
           <div className="mt-4 space-y-4">
-            <p className="text-sm text-muted">Review pending club applications and support requests. Assign each advisor to the correct club; board positions belong to individual clubs, not a site-wide role.</p>
-            <p className="text-sm text-muted">Club leadership submits school announcements for administrator review. Club posts and chat remain separate from that approval queue.</p>
-            <Link href="/admin/reports" className="inline-flex rounded-full bg-navy px-4 py-2 text-sm text-cream">Open live reports</Link>
+            <p className="text-sm text-muted">Handle new Club applications, announcement reviews, and Support conversations first. The Notifications inbox now records incoming requests.</p>
+            <div className="flex flex-wrap gap-2"><Link href="/notifications" className="inline-flex rounded-full bg-navy px-4 py-2 text-sm text-cream">Open notifications</Link><Link href="/admin/support" className="inline-flex rounded-full border border-line px-4 py-2 text-sm text-ink">Support queue</Link></div>
           </div>
         </div>
 
@@ -97,18 +96,12 @@ export default async function AdminPage() {
                 { label: "Post Announcement", href: "/admin/announcements" },
                 { label: "Manage Clubs", href: "/admin/clubs" },
                 { label: "Support Queue", href: "/admin/support" },
-                { label: "Approval Workflows", href: "/admin/workflows" },
-                { label: "View Reports", href: "/admin/reports" },
-                { label: "Club Content & Governance", href: "/clubs/manage" },
                 { label: "Opportunities", href: "/admin/opportunities" },
                 ...(user.role === "admin" ? [
                   { label: "Manage Users", href: "/admin/users" },
                   { label: "Announcement Review", href: "/admin/review" },
-                  { label: "Custom Roles", href: "/admin/roles" },
-                  { label: "Site Text", href: "/manage/site" },
+                  { label: "Public Content & FAQs", href: "/manage/site" },
                   { label: "Management Audit", href: "/admin/audit" },
-                  { label: "Operations Dashboard", href: "/admin/operations" },
-                  { label: "CSV & Bulk Tools", href: "/admin/data" },
                 ] : []),
               ].map((t) => (
                 <Link

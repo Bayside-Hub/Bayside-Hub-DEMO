@@ -14,7 +14,7 @@ function initials(user: SessionUser) {
   return (first + last).toUpperCase();
 }
 
-export default function Topbar({ user }: { user: SessionUser | null }) {
+export default function Topbar({ user, unreadNotifications = 0 }: { user: SessionUser | null; unreadNotifications?: number }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
 
@@ -38,7 +38,7 @@ export default function Topbar({ user }: { user: SessionUser | null }) {
         <ThemeToggle />
         {user ? (
           <>
-            <Link href="/notifications" title="Notifications" aria-label="Notifications" className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-card text-ink transition-colors hover:bg-content-bg hover:text-navy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy"><NotificationIcon className="size-5" /></Link>
+            <Link href="/notifications" title="Notifications" aria-label={`${unreadNotifications} unread notifications`} className="relative flex h-9 w-9 items-center justify-center rounded-full border border-line bg-card text-ink transition-colors hover:bg-content-bg hover:text-navy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy"><NotificationIcon className="size-5" />{unreadNotifications > 0 ? <span className="absolute -right-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-orange px-1 text-[9px] font-bold text-black">{Math.min(unreadNotifications, 99)}</span> : null}</Link>
             <div className="hidden text-right sm:block">
               <p className="text-xs font-medium text-ink">Welcome, {user.name}</p>
               <p className="text-[11px] text-muted">

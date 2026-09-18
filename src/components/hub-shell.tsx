@@ -4,6 +4,8 @@ import Sidebar from "./sidebar";
 import Topbar from "./topbar";
 import SiteFooter from "./site-footer";
 import MobileBottomNav from "./mobile-bottom-nav";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createServerClient } from "@/lib/supabase/server";
 
 /**
  * Shared application chrome for public and authenticated pages.
@@ -12,6 +14,12 @@ import MobileBottomNav from "./mobile-bottom-nav";
  */
 export default async function HubShell({ children }: { children: ReactNode }) {
   const user = await getCurrentUser();
+  let unreadNotifications = 0;
+  if (user && isSupabaseConfigured()) {
+    const db = await createServerClient();
+    const result = await db.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null);
+    unreadNotifications = result.count ?? 0;
+  }
 
   return (
     <div className="theme-dark flex h-full flex-col overflow-hidden bg-content-bg">
@@ -26,7 +34,7 @@ export default async function HubShell({ children }: { children: ReactNode }) {
           <Sidebar role={user?.role ?? "student"} name={user?.name} />
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar user={user} />
+          <Topbar user={user} unreadNotifications={unreadNotifications} />
           <main id="main-content" className="hub-unified-backdrop min-h-0 flex-1 overflow-y-auto pb-20 lg:pb-0">
             {children}
             <SiteFooter />

@@ -29,7 +29,7 @@ grant execute on function public.has_custom_permission(text,uuid) to anon,authen
 grant select,insert,update,delete on public.custom_roles,public.custom_role_assignments to authenticated;
 
 -- Only public content belongs here. Never store keys or private contacts.
-create table if not exists public.site_content(key text primary key check(key in ('home_intro','about_intro','support_intro','footer_note')),body text not null check(char_length(body) between 1 and 4000),updated_by uuid references public.profiles(id),updated_at timestamptz not null default now());
+create table if not exists public.site_content(key text primary key check(key in ('home_intro','about_intro','support_intro','footer_note','support_faqs','manual_content')),body text not null check(char_length(body) between 1 and 4000),updated_by uuid references public.profiles(id),updated_at timestamptz not null default now());
 alter table public.site_content enable row level security;
 drop policy if exists "Public site content" on public.site_content;
 create policy "Public site content" on public.site_content for select using(true);

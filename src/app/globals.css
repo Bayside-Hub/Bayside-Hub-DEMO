@@ -49,8 +49,8 @@
   --card-bg: rgba(255, 255, 255, 0.88);
   --popover-bg: #ffffff;
   --home-bg: #e9eef7;
-  --ink: #172039;
-  --muted: #5f687b;
+  --ink: #000000;
+  --muted: #303642;
   --ring: rgba(41, 69, 168, 0.2);
   --line: rgba(28, 42, 75, 0.12);
 }

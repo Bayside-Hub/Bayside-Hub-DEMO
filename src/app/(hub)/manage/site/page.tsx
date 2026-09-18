@@ -12,5 +12,5 @@ export default async function SiteEditorPage() {
   if (user.role !== "admin" && !allowed) return <p className="p-8">An administrator must grant you site text editing permission.</p>;
   const { error } = await db.from("site_content").select("key").limit(1);
   const text = await getSiteText();
-  return <div className="mx-auto max-w-4xl space-y-5 px-5 py-8 text-cream"><h1 className="text-3xl font-bold">Public site text</h1><p>Update introductions and the footer. Text is public; do not enter secrets or private information.</p>{error ? <p role="alert">Apply custom_permissions.sql before using this editor.</p> : Object.entries(text).map(([key, value]) => <SiteTextForm key={key} field={key} value={value} />)}</div>;
+  return <div className="mx-auto max-w-4xl space-y-5 px-5 py-8 text-ink"><h1 className="text-3xl font-bold">Public content</h1><p className="text-muted">Edit page introductions, Support FAQs, the Help Guide, and footer text. FAQ lines use <code>Question || Answer</code>. Text is public; do not enter private information.</p>{error ? <p role="alert">Apply <code>editable_support_content.sql</code> before using this editor.</p> : Object.entries(text).map(([key, value]) => <SiteTextForm key={key} field={key} value={value} />)}</div>;
 }

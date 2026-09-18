@@ -15,17 +15,13 @@ const serviceCards = [
   { title: "IT Help Desk & Device Support", category: "Tech & IT", schedule: "SCHOOL DAYS · ROOM 314", keywords: "technical technology bug account login computer device", color: "bg-[#263a99]", primary: "Troubleshoot", primaryHref: "#technical-support", secondary: "Report issue", secondaryHref: "#request-support" },
 ];
 
-const faqs = [
-  { question: "Who can I reach out to if I encounter a technical issue or bug?", answer: "Submit a Technical Support request below. The support team will respond within two school days." },
-  { question: "How do I track the status of my activities and requests?", answer: "Open your Profile to review joined clubs, applications, and support requests." },
-];
-
 function searchable(value: string, query: string) {
   return value.toLocaleLowerCase().includes(query.toLocaleLowerCase());
 }
 
 export default async function SupportPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const text = await getSiteText();
+  const faqs = text.support_faqs.split("\n").map(line => { const [question, ...answer] = line.split("||"); return { question: question?.trim(), answer: answer.join("||").trim() }; }).filter(faq => faq.question && faq.answer);
   const { q = "" } = await searchParams;
   const query = q.trim();
   const user = await getCurrentUser();
@@ -37,7 +33,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
   const visibleTopics = query ? supportTopics.filter((topic) => searchable(`${topic.title} ${topic.description}`, query)) : supportTopics;
 
   return (
-    <div className="support-backdrop relative min-h-full overflow-hidden bg-black px-5 py-8 text-[#f0ebe5] sm:px-8 lg:px-12">
+    <div className="support-backdrop relative min-h-full overflow-hidden bg-black px-5 py-8 text-ink sm:px-8 lg:px-12">
       <div className="relative mx-auto w-full max-w-[1812px]">
         <header className="page-title-card mb-6 flex min-h-[300px] flex-col items-center justify-center text-center lg:mb-8">
           <h1 className="text-4xl font-bold sm:text-5xl lg:text-[52px]">We are here to help!</h1>
@@ -46,7 +42,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
             <input id="support-search" name="q" defaultValue={query} placeholder="Ask a question…" className="h-12 min-w-0 flex-1 rounded-[8px] bg-[#f0ebe5] px-4 text-sm text-[#2a2829] outline-none placeholder:text-[#6f6a6b] focus:ring-2 focus:ring-[#97b4de]" />
             <button className="h-12 rounded-[8px] bg-[#263a99] px-6 text-xs font-bold text-[#f0ebe5]">SEARCH</button>
           </form>
-          <p className="mt-2 text-base text-[#dcd0be] sm:text-xl">{text.support_intro}</p>
+          <p className="mt-2 text-base text-muted sm:text-xl">{text.support_intro}</p>
           {query ? <Link href="/support" className="mt-3 text-xs font-semibold text-[#97b4de] hover:underline">Clear search</Link> : null}
         </header>
 
@@ -75,7 +71,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
 
         {user ? <section id="my-requests" className="mt-8 scroll-mt-24 rounded-[20px] bg-[#dcd0be]/95 p-5 text-[#2a2829] sm:p-8"><h2 className="text-2xl font-bold">My requests</h2>{requests?.length ? <ul className="mt-4 space-y-3">{requests.map((request) => <li key={request.id}><Link href={`/support/${request.id}`} className="flex flex-wrap items-center justify-between gap-3 rounded-[10px] bg-[#f0ebe5] px-5 py-4 transition hover:ring-2 hover:ring-[#97b4de]"><div><p className="font-semibold">{request.subject}</p><p className="mt-1 text-xs text-[#6f6a6b]">{request.request_type.replaceAll("_", " ")} · Open conversation →</p></div><span className="rounded-full bg-[#263a99] px-3 py-1 text-xs font-bold uppercase text-[#f0ebe5]">{request.status.replaceAll("_", " ")}</span></Link></li>)}</ul> : <p className="mt-4 text-sm text-[#6f6a6b]">You have no support requests yet.</p>}</section> : null}
 
-        <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium"><span>SUPPORT</span><span className="h-px flex-1 bg-[#f0ebe5]" /><span className="text-[#dcd0be]">BAYSIDE HUB</span></footer>
+        <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium text-ink"><span>SUPPORT</span><span className="h-px flex-1 bg-line" /><span className="text-muted">BAYSIDE HUB</span></footer>
       </div>
     </div>
   );

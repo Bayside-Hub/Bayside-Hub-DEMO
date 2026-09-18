@@ -38,7 +38,7 @@ export default function SupportRequestForm() {
         Requested date/time <span className="font-normal text-[#6f6a6b]">(optional, for room requests)</span>
         <input type="datetime-local" name="requested_for" className="h-11 rounded-control border border-[#2a2829]/15 bg-[#f0ebe5] px-3 text-[#2a2829]" />
       </label>
-      {state && <p role={state.ok ? "status" : "alert"} className={`rounded-control px-3 py-2 text-sm ${state.ok ? "bg-powder/15 text-powder" : "bg-orange/15 text-orange"}`}>{state.message}</p>}
+      {state && <p role={state.ok ? "status" : "alert"} className={`rounded-control px-3 py-2 text-sm ${state.ok ? "bg-powder/20 text-navy" : "bg-orange/15 text-orange"}`}>{state.message}</p>}
       <button type="submit" disabled={pending} className="inline-flex h-11 items-center justify-center rounded-[8px] bg-[#263a99] px-6 text-sm font-bold text-[#f0ebe5] hover:bg-[#1e3279] disabled:opacity-50">
         {pending ? "Submitting…" : "Submit request"}
       </button>
