@@ -56,6 +56,7 @@ export default async function ClubDetailPage({
   const { updatesPage: rawUpdatesPage } = await searchParams;
   const club = await getClubBySlug(slug);
   if (!club) notFound();
+  const advisors = club.advisors ?? [];
   const user = await getCurrentUser();
   const isApprovedCharter = club.officers.length === 0;
   const interest = await getClubInterestInfo(club.slug);
@@ -164,14 +165,8 @@ export default async function ClubDetailPage({
         </div>
       </section>
 
-      {(club.advisors?.length || club.links?.length || club.googleClassroomCode) && (
+      {(club.links?.length || club.googleClassroomCode) && (
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
-          {club.advisors?.length ? (
-            <div className="card-gradient rounded-[10px] p-5">
-              <h2 className="font-display text-lg font-bold uppercase text-cream">Advisors</h2>
-              {club.advisors.map((advisor) => <p key={`${advisor.name}-${advisor.email ?? ""}`} className="mt-2 text-sm text-cream/75">{advisor.name}{advisor.email ? ` · ${advisor.email}` : ""}</p>)}
-            </div>
-          ) : null}
           {club.links?.length ? (
             <div className="card-gradient rounded-[10px] p-5 sm:col-span-3">
               <h2 className="font-display text-lg font-bold uppercase text-cream">Club links</h2>
@@ -291,8 +286,11 @@ export default async function ClubDetailPage({
           <ul className="mt-4 space-y-2 text-sm text-cream/75">
             <li>• Open to all grades</li>
             <li>• {commitmentLabel}</li>
-            <li>• Advisors: see officer board</li>
           </ul>
+          <div className="mt-5 border-t border-white/10 pt-4">
+            <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-powder">Advisor{advisors.length === 1 ? "" : "s"}</h3>
+            {advisors.length ? <ul className="mt-3 space-y-3">{advisors.map((advisor) => <li key={`${advisor.name}-${advisor.email ?? ""}`} className="text-sm text-cream/75"><strong className="block text-cream">{advisor.name}</strong>{advisor.email ? <a href={`mailto:${advisor.email}`} className="mt-0.5 block break-all text-powder hover:text-cream">{advisor.email}</a> : <span className="mt-0.5 block text-cream/55">Email not listed</span>}</li>)}</ul> : <p className="mt-2 text-sm text-cream/55">Advisor information will be posted soon.</p>}
+          </div>
         </aside>
       </section>
 

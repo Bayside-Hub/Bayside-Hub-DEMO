@@ -89,7 +89,7 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
             <Link href={`/clubs/${club.slug}`} className="rounded-full border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-semibold backdrop-blur hover:bg-white/20">View Club page</Link>
             <Link href={`/clubs/manage/${id}/content`} className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#263a99]">Manage content</Link>
             <Link href={`/clubs/manage/${id}/finance`} className="rounded-full border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-semibold backdrop-blur hover:bg-white/20">Treasury &amp; fundraising</Link>
-            <Link href={`/clubs/manage/${id}/operations`} className="rounded-full border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-semibold backdrop-blur hover:bg-white/20">Constitution &amp; elections</Link>
+            <Link href={`/clubs/manage/${id}/operations`} className="rounded-full border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-semibold backdrop-blur hover:bg-white/20">Club constitution</Link>
           </div>
         </div>
       </header>

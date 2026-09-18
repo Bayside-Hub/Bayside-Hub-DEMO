@@ -39,7 +39,6 @@ export default function OpportunitiesPage() {
             ))}
           </div>
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-[#2a2829]/15 pt-5 text-sm font-semibold text-[#263a99]">
-            <Link href="/opportunities/all?type=Elections" className="hover:underline">Student elections →</Link>
             <Link href="/opportunities/all?type=Student%20Discounts" className="hover:underline">Student discounts →</Link>
             <Link href="/opportunities/all" className="hover:underline">View every opportunity →</Link>
           </div>

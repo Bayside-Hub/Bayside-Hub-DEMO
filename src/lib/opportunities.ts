@@ -29,19 +29,21 @@ function mapOpportunity(row: OpportunityRow): Opportunity {
 }
 
 export const getOpportunities = cache(async (limit?: number): Promise<Opportunity[]> => {
-  if (!isSupabaseConfigured()) return limit === undefined ? seedOpportunities : seedOpportunities.slice(0, limit);
+  const visibleSeed = seedOpportunities.filter((item) => item.type !== "Elections");
+  if (!isSupabaseConfigured()) return limit === undefined ? visibleSeed : visibleSeed.slice(0, limit);
   const supabase = await createServerClient();
   let query = supabase
     .from("opportunities")
     .select("*")
     .eq("status", "published")
+    .neq("category", "election")
     .or(`deadline.is.null,deadline.gte.${new Date().toISOString()}`)
     .order("deadline", { ascending: true, nullsFirst: false });
   if (limit !== undefined) query = query.limit(limit);
   const { data, error } = await query;
   if (error) throw new Error(`Unable to load opportunities: ${error.message}`);
   const live = (data ?? []).map(mapOpportunity);
-  const output = preferLiveData(live, seedOpportunities);
+  const output = preferLiveData(live, visibleSeed);
   return limit === undefined ? output : output.slice(0, limit);
 });
 

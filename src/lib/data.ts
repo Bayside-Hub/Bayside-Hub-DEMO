@@ -351,13 +351,6 @@ export type Opportunity = {
 
 export const opportunities: Opportunity[] = [
   {
-    id: "o1",
-    title: "Student Council Elections",
-    type: "Elections",
-    date: "Feb 3, 2027",
-    description: "Nominations open for next year's Student Council. Submit your application by January 20, 2027.",
-  },
-  {
     id: "o2",
     title: "SYEP Summer Youth Employment",
     type: "Internships",
