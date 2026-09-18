@@ -13,15 +13,15 @@ const categories = [
 
 export default function OpportunitiesPage() {
   return (
-    <div className="opportunity-backdrop relative min-h-full overflow-hidden bg-black px-5 py-8 text-[#f0ebe5] sm:px-8 lg:px-12">
+    <div className="opportunity-backdrop relative min-h-full overflow-hidden bg-black px-5 py-8 text-ink sm:px-8 lg:px-12">
       <div className="relative mx-auto w-full max-w-[1812px]">
         <section className="grid items-center gap-8 py-8 lg:grid-cols-[1.25fr_0.95fr] lg:px-7 lg:py-12">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#97b4de]">Opportunities</p>
-            <h1 className="mt-3 text-5xl font-bold tracking-tight sm:text-6xl">Get Involved</h1>
-            <p className="mt-4 max-w-4xl text-base leading-7 text-[#dcd0be] sm:text-lg">Explore chances to grow, learn, and contribute. Discover open positions, upcoming projects, volunteer opportunities, and ways to collaborate with our community. Find your next step here.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-powder">Opportunities</p>
+            <h1 className="mt-3 text-5xl font-bold tracking-tight text-ink sm:text-6xl">Get Involved</h1>
+            <p className="mt-4 max-w-4xl text-base leading-7 text-muted sm:text-lg">Explore chances to grow, learn, and contribute. Discover open positions, upcoming projects, volunteer opportunities, and ways to collaborate with our community. Find your next step here.</p>
           </div>
-          <div className="overflow-hidden rounded-[20px] border-4 border-[#f0ebe5] bg-[#263a99]">
+          <div className="overflow-hidden rounded-[20px] border-4 border-ink bg-[#263a99]">
             <Image src="/opportunities/overview.jpg" alt="Hand-drawn stars and characters on a blue background" width={749} height={216} priority className="aspect-[749/216] w-full object-cover" />
           </div>
         </section>
@@ -45,7 +45,7 @@ export default function OpportunitiesPage() {
           </div>
         </section>
 
-        <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium"><span>OPPORTUNITIES</span><span className="h-px flex-1 bg-[#f0ebe5]" /><span className="text-[#dcd0be]">BAYSIDE HUB</span></footer>
+        <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium text-ink"><span>OPPORTUNITIES</span><span className="h-px flex-1 bg-ink" /><span className="text-muted">BAYSIDE HUB</span></footer>
       </div>
     </div>
   );

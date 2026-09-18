@@ -10,9 +10,9 @@ import { getSiteText } from "@/lib/site-content";
 export const metadata: Metadata = { title: "Support" };
 
 const serviceCards = [
-  { title: "Club & Activity Support", category: "Student life", schedule: "SCHOOL DAYS · S.O. OFFICE", keywords: "club charter funding room activity", color: "bg-[#263a99]", primary: "Guides", primaryHref: "/support/manual", secondary: "Get help", secondaryHref: "#request-support" },
-  { title: "Student Counseling & Wellness", category: "Wellness", schedule: "MONDAY–FRIDAY · ROOM 147", keywords: "counselor counseling mental health wellbeing", color: "bg-[#97b4de]", primary: "Resources", primaryHref: "/support/manual", secondary: "Contact", secondaryHref: "#request-support" },
-  { title: "IT Help Desk & Device Support", category: "Tech & IT", schedule: "SCHOOL DAYS · ROOM 314", keywords: "technical technology bug account login computer device", color: "bg-[#263a99]", primary: "Troubleshoot", primaryHref: "#technical-support", secondary: "Report issue", secondaryHref: "#request-support" },
+  { title: "Club & Activity Support", category: "Student life", schedule: "SCHOOL DAYS · S.O. OFFICE", keywords: "club charter funding room activity", color: "bg-[#263a99]" },
+  { title: "Student Counseling & Wellness", category: "Wellness", schedule: "MONDAY–FRIDAY · ROOM 147", keywords: "counselor counseling mental health wellbeing", color: "bg-[#97b4de]" },
+  { title: "IT Help Desk & Device Support", category: "Tech & IT", schedule: "SCHOOL DAYS · ROOM 314", keywords: "technical technology bug account login computer device", color: "bg-[#263a99]" },
 ];
 
 function searchable(value: string, query: string) {
@@ -49,7 +49,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
         <div className="grid gap-5 xl:grid-cols-[1.7fr_1fr]">
           <section aria-labelledby="support-services-title">
             <h2 id="support-services-title" className="sr-only">Support services</h2>
-            {visibleCards.length ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{visibleCards.map((card) => <article key={card.title} className="flex min-h-60 flex-col rounded-[12px] bg-[#dcd0be] p-[18px] text-[#2a2829]"><span className={`size-12 rounded-[14px] ${card.color}`} aria-hidden /><h3 className="mt-3 text-base font-bold">{card.title}</h3><p className="mt-1 text-xs font-semibold text-[#263a99]">{card.category}</p><p className="mt-2 text-[11px] font-medium">{card.schedule}</p><div className="mt-auto flex flex-col gap-2 pt-5"><Link href={card.primaryHref} className="rounded-full bg-[#e8e1d8] px-5 py-2 text-center text-[10px] font-semibold text-[#263a99]">{card.primary.toUpperCase()}</Link><Link href={card.secondaryHref} className="rounded-full bg-[#e8e1d8] px-5 py-2 text-center text-[10px] font-semibold text-[#263a99]">{card.secondary.toUpperCase()}</Link></div></article>)}</div> : <p className="rounded-[12px] bg-[#dcd0be] p-8 text-center text-[#2a2829]">No support service matched “{query}”.</p>}
+            {visibleCards.length ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{visibleCards.map((card) => <article key={card.title} className="rounded-[12px] bg-[#dcd0be] p-[18px] text-[#2a2829]"><span className={`block size-12 rounded-[14px] ${card.color}`} aria-hidden /><h3 className="mt-3 text-base font-bold">{card.title}</h3><p className="mt-1 text-xs font-semibold text-[#263a99]">{card.category}</p><p className="mt-2 text-[11px] font-medium">{card.schedule}</p></article>)}</div> : <p className="rounded-[12px] bg-[#dcd0be] p-8 text-center text-[#2a2829]">No support service matched “{query}”.</p>}
           </section>
 
           <section className="rounded-[14px] bg-[#dcd0be] p-[22px] text-[#2a2829]" aria-labelledby="faq-title">
