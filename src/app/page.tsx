@@ -17,14 +17,14 @@ import { getStudentDashboard } from "@/lib/student-dashboard";
 import { getSiteText } from "@/lib/site-content";
 
 export default async function Home() {
-  const text = await getSiteText();
-  const [user, dashboard, announcements, clubs, events, opportunities] = await Promise.all([
+  const [text, user, dashboard, announcements, clubs, events, opportunities] = await Promise.all([
+    getSiteText(),
     getCurrentUser(),
     getStudentDashboard(),
     getAnnouncements(1),
-    getAllClubs(),
+    getAllClubs(3),
     getEvents(),
-    getOpportunities(),
+    getOpportunities(3),
   ]);
   const [featured] = announcements;
   const upcomingEvents = events.filter((event) => isEventUpcoming(event));
@@ -130,7 +130,7 @@ export default async function Home() {
         <section className="mt-10">
           <SectionHeader
             title="Clubs"
-            subtitle={`Explore ${clubs.length} currently listed club${clubs.length === 1 ? "" : "s"}. More clubs are being added.`}
+            subtitle="Explore student organizations, find your community, and get involved."
             href="/clubs"
             linkLabel="VIEW ALL"
           />

@@ -61,23 +61,12 @@
   flex: none;
   overflow: hidden;
   border-radius: 22%;
+  background: url("/brand-logo-light.png") center / contain no-repeat;
 }
 
-.brand-logo img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.brand-logo-dark { display: none; }
-[data-theme="dark"] .brand-logo-light { display: none; }
-[data-theme="dark"] .brand-logo-dark { display: block; }
-.brand-logo-variant-light .brand-logo-light { display: block; }
-.brand-logo-variant-light .brand-logo-dark { display: none; }
-.brand-logo-variant-dark .brand-logo-light { display: none; }
-.brand-logo-variant-dark .brand-logo-dark { display: block; }
+[data-theme="dark"] .brand-logo { background-image: url("/brand-logo-dark.png"); }
+.brand-logo-variant-light { background-image: url("/brand-logo-light.png") !important; }
+.brand-logo-variant-dark { background-image: url("/brand-logo-dark.png") !important; }
 
 @theme inline {
   --color-navy: var(--navy);
@@ -99,9 +88,8 @@
   --color-card: var(--card-bg);
   --color-line: var(--line);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-display: var(--font-montserrat), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-brand: var(--font-lexend), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 
   /* Design system — radius scale (from the Figma navigation and card specs) */
   --radius-focus: 4px; /* focus-visible ring corners */
