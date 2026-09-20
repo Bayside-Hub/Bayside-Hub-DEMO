@@ -92,6 +92,8 @@ checks and the existing release checklist are complete.
      assignments, role history and school announcement review
    - `supabase/custom_permissions.sql` — custom roles, scoped permissions,
      public text settings, publication guards and management audit
+   - `supabase/editable_support_content.sql` — editable Support FAQs and Help Guide content
+   - `supabase/site_cms_content.sql` — expanded Home, About, Support, identity, and footer CMS fields
    - `supabase/chat_recent_messages.sql` — latest messages in chronological order
    - `supabase/club_attendance.sql` — temporary/permanent Club check-in codes, QR redemption, and attendance records
    - `supabase/club_media_library.sql` — private-by-default Club media library,
@@ -184,6 +186,8 @@ supabase/               # SQL migrations to apply in the dashboard
 
 For request flow, directory responsibilities, data fallbacks, authorization
 boundaries, and the commenting convention, see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+The complete Student, Club Officer, Advisor, Staff, and Admin permission matrix
+is documented in [`docs/ACCESS_CONTROL.md`](docs/ACCESS_CONTROL.md).
 
 ## Deployment
 

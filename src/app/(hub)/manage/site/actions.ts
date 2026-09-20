@@ -10,10 +10,11 @@ export async function saveSiteText(_state: string, form: FormData) {
   if (!user) return "Sign in before editing.";
   const db = await createServerClient();
   const { data: allowed } = await db.rpc("has_custom_permission", { p_permission: "site.manage" });
-  if (user.role !== "admin" && !allowed) return "You do not have permission to edit site text.";
+  if (!["staff", "admin"].includes(user.role) && !allowed) return "You do not have permission to edit public content.";
   const key = String(form.get("key") ?? "");
   const body = String(form.get("body") ?? "").trim();
-  if (!Object.hasOwn(siteTextDefaults, key) || !body || body.length > 4000) return "Enter 1–4,000 characters in a supported field.";
+  const optionalKeys = new Set(["footer_contact", "support_location"]);
+  if (!Object.hasOwn(siteTextDefaults, key) || (!body && !optionalKeys.has(key)) || body.length > 4000) return "Enter 1–4,000 characters in a supported field; only contact and location may be blank.";
   const { error } = await db.from("site_content").upsert({ key, body, updated_by: user.id, updated_at: new Date().toISOString() });
   if (error) return "Unable to save. Check database setup and your permissions.";
   revalidatePath("/", "layout");

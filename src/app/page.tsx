@@ -56,7 +56,7 @@ export default async function Home() {
             )}
           </p>
           <h1 className="mt-4 font-display text-5xl font-bold uppercase leading-[1.05] tracking-wide text-cream sm:text-7xl lg:text-[96px] xl:text-[105px] xl:leading-[131px]">
-            Anchored in Excellence
+            {text.home_title}
           </h1>
           <p className="mt-6 max-w-3xl text-lg font-semibold leading-8 text-cream lg:text-2xl lg:leading-[30px]">
             {text.home_intro}
@@ -66,7 +66,7 @@ export default async function Home() {
               href="/clubs"
               className="h-16 px-14 text-lg"
             >
-              Explore
+              {text.home_cta_label}
             </PrimaryButton>
           </div>
         </div>

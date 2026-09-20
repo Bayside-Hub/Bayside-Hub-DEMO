@@ -36,7 +36,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
     <div className="support-backdrop relative min-h-full overflow-hidden bg-black px-5 py-8 text-ink sm:px-8 lg:px-12">
       <div className="relative mx-auto w-full max-w-[1812px]">
         <header className="page-title-card mb-6 flex min-h-[300px] flex-col items-center justify-center text-center lg:mb-8">
-          <h1 className="text-4xl font-bold sm:text-5xl lg:text-[52px]">We are here to help!</h1>
+          <h1 className="text-4xl font-bold sm:text-5xl lg:text-[52px]">{text.support_heading}</h1>
           <form role="search" className="mt-5 flex w-full max-w-2xl flex-col gap-3 sm:flex-row">
             <label htmlFor="support-search" className="sr-only">Search support</label>
             <input id="support-search" name="q" defaultValue={query} placeholder="Ask a question…" className="h-12 min-w-0 flex-1 rounded-[8px] bg-[#f0ebe5] px-4 text-sm text-[#2a2829] outline-none placeholder:text-[#6f6a6b] focus:ring-2 focus:ring-[#97b4de]" />
@@ -65,7 +65,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
 
         <section id="request-support" className="mt-8 scroll-mt-24 rounded-[20px] bg-[#dcd0be]/95 p-5 text-[#2a2829] sm:p-8">
           <h2 className="text-2xl font-bold">Request support</h2>
-          <p className="mt-2 text-sm text-[#6f6a6b]">Average response time: within two school days. For in-person help, visit the S.O. office in Room 131.</p>
+          <p className="mt-2 text-sm text-[#6f6a6b]">{text.support_response_time}{text.support_location ? ` ${text.support_location}` : ""}</p>
           {user ? <SupportRequestForm /> : <Link href="/login?next=/support" className="mt-5 inline-flex h-11 items-center rounded-[8px] bg-[#263a99] px-6 text-xs font-bold text-[#f0ebe5]">SIGN IN TO REQUEST SUPPORT</Link>}
         </section>
 

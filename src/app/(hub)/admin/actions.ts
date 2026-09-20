@@ -261,3 +261,83 @@ export async function setOpportunityStatus(_prev: ActionState, formData: FormDat
   revalidatePath("/");
   return { ok: true, message: "Opportunity updated." };
 }
+
+function opportunityInput(formData: FormData) {
+  const title = String(formData.get("title") ?? "").trim();
+  const category = String(formData.get("category") ?? "");
+  const description = String(formData.get("description") ?? "").trim();
+  const eligibility = String(formData.get("eligibility") ?? "").trim();
+  const applicationLink = String(formData.get("application_link") ?? "").trim();
+  const deadline = parseOptionalIsoDateTime(String(formData.get("deadline") ?? ""));
+  if (title.length < 3 || title.length > 120 || description.length < 10 || description.length > 4000 || !opportunityCategories.includes(category as (typeof opportunityCategories)[number]) || deadline === undefined) return null;
+  if (applicationLink) {
+    try { if (new URL(applicationLink).protocol !== "https:") return null; } catch { return null; }
+  }
+  return { title, category: category as (typeof opportunityCategories)[number], description, eligibility: eligibility || null, application_link: applicationLink || null, deadline };
+}
+
+export async function updateOpportunity(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await getCurrentUser();
+  const id = String(formData.get("id") ?? "");
+  const input = opportunityInput(formData);
+  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!id || !input || !isSupabaseConfigured()) return { ok: false, message: "Check the opportunity fields and HTTPS link." };
+  const db = await createServerClient();
+  const { error } = await db.from("opportunities").update({ ...input, updated_at: new Date().toISOString() }).eq("id", id);
+  if (error) return invalid();
+  revalidatePath("/admin/opportunities"); revalidatePath("/opportunities", "layout"); revalidatePath("/");
+  return { ok: true, message: "Opportunity content updated." };
+}
+
+export async function deleteOpportunity(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await getCurrentUser();
+  const id = String(formData.get("id") ?? "");
+  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!id || formData.get("confirm") !== "delete" || !isSupabaseConfigured()) return { ok: false, message: "Confirm deletion first." };
+  const db = await createServerClient();
+  const { error } = await db.from("opportunities").delete().eq("id", id);
+  if (error) return invalid();
+  revalidatePath("/admin/opportunities"); revalidatePath("/opportunities", "layout"); revalidatePath("/");
+  return { ok: true, message: "Opportunity deleted." };
+}
+
+const eventTypes = ["school", "club", "sports", "festival", "spirit_week", "other"] as const;
+
+function eventInput(formData: FormData) {
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const eventType = String(formData.get("event_type") ?? "school");
+  const startAt = parseOptionalIsoDateTime(String(formData.get("start_at") ?? ""));
+  const endAt = parseOptionalIsoDateTime(String(formData.get("end_at") ?? ""));
+  const location = String(formData.get("location") ?? "").trim();
+  const priceLabel = String(formData.get("price_label") ?? "Free").trim();
+  if (title.length < 3 || title.length > 160 || description.length < 3 || description.length > 5000 || !eventTypes.includes(eventType as (typeof eventTypes)[number]) || !startAt || endAt === undefined || (endAt && endAt < startAt) || location.length > 240 || priceLabel.length > 80) return null;
+  return { title, description, event_type: eventType as (typeof eventTypes)[number], start_at: startAt, end_at: endAt, location: location || null, price_label: priceLabel || "Free", published: formData.get("published") === "on" };
+}
+
+export async function saveEvent(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await getCurrentUser();
+  const id = String(formData.get("id") ?? "");
+  const input = eventInput(formData);
+  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!input || !isSupabaseConfigured()) return { ok: false, message: "Check the title, dates, and field lengths." };
+  const db = await createServerClient();
+  const result = id
+    ? await db.from("events").update({ ...input, updated_at: new Date().toISOString() }).eq("id", id)
+    : await db.from("events").insert({ ...input, club_id: null, created_by: user.id });
+  if (result.error) return invalid();
+  revalidatePath("/admin/events"); revalidatePath("/events", "layout"); revalidatePath("/calendar"); revalidatePath("/");
+  return { ok: true, message: id ? "Event updated." : "Event created." };
+}
+
+export async function deleteEvent(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await getCurrentUser();
+  const id = String(formData.get("id") ?? "");
+  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!id || formData.get("confirm") !== "delete" || !isSupabaseConfigured()) return { ok: false, message: "Confirm deletion first." };
+  const db = await createServerClient();
+  const { data, error } = await db.from("events").delete().eq("id", id).is("club_id", null).select("id").maybeSingle();
+  if (error || !data) return { ok: false, message: "Only standalone school events can be deleted here." };
+  revalidatePath("/admin/events"); revalidatePath("/events", "layout"); revalidatePath("/calendar"); revalidatePath("/");
+  return { ok: true, message: "Event deleted." };
+}

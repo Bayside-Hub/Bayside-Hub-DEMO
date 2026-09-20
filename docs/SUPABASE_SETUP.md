@@ -27,10 +27,12 @@ select role, count(*) from public.profiles group by role;
 
 1. `supabase/account_roles_and_review.sql`：Teacher、Advisor 社团绑定、身份日志、学校公告审核。
 2. `supabase/custom_permissions.sql`：自定义权限、社团权限查询、网站文字与管理日志。
-3. `supabase/chat_recent_messages.sql`：聊天显示最新 100 条，而不是最早 100 条。
-4. `supabase/club_attendance.sql`：Club 活动临时/永久验证码、二维码签到与签到记录。
-5. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
-6. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
+3. `supabase/editable_support_content.sql`：可编辑的 Support FAQ 与 Help Guide。
+4. `supabase/site_cms_content.sql`：扩展首页、About、Support、站点名称与页脚 CMS 字段。
+5. `supabase/chat_recent_messages.sql`：聊天显示最新 100 条，而不是最早 100 条。
+6. `supabase/club_attendance.sql`：Club 活动临时/永久验证码、二维码签到与签到记录。
+7. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
+8. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
 
 旧账号不会按域名自动改身份。Advisor 改为其他基础身份时，会移除该账号全部 Advisor 社团绑定；独立董事会任命和自定义权限不随之撤销。
 自定义权限不是任意数据库权限：支持社团内容、社团治理、网站介绍文字，不能授予管理员审核/账号管理能力。
@@ -83,4 +85,4 @@ select * from public.management_audit order by created_at desc limit 20;
 
 SQL 在目标项目的执行结果、五角色真实会话、邮件投递、照片上传与实时聊天均需要上面的实测。
 Privacy/Terms 是 beta 告知文案，不代表学校或法律审核通过；正式开放前需确认负责人联系方式、保留期限、照片许可与学生数据处理要求。
-管理面板尚不是所有数据库字段的通用编辑器：当前网站文字仅支持四个字段；审计页已有筛选与分页，全文搜索、导出和部分内容配置仍需完善。密码恢复入口已实现但邮件流程仍待实测。新增会议/帖子编辑删除沿用已有表，不需要本轮追加 SQL。
+管理面板不是任意数据库字段的通用编辑器；Public Content 已覆盖首页、About、Support、Help Guide、站点名称与页脚，业务记录仍通过各自的专用管理页面维护。密码恢复入口已实现但邮件流程仍待实测。新增会议/帖子编辑删除沿用已有表，不需要本轮追加 SQL。

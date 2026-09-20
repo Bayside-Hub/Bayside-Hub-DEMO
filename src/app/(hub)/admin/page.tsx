@@ -97,10 +97,11 @@ export default async function AdminPage() {
                 { label: "Manage Clubs", href: "/admin/clubs" },
                 { label: "Support Queue", href: "/admin/support" },
                 { label: "Opportunities", href: "/admin/opportunities" },
+                { label: "Events", href: "/admin/events" },
+                { label: "Public Content & FAQs", href: "/manage/site" },
                 ...(user.role === "admin" ? [
                   { label: "Manage Users", href: "/admin/users" },
                   { label: "Announcement Review", href: "/admin/review" },
-                  { label: "Public Content & FAQs", href: "/manage/site" },
                   { label: "Management Audit", href: "/admin/audit" },
                 ] : []),
               ].map((t) => (

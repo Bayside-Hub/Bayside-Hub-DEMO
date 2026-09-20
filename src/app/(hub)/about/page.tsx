@@ -21,13 +21,10 @@ export default async function AboutPage() {
           </div>
           <div>
             <h2 className="font-display text-3xl font-bold uppercase tracking-wide text-cream">
-              Anchored in Excellence
+              {text.about_heading}
             </h2>
             <p className="mt-3 max-w-2xl leading-7 text-cream/80">
-              Bayside Hub is Bayside High School&apos;s one-stop platform for
-              activities, clubs, events, and opportunities — built by students,
-              for students. We keep every announcement, meeting, and deadline
-              in one place so you never miss out.
+              {text.about_body}
             </p>
           </div>
         </div>
@@ -36,21 +33,21 @@ export default async function AboutPage() {
       <section className="mt-8 grid gap-4 sm:grid-cols-3">
         {[
           {
-            title: "Everything in one place",
-            text: "Announcements, club listings, calendars, and opportunities — a single source of truth for school life.",
+            title: text.about_card_1_title,
+            body: text.about_card_1_body,
           },
           {
-            title: "Built by students",
-            text: "Developed and maintained by the Bayside student dev team, guided by advisors and the SO office.",
+            title: text.about_card_2_title,
+            body: text.about_card_2_body,
           },
           {
-            title: "Open to All Baysider",
-            text: "Any Baysider can browse, join clubs, and find opportunities with their NYC account.",
+            title: text.about_card_3_title,
+            body: text.about_card_3_body,
           },
         ].map((c) => (
           <div key={c.title} className="card-gradient rounded-[10px] p-6">
             <h3 className="font-display text-lg font-bold uppercase tracking-wide text-cream">{c.title}</h3>
-            <p className="mt-2 text-sm leading-6 text-cream/70">{c.text}</p>
+            <p className="mt-2 text-sm leading-6 text-cream/70">{c.body}</p>
           </div>
         ))}
       </section>
