@@ -107,8 +107,8 @@ export default function LoginCard() {
           </p>
         )}
 
-        <p className="login-domain-note mt-3 text-center text-xs text-[#5f6368]">
-          Use your @nycstudents.net account. Advisors sign in with their school account.
+        <p className="login-domain-note mt-3 text-center text-xs leading-5 text-[#5f6368]">
+          Use your school account. This device stays signed in until you sign out or clear browser data.
         </p>
       </div>
     </div>

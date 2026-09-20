@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { supabaseAnonKey, supabaseUrl } from "./config";
 import type { Database } from "./types";
 import { shouldClearAuthCookies } from "@/lib/session-errors";
+import { authCookieOptions } from "./auth-session";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -12,6 +13,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    cookieOptions: authCookieOptions,
     cookies: {
       getAll() {
         return request.cookies.getAll();

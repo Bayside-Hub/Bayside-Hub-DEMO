@@ -41,6 +41,8 @@ select role, count(*) from public.profiles group by role;
 
 ## 3. Authentication 配置
 
+会话设置建议：在 Supabase Dashboard → Authentication → Sessions 中不要启用会强制频繁重新登录的短期 Inactivity Timeout 或 Time-box。网站会安全地自动刷新访问令牌，并把该设备的登录 Cookie 持久保存至浏览器允许的最长 400 天；主动退出、清除网站数据、无痕模式或管理员撤销会话后仍需重新登录。
+
 - 启用 Email 注册与密码登录，保持 **Confirm email 开启**；不要为了测试关闭邮箱验证。
 - Site URL 使用正式域名。Redirect URLs 允许该域名的 `/auth/callback` 路径；已有 Google OAuth 配置保留。
 - 配置学校认可的邮件发送服务，验证确认邮件能够送到实际学校邮箱；密钥不要放进前端环境变量或 GitHub。
