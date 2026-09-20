@@ -177,12 +177,32 @@ body {
   100% { transform: translate3d(-28px, 42px, 0) scale(0.92); opacity: 0.25; }
 }
 
-.login-intro-orb { animation: login-orb-intro 900ms cubic-bezier(.2,.8,.2,1) both; }
-.login-intro-card { animation: login-card-intro 600ms 260ms ease-out both; }
-.login-intro-copy { animation: login-copy-intro 700ms 180ms ease-out both; }
-.login-ambient { filter: blur(8px); animation: login-ambient-drift 9s ease-in-out infinite alternate; }
+.login-intro-orb { animation: login-orb-intro 650ms cubic-bezier(.2,.8,.2,1) both; }
+.login-intro-card { animation: login-card-intro 420ms cubic-bezier(.2,.8,.2,1) both; }
+.login-intro-copy { animation: login-copy-intro 520ms 80ms ease-out both; }
+.login-ambient { animation: login-ambient-drift 12s ease-in-out infinite alternate; contain: paint; }
 .login-ambient-one { left: 4%; top: 10%; width: 18rem; height: 18rem; background: rgba(96, 150, 180, .28); box-shadow: 0 0 110px rgba(96, 150, 180, .5); }
 .login-ambient-two { right: 5%; bottom: 4%; width: 22rem; height: 22rem; background: rgba(41, 69, 168, .3); box-shadow: 0 0 130px rgba(151, 180, 222, .34); animation-delay: -4s; animation-duration: 12s; }
+
+/* Keep the complete sign-in form visible on common 13–14 inch laptop screens. */
+@media (min-width: 1280px) and (max-height: 900px) {
+  .login-intro-card { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+  .login-intro-card .login-brand,
+  .login-intro-card .login-welcome,
+  .login-intro-card .login-description,
+  .login-intro-card .login-domain-note,
+  .login-intro-card .login-card-support,
+  .login-intro-card .login-card-policies { display: none; }
+  .login-intro-card h1 { margin-top: .5rem; font-size: 2.5rem; line-height: 1; }
+  .login-intro-card .login-email { margin-top: 1rem; padding-top: .875rem; }
+  .login-intro-card .login-email form { gap: .625rem; }
+  .login-intro-card .login-oauth { margin-top: 1rem; }
+}
+
+@media (max-width: 639px) {
+  .login-intro-card .login-card-support,
+  .login-intro-card .login-card-policies { display: none; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .login-intro-orb,

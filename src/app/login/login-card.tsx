@@ -9,18 +9,18 @@ import EmailAccount from "./email-account";
 import { LogoMark } from "@/components/icons";
 
 function LoginBrand() {
-  return <div className="flex items-center gap-3"><LogoMark className="h-14 w-14" variant="light" /><p className="text-3xl font-bold text-[#4285f4]">Bayside Hub</p></div>;
+  return <div className="login-brand flex items-center gap-3"><LogoMark className="h-11 w-11 sm:h-12 sm:w-12" variant="light" /><p className="text-2xl font-bold text-[#4285f4] sm:text-3xl">Bayside Hub</p></div>;
 }
 
 export function LoginCardSkeleton() {
   return (
     <div>
       <LoginBrand />
-      <h1 className="mt-12 text-5xl font-bold text-black">Log In</h1>
+      <h1 className="mt-7 text-4xl font-bold text-black sm:text-5xl">Log In</h1>
       <p className="mt-3 text-sm text-[#5f6368]">
         Sign in with your NYC student account to get started.
       </p>
-      <div className="mt-12 h-11 w-full animate-pulse rounded-full bg-[#c0dbea]" />
+      <div className="mt-7 h-11 w-full animate-pulse rounded-full bg-[#c0dbea]" />
     </div>
   );
 }
@@ -54,9 +54,9 @@ export default function LoginCard() {
   return (
     <div>
       <LoginBrand />
-      <p className="mt-5 text-base text-black">Welcome back!</p>
-      <h1 className="mt-5 text-5xl font-bold text-black sm:text-6xl">Log In</h1>
-      <p className="mt-4 text-sm leading-6 text-[#5f6368]">Sign in with your school email or Google, or create a new school account below.</p>
+      <p className="login-welcome mt-3 text-sm text-black sm:text-base">Welcome back!</p>
+      <h1 className="mt-2 text-4xl font-bold text-black sm:text-5xl xl:text-6xl">Log In</h1>
+      <p className="login-description mt-3 text-sm leading-6 text-[#5f6368]">Sign in with your school email or Google, or create a new school account below.</p>
 
       {error === "auth" && (
         <p className="mt-4 rounded-light bg-orange/10 px-3 py-2 text-xs font-medium text-orange">
@@ -75,7 +75,7 @@ export default function LoginCard() {
       )}
 
       <EmailAccount next={next} recovery={searchParams.get("mode") === "recovery"} />
-      <div className="mt-10 flex w-full flex-col gap-3">
+      <div className="login-oauth mt-5 flex w-full flex-col gap-2.5 sm:mt-6">
         <p className="text-center text-sm text-[#6096b4]">continue with</p>
         <button
           type="button"
@@ -107,7 +107,7 @@ export default function LoginCard() {
           </p>
         )}
 
-        <p className="mt-5 text-center text-xs text-[#5f6368]">
+        <p className="login-domain-note mt-3 text-center text-xs text-[#5f6368]">
           Use your @nycstudents.net account. Advisors sign in with their school account.
         </p>
       </div>
