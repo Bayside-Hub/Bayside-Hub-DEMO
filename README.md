@@ -96,6 +96,7 @@ checks and the existing release checklist are complete.
    - `supabase/site_cms_content.sql` — expanded Home, About, Support, identity, and footer CMS fields
    - `supabase/chat_recent_messages.sql` — latest messages in chronological order
    - `supabase/club_attendance.sql` — temporary/permanent Club check-in codes, QR redemption, and attendance records
+   - `supabase/club_fair_qr_links.sql` — expiring, revocable public QR links for Club fair displays
    - `supabase/club_media_library.sql` — private-by-default Club media library,
      cover/gallery placement, Club post images, and reviewed school announcement images
    - `supabase/demo_clubs.sql` — optional, explicitly marked draft test clubs

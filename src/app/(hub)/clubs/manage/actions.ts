@@ -7,6 +7,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { parseOptionalDateOnly } from "@/lib/input-validation";
 import { parseMeetingInput, parseClubPostInput } from "@/lib/club-content-input";
 import { MAX_IMAGE_UPLOAD_BYTES } from "@/lib/upload-limits";
+import { parseClubShareLinkInput } from "@/lib/club-share-link";
 
 const denied = { ok: false, message: "You no longer have permission for this club. Refresh or contact your advisor." };
 const invalid = { ok: false, message: "Check the required fields, lengths and dates, then try again." };
@@ -145,6 +146,38 @@ export async function closeAttendanceSession(formData: FormData) {
   if (error || !data) return failed;
   revalidatePath(`/clubs/manage/${clubId}`);
   return { ok: true, message: "Check-in closed. The code can no longer be used." };
+}
+
+export async function createClubShareLink(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context) return denied;
+  const input = parseClubShareLinkInput(String(formData.get("label") ?? ""), String(formData.get("expires_at") ?? ""));
+  if (!input) return { ok: false, message: "Enter a label and an expiration between 5 minutes and 366 days from now." };
+  const { data: club } = await context.supabase.from("clubs").select("status").eq("id", clubId).maybeSingle();
+  if (club?.status !== "published") return { ok: false, message: "Publish this Club before creating a public fair QR code." };
+  const { error } = await context.supabase.from("club_share_links").insert({
+    club_id: clubId,
+    label: input.label,
+    expires_at: input.expiresAt,
+    active: true,
+    created_by: context.user.id,
+  });
+  if (error) return failed;
+  revalidatePath(`/clubs/manage/${clubId}`);
+  return { ok: true, message: "Club fair QR code created." };
+}
+
+export async function revokeClubShareLink(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const linkId = String(formData.get("link_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context || !linkId) return denied;
+  const { data, error } = await context.supabase.from("club_share_links").update({ active: false })
+    .eq("id", linkId).eq("club_id", clubId).select("id").maybeSingle();
+  if (error || !data) return failed;
+  revalidatePath(`/clubs/manage/${clubId}`);
+  return { ok: true, message: "QR link revoked. Existing printed codes will no longer open the Club." };
 }
 
 export async function publishClubAnnouncement(formData: FormData) {

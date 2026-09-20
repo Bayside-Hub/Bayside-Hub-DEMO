@@ -71,6 +71,7 @@ export type Database = {
       club_messages: TableDefinition<ClubMessageRow>;
       club_attendance_sessions: TableDefinition<ClubAttendanceSessionRow>;
       club_attendance_records: TableDefinition<ClubAttendanceRecordRow>;
+      club_share_links: TableDefinition<ClubShareLinkRow>;
       announcement_versions: TableDefinition<AnnouncementVersionRow>;
       events: TableDefinition<EventRow>;
       opportunities: TableDefinition<OpportunityRow>;
@@ -109,6 +110,7 @@ export type Database = {
       has_custom_permission: { Args: { p_permission: string; p_club_id?: string | null }; Returns: boolean };
       can_manage_club: { Args: { p_club_id: string }; Returns: boolean };
       can_govern_club: { Args: { p_club_id: string }; Returns: boolean };
+      resolve_club_share_link: { Args: { p_id: string }; Returns: { club_id: string }[] };
       assign_account_role: { Args: { p_user_id: string; p_role: string; p_club_id?: string | null }; Returns: undefined };
       review_school_announcement: { Args: { p_id: string; p_approve: boolean; p_note: string }; Returns: undefined };
       set_user_role: {
@@ -376,6 +378,16 @@ export type ClubAttendanceRecordRow = {
   club_id: string;
   profile_id: string;
   checked_in_at: string;
+};
+
+export type ClubShareLinkRow = {
+  id: string;
+  club_id: string;
+  label: string;
+  expires_at: string;
+  active: boolean;
+  created_by: string;
+  created_at: string;
 };
 
 export type ClubAttendanceRecordDetail = {

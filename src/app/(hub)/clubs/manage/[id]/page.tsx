@@ -8,6 +8,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { bellPeriodFromStartTime, bellPeriods } from "@/lib/bell-schedule";
 import { addClubLink, addClubMeeting, publishClubAnnouncement, removeClubLink, reviewClubMembership, updateManagedClub } from "../actions";
 import ClubGovernancePanel from "./club-governance-panel";
+import FairQrPanel from "./fair-qr-panel";
 
 const input = "h-11 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink outline-none focus:border-powder focus:ring-2 focus:ring-powder/20";
 
@@ -68,6 +69,7 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
     { href: "#members", label: "People", icon: UserIcon },
     { href: "#media", label: "Media", icon: MediaIcon },
     { href: "#attendance", label: "Attendance", icon: AttendanceIcon },
+    { href: "#fair-qr", label: "Fair QR", icon: MediaIcon },
     { href: `/clubs/manage/${id}/finance`, label: "Finance", icon: GearIcon },
     { href: `/clubs/manage/${id}/operations`, label: "Constitution", icon: CalendarIcon },
     { href: "#settings", label: "Settings", icon: GearIcon },
@@ -144,6 +146,7 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
         </main>
 
         <aside className="space-y-6">
+          <FairQrPanel clubId={club.id} clubName={club.name} />
           <section id="members" className="scroll-mt-28 rounded-[20px] border border-line bg-card p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-powder">People</p><h2 className="mt-1 text-xl font-bold text-ink">Membership requests</h2></div>{memberships?.length ? <span className="rounded-full bg-orange px-2.5 py-1 text-xs font-bold text-black">{memberships.length}</span> : null}</div>
             {canGovern && memberships?.length ? <ul className="mt-4 space-y-3">{memberships.map((membership) => { const profile = profileMap.get(membership.profile_id); return <li key={membership.id} className="rounded-control border border-line p-3"><p className="font-semibold text-ink">{profile?.full_name ?? profile?.email ?? "Student"}</p><p className="mt-0.5 text-xs text-muted">Requested {new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(membership.requested_at))}</p><div className="mt-3 grid gap-2"><ActionFeedbackForm action={reviewClubMembership}><input type="hidden" name="club_id" value={club.id} /><input type="hidden" name="membership_id" value={membership.id} /><input type="hidden" name="status" value="active" /><button className="rounded-full bg-navy px-4 py-2 text-xs font-semibold text-cream">Approve</button></ActionFeedbackForm><ActionFeedbackForm action={reviewClubMembership} className="grid gap-2"><input type="hidden" name="club_id" value={club.id} /><input type="hidden" name="membership_id" value={membership.id} /><input type="hidden" name="status" value="rejected" /><label className="text-xs font-semibold text-muted">Reason for rejection<input name="rejection_reason" required minLength={3} maxLength={1000} placeholder="Tell the student what they can do next" className={`${input} mt-1`} /></label><button className="justify-self-start rounded-full border border-line px-4 py-2 text-xs font-semibold text-muted">Decline with reason</button></ActionFeedbackForm></div></li>; })}</ul> : <p className="mt-4 text-sm leading-6 text-muted">{canGovern ? "You’re all caught up—there are no pending requests." : "Membership review is available to advisors and staff."}</p>}

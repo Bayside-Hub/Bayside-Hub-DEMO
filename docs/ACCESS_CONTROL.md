@@ -22,3 +22,8 @@ School content CMS includes public site copy, announcements, events,
 opportunities, Support operations, and the approval workflows. Club content is
 managed through the assigned Club workspace. Students can only maintain their
 own account activity, requests, registrations, and memberships.
+
+Club Officers, assigned Advisors, Staff, and Admins can create or revoke an
+expiring Club fair QR link for a Club they manage. The public resolver returns
+only the destination Club, never creator or audit data, and only while the link
+is active, unexpired, and the Club remains published.

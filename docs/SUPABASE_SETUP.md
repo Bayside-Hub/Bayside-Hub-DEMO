@@ -31,8 +31,9 @@ select role, count(*) from public.profiles group by role;
 4. `supabase/site_cms_content.sql`：扩展首页、About、Support、站点名称与页脚 CMS 字段。
 5. `supabase/chat_recent_messages.sql`：聊天显示最新 100 条，而不是最早 100 条。
 6. `supabase/club_attendance.sql`：Club 活动临时/永久验证码、二维码签到与签到记录。
-7. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
-8. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
+7. `supabase/club_fair_qr_links.sql`：展会用可设有效期、可撤销的 Club 页面二维码链接。
+8. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
+9. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
 
 旧账号不会按域名自动改身份。Advisor 改为其他基础身份时，会移除该账号全部 Advisor 社团绑定；独立董事会任命和自定义权限不随之撤销。
 自定义权限不是任意数据库权限：支持社团内容、社团治理、网站介绍文字，不能授予管理员审核/账号管理能力。
