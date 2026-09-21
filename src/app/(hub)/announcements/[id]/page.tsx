@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import AnnouncementActions from "@/components/announcement-actions";
+import AnnouncementBody from "@/components/announcement-body";
 import { AnnouncementCard } from "@/components/cards";
 import { getAnnouncement, getAnnouncements } from "@/lib/announcements";
 
@@ -30,7 +31,7 @@ export default async function AnnouncementDetailPage({ params }: { params: Promi
           <div className="flex flex-wrap items-center gap-3 text-xs"><span className="rounded-full bg-navy px-3 py-1 font-semibold text-cream">{announcement.tag}</span><time className="text-muted">Published {announcement.date}</time></div>
           <h1 className="mt-5 max-w-5xl font-display text-4xl font-bold leading-[1.02] tracking-tight text-ink sm:text-6xl">{announcement.title}</h1>
           <div className="mt-7 border-y border-line py-4"><AnnouncementActions title={announcement.title} /></div>
-          <div className="prose-announcement mt-8 max-w-3xl whitespace-pre-wrap text-base leading-8 text-muted sm:text-lg">{announcement.excerpt}</div>
+          <div className="prose-announcement mt-8 max-w-3xl whitespace-pre-wrap text-base leading-8 text-muted sm:text-lg"><AnnouncementBody body={announcement.excerpt} /></div>
         </div>
       </article>
 

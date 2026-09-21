@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { createAnnouncement } from "../actions";
+import AnnouncementBody from "@/components/announcement-body";
 
 const tagOptions = ["Announcements", "Events", "Clubs", "Sports", "Opportunities"];
 
@@ -65,6 +66,7 @@ export default function AnnouncementForm({ disabled }: { disabled?: boolean }) {
           onChange={(event) => setPreview((current) => ({ ...current, body: event.target.value }))}
           className="w-full rounded-card border border-black/10 bg-content-bg px-4 py-3 text-sm leading-6 text-ink outline-none transition-shadow placeholder:text-muted focus:border-navy focus:ring-2 focus:ring-navy/20 disabled:opacity-50"
         />
+        <p className="mt-1 text-xs text-muted">Paste a full https:// link in the message; it will be clickable on the published announcement.</p>
       </div>
 
       <button
@@ -82,7 +84,7 @@ export default function AnnouncementForm({ disabled }: { disabled?: boolean }) {
             {preview.title.trim() || "Your announcement title"}
           </h3>
           <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted">
-            {preview.body.trim() || "Your announcement body will appear here."}
+            <AnnouncementBody body={preview.body.trim() || "Your announcement body will appear here."} />
           </p>
         </article>
       ) : null}
