@@ -32,16 +32,19 @@ select role, count(*) from public.profiles group by role;
 5. `supabase/chat_recent_messages.sql`：聊天显示最新 100 条，而不是最早 100 条。
 6. `supabase/club_attendance.sql`：Club 活动临时/永久验证码、二维码签到与签到记录。
 7. `supabase/club_fair_qr_links.sql`：展会用可设有效期、可撤销的 Club 页面二维码链接。
-8. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
-9. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
+8. `supabase/announcement_cms_workflow.sql`：工作人员私人自动草稿、定时公告和对应的公开可见性规则。
+9. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
+10. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
 
 旧账号不会按域名自动改身份。Advisor 改为其他基础身份时，会移除该账号全部 Advisor 社团绑定；独立董事会任命和自定义权限不随之撤销。
 自定义权限不是任意数据库权限：支持社团内容、社团治理、网站介绍文字，不能授予管理员审核/账号管理能力。
 角色定义删除会同时撤销其分配；请先检查影响范围。
 
+公告编辑器选择的时间按编辑者设备的本地时区转换为 UTC 保存。定时公告由数据库可见性规则在到点后自动公开，无需额外 cron；未到点前公开页面和公告版本历史均不可见。版本恢复仅还原标题、正文和分类，不会意外更改排期或归档状态。自动草稿按工作人员账号隔离。要永久删除公告，必须先归档并再次确认；归档可恢复。
+
 ## 3. Authentication 配置
 
-会话设置建议：在 Supabase Dashboard → Authentication → Sessions 中不要启用会强制频繁重新登录的短期 Inactivity Timeout 或 Time-box。网站会安全地自动刷新访问令牌，并把该设备的登录 Cookie 持久保存至浏览器允许的最长 400 天；主动退出、清除网站数据、无痕模式或管理员撤销会话后仍需重新登录。
+会话设置建议：在 Supabase Dashboard → Authentication → Sessions 中根据学校政策配置 Inactivity Timeout 和 Time-box。登录页默认仅使用会话 Cookie；用户明确选择“Remember this device”才会将 Cookie 最多保存 400 天。退出当前设备与退出所有设备是不同操作。清除浏览器数据、无痕模式、管理员撤销会话后都需重新登录。
 
 - 启用 Email 注册与密码登录，保持 **Confirm email 开启**；不要为了测试关闭邮箱验证。
 - Site URL 使用正式域名。Redirect URLs 允许该域名的 `/auth/callback` 路径；已有 Google OAuth 配置保留。

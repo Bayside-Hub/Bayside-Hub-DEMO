@@ -42,12 +42,16 @@ export const getAnnouncements = cache(async (limit = 100): Promise<Announcement[
   if (!isSupabaseConfigured()) return seedAnnouncements.slice(0, limit);
 
   const supabase = await createServerClient();
-  const { data: rows, error } = await supabase
+  const now = new Date().toISOString();
+  let { data: rows, error } = await supabase
     .from("announcements")
     .select("id, title, tag, body, created_at, media_id")
     .eq("published", true)
+    .is("archived_at", null)
+    .or(`publish_at.is.null,publish_at.lte.${now}`)
     .order("created_at", { ascending: false })
     .limit(limit);
+  if (error?.code === "42703") ({ data: rows, error } = await supabase.from("announcements").select("id, title, tag, body, created_at, media_id").eq("published", true).is("archived_at", null).order("created_at", { ascending: false }).limit(limit));
 
   if (error) throw new Error(`Unable to load announcements: ${error.message}`);
   const media = await attachAnnouncementMedia(supabase, rows ?? []);
@@ -57,7 +61,8 @@ export const getAnnouncements = cache(async (limit = 100): Promise<Announcement[
 export const getAnnouncementTags = cache(async (): Promise<string[]> => {
   if (!isSupabaseConfigured()) return Array.from(new Set(seedAnnouncements.map((a) => a.tag)));
   const supabase = await createServerClient();
-  const { data, error } = await supabase.from("announcements").select("tag").eq("published", true);
+  let { data, error } = await supabase.from("announcements").select("tag").eq("published", true).is("archived_at", null).or(`publish_at.is.null,publish_at.lte.${new Date().toISOString()}`);
+  if (error?.code === "42703") ({ data, error } = await supabase.from("announcements").select("tag").eq("published", true).is("archived_at", null));
   if (error) throw new Error(`Unable to load announcement filters: ${error.message}`);
   return Array.from(new Set((data ?? []).map((row) => row.tag))).sort();
 });
@@ -82,12 +87,19 @@ export const getAnnouncementsPage = cache(async (
     return { announcements: filtered.slice(start, start + safePageSize), page: Math.min(safePage, pageCount), pageCount };
   }
   const supabase = await createServerClient();
-  let query = supabase.from("announcements").select("id, title, tag, body, created_at, media_id", { count: "exact" }).eq("published", true);
+  let query = supabase.from("announcements").select("id, title, tag, body, created_at, media_id", { count: "exact" }).eq("published", true).is("archived_at", null);
+  query = query.or(`publish_at.is.null,publish_at.lte.${new Date().toISOString()}`);
   if (tag) query = query.eq("tag", tag);
   if (safeSearch) query = query.or(`title.ilike.%${safeSearch}%,body.ilike.%${safeSearch}%`);
-  const { data, count, error } = await query
+  let { data, count, error } = await query
     .order("created_at", { ascending: false })
     .range((safePage - 1) * safePageSize, safePage * safePageSize - 1);
+  if (error?.code === "42703") {
+    let fallback = supabase.from("announcements").select("id, title, tag, body, created_at, media_id", { count: "exact" }).eq("published", true).is("archived_at", null);
+    if (tag) fallback = fallback.eq("tag", tag);
+    if (safeSearch) fallback = fallback.or(`title.ilike.%${safeSearch}%,body.ilike.%${safeSearch}%`);
+    ({ data, count, error } = await fallback.order("created_at", { ascending: false }).range((safePage - 1) * safePageSize, safePage * safePageSize - 1));
+  }
   if (error) throw new Error(`Unable to load announcements: ${error.message}`);
   const pageCount = Math.max(1, Math.ceil((count ?? 0) / safePageSize));
   const media = await attachAnnouncementMedia(supabase, data ?? []);
@@ -118,12 +130,15 @@ export const getArchivedAnnouncements = cache(async (limit = 100, from?: string,
 export async function getAnnouncement(id: string): Promise<Announcement | null> {
   if (isSupabaseConfigured()) {
     const supabase = await createServerClient();
-    const { data: row } = await supabase
+    let { data: row, error } = await supabase
       .from("announcements")
-      .select("id, title, tag, body, created_at, media_id")
+      .select("id, title, tag, body, created_at, media_id, publish_at, published, archived_at")
       .eq("id", id)
       .or("published.eq.true,archived_at.not.is.null")
       .maybeSingle();
+    if (error?.code === "42703") ({ data: row, error } = await supabase.from("announcements").select("id, title, tag, body, created_at, media_id, published, archived_at").eq("id", id).or("published.eq.true,archived_at.not.is.null").maybeSingle());
+    if (error) return null;
+    if (row && row.published && !row.archived_at && "publish_at" in row && row.publish_at && new Date(row.publish_at).getTime() > Date.now()) return null;
     if (row) {
       const media = row.media_id ? await attachAnnouncementMedia(supabase, [row]) : new Map();
       const image = row.media_id ? media.get(row.media_id) : undefined;

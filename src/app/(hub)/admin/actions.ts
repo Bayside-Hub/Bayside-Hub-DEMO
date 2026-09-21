@@ -8,6 +8,24 @@ import { announcementTags, parseOptionalIsoDateTime } from "@/lib/input-validati
 
 export type ActionState = { ok: boolean; message: string } | null;
 
+function publicationTime(value: string) {
+  const parsed = parseOptionalIsoDateTime(value);
+  return parsed === undefined ? undefined : parsed;
+}
+
+export async function saveAnnouncementDraft(input: { key: string; title: string; tag: string; body: string; publishAt: string }) {
+  const user = await getCurrentUser();
+  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (input.key !== "new" && !/^[0-9a-f-]{36}$/i.test(input.key)) return { ok: false, message: "Invalid draft." };
+  const title = input.title.trim();
+  const body = input.body.trim();
+  const publishAt = publicationTime(input.publishAt);
+  if (title.length > 120 || body.length > 10000 || publishAt === undefined || !announcementTags.includes(input.tag as (typeof announcementTags)[number])) return { ok: false, message: "Draft exceeds the allowed length or has an invalid date." };
+  const db = await createServerClient();
+  const { error } = await db.from("announcement_drafts").upsert({ user_id: user.id, draft_key: input.key, title, tag: input.tag, body, publish_at: publishAt, updated_at: new Date().toISOString() });
+  return error ? { ok: false, message: "Draft could not be saved. Apply announcement_cms_workflow.sql." } : { ok: true, message: "Draft saved." };
+}
+
 function invalid(): ActionState {
   return { ok: false, message: "Something went wrong. Try again." };
 }
@@ -21,6 +39,7 @@ export async function createAnnouncement(
   const tag = String(formData.get("tag") ?? "Announcements").trim();
   const body = String(formData.get("body") ?? "").trim();
   const versionNote = String(formData.get("version_note") ?? "Initial publication").trim();
+  const publishAt = publicationTime(String(formData.get("publish_at") ?? ""));
 
   if (!user || !["staff", "admin"].includes(user.role)) {
     return { ok: false, message: "Staff only." };
@@ -36,6 +55,7 @@ export async function createAnnouncement(
   }
   if (!announcementTags.includes(tag as (typeof announcementTags)[number])) return invalid();
   if (versionNote.length > 240) return { ok: false, message: "Version notes must be 240 characters or fewer." };
+  if (publishAt === undefined) return { ok: false, message: "Enter a valid publication time." };
 
   const supabase = await createServerClient();
   const { error } = await supabase.from("announcements").insert({
@@ -45,15 +65,17 @@ export async function createAnnouncement(
     created_by: user.id,
     updated_by: user.id,
     version_note: versionNote.slice(0, 240) || "Initial publication",
+    publish_at: publishAt,
     published: true,
   });
 
-  if (error) return invalid();
+  if (error) return { ok: false, message: "Could not publish. Apply announcement_cms_workflow.sql if it has not been run." };
+  await supabase.from("announcement_drafts").delete().eq("user_id", user.id).eq("draft_key", "new");
 
   revalidatePath("/announcements");
   revalidatePath("/");
   revalidatePath("/admin/announcements");
-  return { ok: true, message: "Announcement published." };
+  return { ok: true, message: publishAt && new Date(publishAt).getTime() > Date.now() ? "Announcement scheduled." : "Announcement published." };
 }
 
 export async function deleteAnnouncement(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -64,8 +86,8 @@ export async function deleteAnnouncement(_prev: ActionState, formData: FormData)
   if (!isSupabaseConfigured() || !id) return invalid();
 
   const supabase = await createServerClient();
-  const { error } = await supabase.from("announcements").delete().eq("id", id);
-  if (error) return invalid();
+  const { data, error } = await supabase.from("announcements").delete().eq("id", id).not("archived_at", "is", null).select("id").maybeSingle();
+  if (error || !data) return { ok: false, message: "Archive the announcement before permanently deleting it." };
 
   revalidatePath("/announcements");
   revalidatePath("/");
@@ -120,17 +142,36 @@ export async function updateAnnouncement(_prev: ActionState, formData: FormData)
   const tag = String(formData.get("tag") ?? "Announcements");
   const body = String(formData.get("body") ?? "").trim();
   const versionNote = String(formData.get("version_note") ?? "").trim();
+  const publishAt = publicationTime(String(formData.get("publish_at") ?? ""));
   if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
-  if (!isSupabaseConfigured() || !id || title.length < 3 || title.length > 120 || body.length < 3 || body.length > 10000 || !versionNote || versionNote.length > 240) return invalid();
+  if (!isSupabaseConfigured() || !id || title.length < 3 || title.length > 120 || body.length < 3 || body.length > 10000 || !versionNote || versionNote.length > 240 || publishAt === undefined) return invalid();
   if (!announcementTags.includes(tag as (typeof announcementTags)[number])) return invalid();
   const supabase = await createServerClient();
-  const { error } = await supabase.from("announcements").update({ title, tag, body, updated_by: user.id, version_note: versionNote.slice(0, 240) }).eq("id", id);
+  const { error } = await supabase.from("announcements").update({ title, tag, body, publish_at: publishAt, updated_by: user.id, version_note: versionNote.slice(0, 240) }).eq("id", id);
   if (error) return invalid();
+  await supabase.from("announcement_drafts").delete().eq("user_id", user.id).eq("draft_key", id);
   revalidatePath(`/announcements/${id}`);
   revalidatePath(`/admin/announcements/${id}`);
   revalidatePath("/announcements");
   revalidatePath("/");
   return { ok: true, message: "Announcement updated and version saved." };
+}
+
+export async function restoreAnnouncementVersion(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await getCurrentUser();
+  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (formData.get("confirm") !== "yes") return { ok: false, message: "Confirm restoration first." };
+  const id = String(formData.get("id") ?? "");
+  const versionId = String(formData.get("version_id") ?? "");
+  const db = await createServerClient();
+  const { data: version } = await db.from("announcement_versions").select("snapshot_title,snapshot_content,snapshot_tag,version_number").eq("id", versionId).eq("announcement_id", id).maybeSingle();
+  if (!version) return { ok: false, message: "Version not found." };
+  const { data, error } = await db.from("announcements").update({ title: version.snapshot_title, body: version.snapshot_content, tag: version.snapshot_tag, updated_by: user.id, version_note: `Restored version ${version.version_number}` }).eq("id", id).select("id").maybeSingle();
+  if (error || !data) return invalid();
+  revalidatePath(`/admin/announcements/${id}`);
+  revalidatePath(`/announcements/${id}`);
+  revalidatePath("/announcements");
+  return { ok: true, message: `Restored version ${version.version_number}.` };
 }
 
 export async function setApplicationStatus(_prev: ActionState, formData: FormData): Promise<ActionState> {

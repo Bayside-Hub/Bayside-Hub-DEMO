@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
+import { pageVitals, vitalTargets } from "@/lib/web-vitals";
 
 const date = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
 async function requestTime() { return Date.now(); }
@@ -31,8 +32,9 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
     db.from("search_analytics").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
     db.from("search_analytics").select("normalized_query,created_at").eq("result_count", 0).gte("created_at", monthAgo).order("created_at", { ascending: false }).limit(1000),
   ]);
-  const analytics = await db.from("analytics_events").select("event_name,user_id,session_id,metric_value,metadata,created_at").gte("created_at", monthAgo).limit(10000);
+  const analytics = await db.from("analytics_events").select("event_name,route,user_id,session_id,metric_value,metadata,created_at").gte("created_at", monthAgo).order("created_at", { ascending: false }).limit(10000);
   const analyticsRows = (analytics.data ?? []).filter(row => device === "all" || (row.metadata as Record<string,unknown>)?.device === device);
+  const slowPages = pageVitals(analyticsRows).slice(0, 10);
   const dailyActive = new Set(analyticsRows.filter(row => row.created_at >= dayAgo).map(row => row.user_id ?? row.session_id).filter(Boolean)).size;
   const searchToClub = analyticsRows.filter(row => row.event_name === "search_result_click").length;
   const joinStarted = analyticsRows.filter(row => row.event_name === "club_join_started").length;
@@ -82,6 +84,11 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
       </section>
     </div>
     <section className="rounded-card border border-line bg-card p-6 shadow-sm"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-widest text-muted">Product analytics</p><h2 className="mt-1 text-xl font-bold text-ink">DAU, discovery, join funnel &amp; Core Web Vitals</h2></div><span className="text-xs text-muted">{rangeDays} days · {device} devices · DAU uses last 24 hours</span></div>{analytics.error ? <p className="mt-5 text-sm text-muted">Run <code>supabase/school_operations.sql</code> to begin collecting product analytics.</p> : <><div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Metric label="Active users / sessions" value={String(dailyActive)} /><Metric label="Search → Club" value={String(searchToClub)} /><Metric label="Join funnel" value={`${joinCompleted}/${joinStarted}`} note={joinStarted ? `${Math.round(joinCompleted / joinStarted * 100)}% completion` : "No starts yet"} /><Metric label="LCP p75" value={p75("LCP") == null ? "—" : `${Math.round(p75("LCP")!)} ms`} /><Metric label="INP p75" value={p75("INP") == null ? "—" : `${Math.round(p75("INP")!)} ms`} /><Metric label="CLS p75" value={p75("CLS") == null ? "—" : p75("CLS")!.toFixed(3)} /></div><Trend rows={analyticsRows}/></>}</section>
+    <section className="rounded-card border border-line bg-card p-6 shadow-sm">
+      <h2 className="text-xl font-bold text-ink">Slowest pages on real devices</h2>
+      <p className="mt-1 text-xs text-muted">At least five measurements per page. Targets: LCP ≤ {vitalTargets.LCP} ms, INP ≤ {vitalTargets.INP} ms, CLS ≤ {vitalTargets.CLS}.</p>
+      {slowPages.length ? <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[520px] text-left text-xs"><thead><tr className="border-b border-line text-muted"><th className="py-2">Page</th><th>Samples</th><th>LCP p75</th><th>INP p75</th><th>CLS p75</th></tr></thead><tbody>{slowPages.map((row) => <tr key={row.route} className="border-b border-line/50"><td className="max-w-56 truncate py-2 font-semibold text-ink">{row.route}</td><td>{row.samples}</td><td className={row.LCP != null && row.LCP > vitalTargets.LCP ? "font-bold text-orange" : "text-ink"}>{row.LCP == null ? "—" : `${Math.round(row.LCP)} ms`}</td><td className={row.INP != null && row.INP > vitalTargets.INP ? "font-bold text-orange" : "text-ink"}>{row.INP == null ? "—" : `${Math.round(row.INP)} ms`}</td><td className={row.CLS != null && row.CLS > vitalTargets.CLS ? "font-bold text-orange" : "text-ink"}>{row.CLS == null ? "—" : row.CLS.toFixed(3)}</td></tr>)}</tbody></table></div> : <p className="mt-4 text-sm text-muted">Not enough real-device samples yet.</p>}
+    </section>
   </div>;
 }
 

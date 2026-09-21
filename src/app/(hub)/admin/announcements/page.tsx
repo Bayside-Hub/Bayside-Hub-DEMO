@@ -9,32 +9,41 @@ import Pagination from "@/components/pagination";
 import DeleteAnnouncementButton from "./delete-announcement-button";
 
 const PAGE_SIZE = 20;
+async function requestTime() { return Date.now(); }
 
 export const metadata: Metadata = {
   title: "Post Announcement — Admin",
 };
 
 export default async function AdminAnnouncementsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  await requireStaff();
+  const user = await requireStaff();
   const { page: pageParam } = await searchParams;
   const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;
+  const now = await requestTime();
   const configured = isSupabaseConfigured();
 
   const supabase = configured ? await createServerClient() : null;
-  const { data: rows, count } = supabase
+  let { data: rows, count, error: listError } = supabase
     ? await supabase
         .from("announcements")
-        .select("id, title, tag, created_at, archived_at", { count: "exact" })
+        .select("id, title, tag, created_at, archived_at, publish_at, published", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(from, from + PAGE_SIZE - 1)
-    : { data: null, count: 0 };
+    : { data: null, count: 0, error: null };
+  if (supabase && listError?.code === "42703") {
+    const fallback = await supabase.from("announcements").select("id,title,tag,created_at,archived_at,published", { count: "exact" }).order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
+    rows = fallback.data?.map((row) => ({ ...row, publish_at: null })) ?? null;
+    count = fallback.count;
+    listError = fallback.error;
+  }
+  const { data: draft } = supabase ? await supabase.from("announcement_drafts").select("*").eq("user_id", user.id).eq("draft_key", "new").maybeSingle() : { data: null };
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader
         title="Post Announcement"
-        subtitle="Create announcements for the whole school. Published posts appear on the Announcements page immediately."
+        subtitle="Draft safely, preview, publish now or schedule a future announcement."
       />
 
       {!configured && (
@@ -51,7 +60,7 @@ export default async function AdminAnnouncementsPage({ searchParams }: { searchP
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-card border border-black/5 bg-card p-6 shadow-sm">
           <h2 className="text-lg font-bold text-ink">New announcement</h2>
-          <AnnouncementForm disabled={!configured} />
+          <AnnouncementForm disabled={!configured} draft={draft} />
         </section>
 
         <section className="rounded-card border border-black/5 bg-card p-6 shadow-sm">
@@ -74,16 +83,16 @@ export default async function AdminAnnouncementsPage({ searchParams }: { searchP
                       {row.tag} ·{" "}
                       {new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
                         new Date(row.created_at),
-                      )}
+                      )} · {row.archived_at ? "Archived" : "publish_at" in row && row.publish_at && new Date(row.publish_at).getTime() > now ? "Scheduled" : row.published ? "Published" : "Draft"}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <Link
+                    {(!row.publish_at || new Date(row.publish_at).getTime() <= now || row.archived_at) && <Link
                       href={`/announcements/${row.id}`}
                       className="rounded-full border border-black/10 px-3 py-1 text-xs font-medium text-ink transition-colors hover:border-navy hover:text-navy"
                     >
                       View
-                    </Link>
+                    </Link>}
                     <Link href={`/admin/announcements/${row.id}`} className="rounded-full border border-black/10 px-3 py-1 text-xs font-medium text-ink">Edit</Link>
                     <DeleteAnnouncementButton id={row.id} archived={Boolean(row.archived_at)} />
                   </div>

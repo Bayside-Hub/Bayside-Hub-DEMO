@@ -10,6 +10,7 @@ export async function POST(request: Request) {
   if (!["page_view", "search_result_click", "LCP", "INP", "CLS"].includes(eventName)) return NextResponse.json({ error: "Unsupported event" }, { status: 400 });
   const value = body.value == null ? null : Number(body.value);
   if (value !== null && !Number.isFinite(value)) return NextResponse.json({ error: "Invalid metric" }, { status: 400 });
+  if (["LCP", "INP", "CLS"].includes(eventName) && (value === null || value < 0 || value > (eventName === "CLS" ? 10 : 60_000))) return NextResponse.json({ error: "Metric out of range" }, { status: 400 });
   const db = await createServerClient();
   const inputMetadata = body.metadata && typeof body.metadata === "object" ? body.metadata as Record<string, unknown> : {};
   const device = ["mobile", "tablet", "desktop"].includes(String(inputMetadata.device)) ? String(inputMetadata.device) : "unknown";

@@ -3,10 +3,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { supabaseAnonKey, supabaseUrl } from "./config";
 import type { Database } from "./types";
 import { shouldClearAuthCookies } from "@/lib/session-errors";
-import { authCookieOptions } from "./auth-session";
+import { authCookieLifetime, authCookieOptions, REMEMBER_DEVICE_COOKIE } from "./auth-session";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
+  const remember = request.cookies.get(REMEMBER_DEVICE_COOKIE)?.value === "1";
 
   if (!supabaseUrl || !supabaseAnonKey) {
     return { response: supabaseResponse, user: null };
@@ -24,7 +25,7 @@ export async function updateSession(request: NextRequest) {
         );
         supabaseResponse = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options),
+          supabaseResponse.cookies.set(name, value, { ...options, maxAge: authCookieLifetime(remember, options?.maxAge === 0) }),
         );
       },
     },

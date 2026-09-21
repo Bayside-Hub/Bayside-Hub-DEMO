@@ -7,6 +7,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { safeNextPath } from "@/lib/navigation";
 import EmailAccount from "./email-account";
 import { LogoMark } from "@/components/icons";
+import { rememberDeviceCookie } from "@/lib/supabase/auth-session";
 
 function LoginBrand() {
   return <div className="login-brand flex items-center gap-3"><LogoMark className="h-11 w-11 sm:h-12 sm:w-12" variant="light" /><p className="text-2xl font-bold text-[#4285f4] sm:text-3xl">Bayside Hub</p></div>;
@@ -32,10 +33,12 @@ export default function LoginCard() {
   const configured = isSupabaseConfigured();
   const [pending, setPending] = useState(false);
   const [oauthMessage, setOauthMessage] = useState<string | null>(null);
+  const [remember, setRemember] = useState(false);
 
   async function signIn() {
     setOauthMessage(null);
     setPending(true);
+    rememberDeviceCookie(remember);
     const supabase = createBrowserClient();
     const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -77,6 +80,7 @@ export default function LoginCard() {
       <EmailAccount next={next} recovery={searchParams.get("mode") === "recovery"} />
       <div className="login-oauth mt-5 flex w-full flex-col gap-2.5 sm:mt-6">
         <p className="text-center text-sm text-[#6096b4]">continue with</p>
+        <label className="flex items-center justify-center gap-2 text-xs text-[#5f6368]"><input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> Remember this device for Google sign-in</label>
         <button
           type="button"
           onClick={signIn}
@@ -108,7 +112,7 @@ export default function LoginCard() {
         )}
 
         <p className="login-domain-note mt-3 text-center text-xs leading-5 text-[#5f6368]">
-          Use your school account. This device stays signed in until you sign out or clear browser data.
+          Use your school account. On shared devices, leave “Remember this device” unchecked.
         </p>
       </div>
     </div>

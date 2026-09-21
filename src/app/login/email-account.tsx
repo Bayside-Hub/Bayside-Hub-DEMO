@@ -4,12 +4,14 @@ import { useState, type FormEvent } from "react";
 import { createBrowserClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import Link from "next/link";
+import { rememberDeviceCookie } from "@/lib/supabase/auth-session";
 
 /** Email registration requires verification; database triggers assign roles. */
 export default function EmailAccount({ next, recovery = false }: { next: string; recovery?: boolean }) {
   const [mode, setMode] = useState<"login" | "signup" | "recovery">(recovery ? "recovery" : "login");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
+  const [remember, setRemember] = useState(false);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -22,6 +24,7 @@ export default function EmailAccount({ next, recovery = false }: { next: string;
     setPending(true);
     setMessage("");
     try {
+      if (mode === "login") rememberDeviceCookie(remember);
       const client = createBrowserClient();
       if (mode === "recovery") {
         const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/auth/callback?next=/reset-password` });
@@ -53,6 +56,7 @@ export default function EmailAccount({ next, recovery = false }: { next: string;
       {mode === "signup" && <p className="text-xs leading-5">Use at least 12 characters. Student email addresses receive Student access; school staff addresses receive Teacher access. Club leadership is assigned separately by an administrator.</p>}
       {message && <p role="status" className="rounded-lg bg-blue-50 p-3 text-sm leading-5 text-blue-950">{message}</p>}
       {mode === "signup" && <label className="flex items-start gap-2 text-xs leading-5"><input name="terms" type="checkbox" required className="mt-1" /><span>I have read the <Link href="/privacy" className="underline">Privacy Policy</Link> and agree to the <Link href="/terms" className="underline">Terms of Use</Link>.</span></label>}
+      {mode === "login" && <label className="flex items-center gap-2 text-xs leading-5"><input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> Remember this device (avoid on shared computers)</label>}
       <button disabled={pending || !isSupabaseConfigured()} className="min-h-10 rounded-full bg-[#263a99] px-4 font-semibold text-white disabled:opacity-50">{pending ? "Please wait…" : mode === "signup" ? "Create account" : mode === "recovery" ? "Send reset link" : "Sign in"}</button>
     </form>
     {mode === "login" && <button type="button" disabled={pending} onClick={() => { setMode("recovery"); setMessage(""); }} className="mt-2 min-h-10 text-sm text-[#263a99] underline">Forgot password?</button>}

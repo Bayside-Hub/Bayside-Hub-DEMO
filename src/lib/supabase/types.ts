@@ -73,6 +73,7 @@ export type Database = {
       club_attendance_records: TableDefinition<ClubAttendanceRecordRow>;
       club_share_links: TableDefinition<ClubShareLinkRow>;
       announcement_versions: TableDefinition<AnnouncementVersionRow>;
+      announcement_drafts: TableDefinition<AnnouncementDraftRow>;
       events: TableDefinition<EventRow>;
       opportunities: TableDefinition<OpportunityRow>;
       support_requests: TableDefinition<SupportRequestRow>;
@@ -191,7 +192,10 @@ export type AnnouncementRow = {
   updated_by: string | null;
   version_note: string | null;
   media_id: string | null;
+  publish_at: string | null;
 };
+
+export type AnnouncementDraftRow = { user_id: string; draft_key: string; title: string; tag: string; body: string; publish_at: string | null; updated_at: string };
 
 export type ClubApplicationRow = {
   id: string;
