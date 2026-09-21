@@ -33,14 +33,16 @@ select role, count(*) from public.profiles group by role;
 6. `supabase/club_attendance.sql`：Club 活动临时/永久验证码、二维码签到与签到记录。
 7. `supabase/club_fair_qr_links.sql`：展会用可设有效期、可撤销的 Club 页面二维码链接。
 8. `supabase/announcement_cms_workflow.sql`：工作人员私人自动草稿、定时公告和对应的公开可见性规则。
-9. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
-10. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
+9. `supabase/site_cms_workflow.sql`：网站页面文字私人草稿、预览、定时生效和版本恢复。
+10. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
+11. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
 
 旧账号不会按域名自动改身份。Advisor 改为其他基础身份时，会移除该账号全部 Advisor 社团绑定；独立董事会任命和自定义权限不随之撤销。
 自定义权限不是任意数据库权限：支持社团内容、社团治理、网站介绍文字，不能授予管理员审核/账号管理能力。
 角色定义删除会同时撤销其分配；请先检查影响范围。
 
 公告编辑器选择的时间按编辑者设备的本地时区转换为 UTC 保存。定时公告由数据库可见性规则在到点后自动公开，无需额外 cron；未到点前公开页面和公告版本历史均不可见。版本恢复仅还原标题、正文和分类，不会意外更改排期或归档状态。自动草稿按工作人员账号隔离。要永久删除公告，必须先归档并再次确认；归档可恢复。
+站点页面文字也按编辑者设备的本地时区排期。到点后的文字由公开读取逻辑自动显示，无需额外 cron；手动发布或恢复旧版本会取消该字段之前的排期。页面草稿按工作人员账号隔离，版本恢复会立即公开所选内容。
 
 ## 3. Authentication 配置
 

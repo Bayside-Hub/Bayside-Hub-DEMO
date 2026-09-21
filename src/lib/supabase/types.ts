@@ -28,6 +28,9 @@ export type Database = {
       custom_roles: TableDefinition<{ id: string; name: string; permissions: string[]; created_at: string }>;
       custom_role_assignments: TableDefinition<{ id: string; role_id: string; profile_id: string; club_id: string | null; created_at: string }>;
       site_content: TableDefinition<{ key: string; body: string; updated_by: string | null; updated_at: string }>;
+      site_content_drafts: TableDefinition<{ user_id: string; key: string; body: string; updated_at: string }>;
+      site_content_scheduled: TableDefinition<{ key: string; body: string; publish_at: string; updated_by: string | null; updated_at: string }>;
+      site_content_versions: TableDefinition<{ id: string; key: string; version_number: number; snapshot_body: string; changed_by: string | null; changed_at: string }>;
       school_announcement_submissions: TableDefinition<{ id: string; club_id: string; author_id: string; title: string; body: string; media_id: string | null; status: string; review_note: string | null; created_at: string }>;
       profiles: {
         Row: Profile;

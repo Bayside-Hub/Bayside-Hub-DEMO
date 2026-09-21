@@ -74,5 +74,9 @@ export const getSiteText = cache(async () => {
   for (const item of data ?? []) {
     if (Object.hasOwn(result, item.key)) result[item.key as keyof typeof result] = item.body;
   }
+  const { data: scheduled } = await db.from("site_content_scheduled").select("key,body").lte("publish_at", new Date().toISOString());
+  for (const item of scheduled ?? []) {
+    if (Object.hasOwn(result, item.key)) result[item.key as keyof typeof result] = item.body;
+  }
   return result;
 });
