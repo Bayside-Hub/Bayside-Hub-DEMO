@@ -99,6 +99,8 @@ checks and the existing release checklist are complete.
    - `supabase/club_fair_qr_links.sql` — expiring, revocable public QR links for Club fair displays
    - `supabase/announcement_cms_workflow.sql` — private autosaved announcement drafts and scheduled publication
    - `supabase/site_cms_workflow.sql` — page-copy drafts, previews, scheduled changes, and version recovery
+   - `supabase/finance_permissions_and_reimbursements.sql` — Staff/Admin-only
+     treasury writes, secure reimbursement tickets, and private receipt attachments
    - `supabase/club_media_library.sql` — private-by-default Club media library,
      cover/gallery placement, Club post images, and reviewed school announcement images
    - `supabase/demo_clubs.sql` — optional, explicitly marked draft test clubs
@@ -141,6 +143,10 @@ student is assigned through `club_officers` and may hold different positions in
 multiple clubs. Active officers can edit their assigned clubs, schedules,
 announcements, and photos. Advisors and staff control officer appointments;
 only staff/admins assign faculty advisors.
+
+Treasury is a deliberate exception to general Club management: Advisors and
+board members can view balances and submit reimbursement tickets, while only
+Staff/Admin can create or correct official amounts, budgets, and fundraising records.
 
 ## BHS Club Manual support
 
