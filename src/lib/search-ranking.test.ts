@@ -20,3 +20,16 @@ test("requires all terms and bounds the result count", () => {
   assert.deepEqual(rankSearchResults(results, "robotics missing"), []);
   assert.equal(rankSearchResults(results, "club", 999).length, 2);
 });
+
+test("matches common synonyms without outranking an exact title", () => {
+  const extended = [...results, { kind: "Opportunity" as const, title: "Hospital Internship", href: "/opportunities/hospital", meta: "Career" }];
+  assert.equal(rankSearchResults(extended, "job")[0]?.href, "/opportunities/hospital");
+  assert.equal(rankSearchResults(results, "organization")[0]?.href, "/clubs/robotics");
+});
+
+test("tolerates bounded spelling mistakes and diacritics", () => {
+  assert.equal(rankSearchResults(results, "robotcs")[0]?.href, "/clubs/robotics");
+  const accents = [{ kind: "Club" as const, title: "Café Culture", href: "/clubs/cafe", meta: "Language" }];
+  assert.equal(rankSearchResults(accents, "cafe")[0]?.href, "/clubs/cafe");
+  assert.deepEqual(rankSearchResults(results, "rt"), []);
+});

@@ -42,16 +42,12 @@ export default function SearchBox() {
   const rootRef = useRef<HTMLDivElement>(null);
 
   const matches = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = query.trim();
     if (!q) return { grouped: [] as { kind: Result["kind"]; items: Result[] }[], flat: [] as Result[] };
     const grouped = groupOrder
       .map((kind) => ({
         kind,
-        items: results.filter(
-          (r) =>
-            r.kind === kind &&
-            (r.title.toLowerCase().includes(q) || (r.meta ?? "").toLowerCase().includes(q)),
-        ),
+        items: results.filter((r) => r.kind === kind),
       }))
       .filter((g) => g.items.length > 0);
     const flat: Result[] = grouped.flatMap((g) => g.items);
@@ -125,6 +121,13 @@ export default function SearchBox() {
     router.push(href);
   }
 
+  function openSearchPage() {
+    const q = query.trim();
+    if (q.length < 2) return;
+    setOpen(false);
+    router.push(`/search?q=${encodeURIComponent(q)}`);
+  }
+
   return (
     <div ref={rootRef} className="relative w-full max-w-md min-w-0 flex-1 sm:flex-none">
       <label className="relative block">
@@ -163,7 +166,7 @@ export default function SearchBox() {
             } else if (e.key === "Enter") {
               e.preventDefault();
               const item = matches.flat[safeActive];
-              if (item) openResult(item.href);
+              if (item) openResult(item.href); else openSearchPage();
             } else if (e.key === "Escape") {
               setOpen(false);
             }
@@ -278,6 +281,7 @@ export default function SearchBox() {
               </span>
             </div>
           )}
+          {query.trim().length >= 2 && <button type="button" onClick={openSearchPage} className="mt-1 w-full border-t border-line px-3 py-2 text-left text-xs font-bold text-navy">View all results for “{query.trim()}” →</button>}
         </div>
       )}
     </div>

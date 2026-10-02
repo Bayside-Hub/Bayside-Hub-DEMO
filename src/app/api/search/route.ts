@@ -44,7 +44,7 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json(
-    { results },
+    { results: results.map(result => ({ kind: result.kind, title: result.title, href: result.href, meta: result.meta })) },
     { headers: cacheHeaders },
   );
 }
