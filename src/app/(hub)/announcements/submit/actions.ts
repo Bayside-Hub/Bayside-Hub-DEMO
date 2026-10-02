@@ -2,6 +2,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function submitSchoolAnnouncement(_state: string, form: FormData) {
   const user = await getCurrentUser();
@@ -12,6 +13,8 @@ export async function submitSchoolAnnouncement(_state: string, form: FormData) {
   const requestedMediaId = String(form.get("media_id") ?? "");
   if (title.length < 3 || title.length > 120 || body.length < 3 || body.length > 10000 || !clubId) return "Choose a club and complete the title and announcement.";
   const db = await createServerClient();
+  const limit = await checkRateLimit(db, "announcement_submit");
+  if (!limit.allowed && !limit.unavailable) return "Too many announcement submissions. Try again later.";
   let mediaId: string | null = null;
   if (requestedMediaId) {
     const { data: media } = await db.from("club_media").select("id").eq("id", requestedMediaId).eq("club_id", clubId).maybeSingle();

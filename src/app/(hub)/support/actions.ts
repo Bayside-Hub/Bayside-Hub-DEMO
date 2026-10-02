@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
 import { parseOptionalIsoDateTime } from "@/lib/input-validation";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export type SupportActionState = { ok: boolean; message: string } | null;
 
@@ -46,6 +47,8 @@ export async function submitSupportRequest(
   }
 
   const supabase = await createServerClient();
+  const limit = await checkRateLimit(supabase, "support_submit");
+  if (!limit.allowed && !limit.unavailable) return { ok: false, message: "Too many support requests. Try again later." };
   const { error } = await supabase.from("support_requests").insert({
     request_type: requestType as (typeof requestTypes)[number],
     submitted_by: user.id,

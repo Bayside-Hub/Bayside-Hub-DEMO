@@ -100,6 +100,8 @@ checks and the existing release checklist are complete.
    - `supabase/announcement_cms_workflow.sql` — private autosaved announcement drafts and scheduled publication
    - `supabase/announcement_calendar_enhancements.sql` — announcement priority,
      pinning and expiry plus administrator-managed calendar layers and CSV imports
+   - `supabase/security_observability.sql` — PostgreSQL-backed distributed rate
+     limits and authenticated client/server error reporting
    - `supabase/site_cms_workflow.sql` — page-copy drafts, previews, scheduled changes, and version recovery
    - `supabase/finance_permissions_and_reimbursements.sql` — Staff/Admin-only
      treasury writes, secure reimbursement tickets, and private receipt attachments
@@ -282,11 +284,11 @@ actor, and do not place private application or support-request text in logs.
 
 ### Security, privacy, and abuse protection
 
-- [ ] Add distributed rate limiting for search, applications, support requests, RSVP, and membership actions.
+- [x] Add distributed rate limiting for search, applications, support requests, RSVP, and membership actions.
 - [ ] Add automated role-matrix tests for students, club officers, advisors, staff, and admins.
 - [ ] Review public DTOs so student email addresses and internal UUIDs are returned only when required.
 - [ ] Add retention and deletion policies for support requests, applications, and analytics.
-- [ ] Add dependency, secret, and migration security scanning to CI.
+- [x] Add dependency, secret, and migration security scanning to CI.
 
 Acceptance criteria: limits work across serverless instances, authorization is
 tested at both UI and action/API boundaries, and retention rules are school-approved.

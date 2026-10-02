@@ -153,6 +153,7 @@ export type Database = {
       reply_to_membership_decision: { Args: { p_membership_id: string; p_reply: string }; Returns: boolean };
       record_search_analytics: { Args: { p_query: string; p_result_count: number }; Returns: undefined };
       record_system_error: { Args: { p_source: string; p_message: string; p_context?: Record<string, unknown> }; Returns: undefined };
+      check_rate_limit: { Args: { p_scope: string; p_identifier?: string }; Returns: boolean };
       can_approve_club_finance: { Args: { p_club_id: string }; Returns: boolean };
       review_club_fundraiser: { Args: { p_fundraiser_id: string; p_approve: boolean; p_note: string }; Returns: boolean };
       close_club_fundraiser: { Args: { p_fundraiser_id: string; p_statement: string; p_proceeds_cents: number; p_expenses_cents: number }; Returns: boolean };

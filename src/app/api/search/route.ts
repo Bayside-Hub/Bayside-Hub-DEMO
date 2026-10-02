@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSearchResults } from "@/lib/search";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
   let query = "";
@@ -13,6 +14,11 @@ export async function GET(request: Request) {
   const cacheHeaders = { "Cache-Control": "private, no-store" };
   if (query.trim().length < 2) {
     return NextResponse.json({ results: [] }, { status: 200, headers: cacheHeaders });
+  }
+  if (isSupabaseConfigured()) {
+    const db = await createServerClient();
+    const limit = await checkRateLimit(db, "search_api", request);
+    if (!limit.allowed && !limit.unavailable) return NextResponse.json({ results: [], error: "Too many searches. Try again shortly." }, { status: 429, headers: { ...cacheHeaders, "Retry-After": "60" } });
   }
   let results;
   try {

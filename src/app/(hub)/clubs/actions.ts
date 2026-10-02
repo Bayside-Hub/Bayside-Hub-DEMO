@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { clubCategories } from "@/lib/data";
 import { getClubBySlug } from "@/lib/clubs";
 import type { ClubChatMessage } from "@/lib/supabase/types";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export type ActionState = { ok: boolean; message: string } | null;
 
@@ -54,6 +55,8 @@ export async function submitClubApplication(
   }
 
   const supabase = await createServerClient();
+  const limit = await checkRateLimit(supabase, "club_application");
+  if (!limit.allowed && !limit.unavailable) return { ok: false, message: "Too many Club applications. Try again later." };
   const { data: existing } = await supabase.from("club_applications")
     .select("id")
     .eq("submitted_by", user.id)
@@ -179,6 +182,8 @@ export async function requestClubMembership(formData: FormData): Promise<void> {
   if (!user || !clubId || !slug || !isSupabaseConfigured()) return;
 
   const supabase = await createServerClient();
+  const limit = await checkRateLimit(supabase, "membership_action");
+  if (!limit.allowed && !limit.unavailable) return;
   const { data: club } = await supabase
     .from("clubs")
     .select("join_policy, recruiting_status")
