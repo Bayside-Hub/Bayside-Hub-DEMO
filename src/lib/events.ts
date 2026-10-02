@@ -2,7 +2,7 @@ import { cache } from "react";
 import { events as seedEvents, type EventItem } from "./data";
 import { isSupabaseConfigured } from "./supabase/config";
 import { createServerClient } from "./supabase/server";
-import type { EventRow } from "./supabase/types";
+import type { CalendarSourceRow, EventRow } from "./supabase/types";
 import { normalizeRecordId, preferLiveData } from "./live-data";
 
 function formatDate(startAt: string, endAt: string | null) {
@@ -14,9 +14,10 @@ function formatDate(startAt: string, endAt: string | null) {
     : formatter.format(start);
 }
 
-function mapEvent(row: EventRow): EventItem {
+function mapEvent(row: EventRow, calendars = new Map<string, CalendarSourceRow>()): EventItem {
   const start = new Date(row.start_at);
   const end = row.end_at ? new Date(row.end_at) : null;
+  const calendar = row.calendar_id ? calendars.get(row.calendar_id) : undefined;
   return {
     id: normalizeRecordId(row.id),
     title: row.title,
@@ -30,6 +31,9 @@ function mapEvent(row: EventRow): EventItem {
     price: row.price_label,
     description: row.description,
     source: row.event_type === "club" ? "club" : row.event_type === "sports" ? "sports" : "school",
+    calendarId: calendar?.id,
+    calendarName: calendar?.name,
+    calendarColor: calendar?.color,
   };
 }
 
@@ -92,11 +96,13 @@ export const getEvents = cache(async (limit?: number): Promise<EventItem[]> => {
   if (limit !== undefined) query = query.limit(limit);
   const { data, error } = await query;
   if (error) throw new Error(`Unable to load events: ${error.message}`);
-  const [meetingResult, clubResult] = await Promise.all([
+  const [meetingResult, clubResult, calendarResult] = await Promise.all([
     supabase.from("club_meetings").select("id, club_id, day_of_week, start_time, end_time, location, recurrence_note"),
     supabase.from("clubs").select("id, slug, name, active_start_date, active_end_date").eq("status", "published"),
+    supabase.from("calendar_sources").select("*").eq("active", true),
   ]);
-  const live = (data ?? []).map(mapEvent);
+  const calendars = new Map((calendarResult.data ?? []).map(calendar => [calendar.id, calendar]));
+  const live = (data ?? []).filter(row => !row.calendar_id || calendars.has(row.calendar_id)).map(row => mapEvent(row, calendars));
   const recurring = meetingResult.error || clubResult.error
     ? []
     : meetingEvents(meetingResult.data ?? [], clubResult.data ?? []);

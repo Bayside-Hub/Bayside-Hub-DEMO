@@ -27,13 +27,13 @@ export default async function AdminAnnouncementsPage({ searchParams }: { searchP
   let { data: rows, count, error: listError } = supabase
     ? await supabase
         .from("announcements")
-        .select("id, title, tag, created_at, archived_at, publish_at, published", { count: "exact" })
+        .select("id, title, tag, created_at, archived_at, publish_at, published, priority, pinned_until, expires_at", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(from, from + PAGE_SIZE - 1)
     : { data: null, count: 0, error: null };
   if (supabase && listError?.code === "42703") {
     const fallback = await supabase.from("announcements").select("id,title,tag,created_at,archived_at,published", { count: "exact" }).order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
-    rows = fallback.data?.map((row) => ({ ...row, publish_at: null })) ?? null;
+    rows = fallback.data?.map((row) => ({ ...row, publish_at: null, priority: "normal" as const, pinned_until: null, expires_at: null })) ?? null;
     count = fallback.count;
     listError = fallback.error;
   }
@@ -83,7 +83,7 @@ export default async function AdminAnnouncementsPage({ searchParams }: { searchP
                       {row.tag} ·{" "}
                       {new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
                         new Date(row.created_at),
-                      )} · {row.archived_at ? "Archived" : "publish_at" in row && row.publish_at && new Date(row.publish_at).getTime() > now ? "Scheduled" : row.published ? "Published" : "Draft"}
+                      )} · {row.archived_at ? "Archived" : "publish_at" in row && row.publish_at && new Date(row.publish_at).getTime() > now ? "Scheduled" : row.expires_at && new Date(row.expires_at).getTime() <= now ? "Expired" : row.published ? "Published" : "Draft"}{row.priority !== "normal" ? ` · ${row.priority}` : ""}{row.pinned_until && new Date(row.pinned_until).getTime() > now ? " · Pinned" : ""}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">

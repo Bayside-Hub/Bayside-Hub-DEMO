@@ -170,6 +170,8 @@ export type Announcement = {
   excerpt: string;
   imageUrl?: string;
   imageAlt?: string;
+  priority?: "normal" | "important" | "urgent";
+  pinned?: boolean;
 };
 
 export const announcements: Announcement[] = [
@@ -212,6 +214,9 @@ export type EventItem = {
   price: string;
   description: string;
   source?: "school" | "club" | "sports";
+  calendarId?: string;
+  calendarName?: string;
+  calendarColor?: string;
 };
 
 export const events: EventItem[] = [

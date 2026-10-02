@@ -43,10 +43,11 @@ export default function CalendarBoard({ events }: { events: EventItem[] }) {
   }, []);
 
   const [cursor, setCursor] = useState(defaultMonth);
-  const [layer, setLayer] = useState<"all" | "school" | "club" | "sports">("all");
+  const [layer, setLayer] = useState("all");
   const [view, setView] = useState<"auto" | "month" | "list">("auto");
+  const customCalendars = useMemo(() => Array.from(new Map(events.filter(event => event.calendarId).map(event => [event.calendarId!, { id: event.calendarId!, name: event.calendarName ?? "Calendar", color: event.calendarColor ?? "#263A99" }])).values()), [events]);
   const visibleEvents = useMemo(
-    () => layer === "all" ? events : events.filter((event) => (event.source ?? (event.category === "sports" ? "sports" : "school")) === layer),
+    () => layer === "all" ? events : layer.startsWith("calendar:") ? events.filter(event => event.calendarId === layer.slice(9)) : events.filter((event) => (event.source ?? (event.category === "sports" ? "sports" : "school")) === layer),
     [events, layer],
   );
   const monthEvents = useMemo(
@@ -88,6 +89,7 @@ export default function CalendarBoard({ events }: { events: EventItem[] }) {
           {(["all", "school", "club", "sports"] as const).map((value) => (
             <button key={value} type="button" aria-pressed={layer === value} onClick={() => setLayer(value)} className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${layer === value ? "bg-cream text-black" : "border border-line text-cream"}`}>{value}</button>
           ))}
+          {customCalendars.map(calendar => <button key={calendar.id} type="button" aria-pressed={layer === `calendar:${calendar.id}`} onClick={() => setLayer(`calendar:${calendar.id}`)} className={`rounded-full px-3 py-1 text-xs font-semibold ${layer === `calendar:${calendar.id}` ? "bg-cream text-black" : "border border-line text-cream"}`}><span className="mr-1.5 inline-block size-2 rounded-full" style={{backgroundColor:calendar.color}}/>{calendar.name}</button>)}
         </div>
         <div className="flex rounded-full border border-line" role="group" aria-label="Calendar view">
           {(["month", "list"] as const).map((value) => (
@@ -150,7 +152,8 @@ export default function CalendarBoard({ events }: { events: EventItem[] }) {
                 <Link
                   key={e.id}
                   href={`/events/${e.id}`}
-                  className="truncate rounded-md bg-navy px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-cream transition-colors hover:bg-sky/60 hover:text-black"
+                  className="truncate rounded-md bg-navy px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-cream transition-colors hover:opacity-80"
+                  style={e.calendarColor ? { backgroundColor: e.calendarColor } : undefined}
                 >
                   {e.title}
                 </Link>

@@ -9,7 +9,7 @@ export default async function EditAnnouncementPage({ params }: { params: Promise
   const { id } = await params;
   const supabase = await createServerClient();
   const [{ data: initial, error: announcementError }, { data: draft }, { data: versions }] = await Promise.all([
-    supabase.from("announcements").select("id, title, tag, body, publish_at").eq("id", id).maybeSingle(),
+    supabase.from("announcements").select("id, title, tag, body, publish_at, priority, pinned_until, expires_at").eq("id", id).maybeSingle(),
     supabase.from("announcement_drafts").select("*").eq("user_id", user.id).eq("draft_key", id).maybeSingle(),
     supabase.from("announcement_versions").select("*").eq("announcement_id", id).order("version_number", { ascending: false }).limit(15),
   ]);

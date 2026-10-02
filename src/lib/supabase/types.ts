@@ -77,6 +77,7 @@ export type Database = {
       club_share_links: TableDefinition<ClubShareLinkRow>;
       announcement_versions: TableDefinition<AnnouncementVersionRow>;
       announcement_drafts: TableDefinition<AnnouncementDraftRow>;
+      calendar_sources: TableDefinition<CalendarSourceRow>;
       events: TableDefinition<EventRow>;
       opportunities: TableDefinition<OpportunityRow>;
       support_requests: TableDefinition<SupportRequestRow>;
@@ -199,9 +200,12 @@ export type AnnouncementRow = {
   version_note: string | null;
   media_id: string | null;
   publish_at: string | null;
+  priority: "normal" | "important" | "urgent";
+  pinned_until: string | null;
+  expires_at: string | null;
 };
 
-export type AnnouncementDraftRow = { user_id: string; draft_key: string; title: string; tag: string; body: string; publish_at: string | null; updated_at: string };
+export type AnnouncementDraftRow = { user_id: string; draft_key: string; title: string; tag: string; body: string; publish_at: string | null; priority: "normal" | "important" | "urgent"; pinned_until: string | null; expires_at: string | null; updated_at: string };
 
 export type ClubApplicationRow = {
   id: string;
@@ -444,7 +448,10 @@ export type EventRow = {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  calendar_id: string | null;
 };
+
+export type CalendarSourceRow = { id: string; name: string; description: string | null; color: string; active: boolean; created_by: string; created_at: string; updated_at: string };
 
 export type OpportunityRow = {
   id: string;

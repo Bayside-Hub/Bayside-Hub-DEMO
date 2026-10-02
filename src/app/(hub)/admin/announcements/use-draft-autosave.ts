@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { saveAnnouncementDraft } from "../actions";
 
-export type DraftFields = { title: string; tag: string; body: string; publishAt: string };
+export type DraftFields = { title: string; tag: string; body: string; publishAt: string; priority: string; pinnedUntil: string; expiresAt: string };
 
 export function useDraftAutosave(key: string, fields: DraftFields, disabled = false) {
   const [status, setStatus] = useState("");
@@ -13,7 +13,7 @@ export function useDraftAutosave(key: string, fields: DraftFields, disabled = fa
     if (first.current) { first.current = false; return; }
     setStatus("Saving draft…");
     const timer = window.setTimeout(async () => {
-      const result = await saveAnnouncementDraft({ key, ...fields, publishAt: fields.publishAt ? new Date(fields.publishAt).toISOString() : "" });
+      const result = await saveAnnouncementDraft({ key, ...fields, publishAt: fields.publishAt ? new Date(fields.publishAt).toISOString() : "", pinnedUntil: fields.pinnedUntil ? new Date(fields.pinnedUntil).toISOString() : "", expiresAt: fields.expiresAt ? new Date(fields.expiresAt).toISOString() : "" });
       setStatus(result.message);
     }, 1200);
     return () => window.clearTimeout(timer);

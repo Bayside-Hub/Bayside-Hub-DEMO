@@ -15,16 +15,22 @@ export default function AnnouncementForm({ disabled, draft }: { disabled?: boole
   const [tag, setTag] = useState(draft?.tag ?? "Announcements");
   const [body, setBody] = useState(draft?.body ?? "");
   const [publishAt, setPublishAt] = useState(localDateTime(draft?.publish_at));
+  const [priority, setPriority] = useState<string>(draft?.priority ?? "normal");
+  const [pinnedUntil, setPinnedUntil] = useState(localDateTime(draft?.pinned_until));
+  const [expiresAt, setExpiresAt] = useState(localDateTime(draft?.expires_at));
   const [preview, setPreview] = useState(false);
-  const fields = useMemo(() => ({ title, tag, body, publishAt }), [title, tag, body, publishAt]);
+  const fields = useMemo(() => ({ title, tag, body, publishAt, priority, pinnedUntil, expiresAt }), [title, tag, body, publishAt, priority, pinnedUntil, expiresAt]);
   const autosave = useDraftAutosave("new", fields, disabled || state?.ok === true);
 
   return <form action={action} className="mt-4 grid gap-4">
     <label className="grid gap-1 text-sm font-semibold text-ink">Title<input name="title" required minLength={3} maxLength={120} value={title} onChange={(event) => setTitle(event.target.value)} disabled={disabled} className={input} /></label>
     <label className="grid gap-1 text-sm font-semibold text-ink">Tag<select name="tag" value={tag} onChange={(event) => setTag(event.target.value)} disabled={disabled} className={input}>{tags.map((value) => <option key={value}>{value}</option>)}</select></label>
+    <label className="grid gap-1 text-sm font-semibold text-ink">Priority<select name="priority" value={priority} onChange={(event) => setPriority(event.target.value)} disabled={disabled} className={input}><option value="normal">Normal</option><option value="important">Important</option><option value="urgent">Urgent</option></select></label>
     <label className="grid gap-1 text-sm font-semibold text-ink">Body<textarea name="body" required minLength={3} maxLength={10000} rows={7} value={body} onChange={(event) => setBody(event.target.value)} disabled={disabled} className={`${input} h-auto py-3`} /><span className="text-xs font-normal text-muted">Full https:// links become clickable after publishing.</span></label>
     <label className="grid gap-1 text-sm font-semibold text-ink">Schedule publication (optional)<input type="datetime-local" value={publishAt} onChange={(event) => setPublishAt(event.target.value)} disabled={disabled} className={input} /><span className="text-xs font-normal text-muted">Leave blank to publish now. A future time keeps it hidden until then.</span></label>
     <input type="hidden" name="publish_at" value={publishAt ? new Date(publishAt).toISOString() : ""} />
+    <div className="grid gap-3 sm:grid-cols-2"><label className="grid gap-1 text-sm font-semibold text-ink">Pin until (optional)<input type="datetime-local" value={pinnedUntil} onChange={(event) => setPinnedUntil(event.target.value)} className={input} /></label><label className="grid gap-1 text-sm font-semibold text-ink">Expire automatically (optional)<input type="datetime-local" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} className={input} /></label></div>
+    <input type="hidden" name="pinned_until" value={pinnedUntil ? new Date(pinnedUntil).toISOString() : ""} /><input type="hidden" name="expires_at" value={expiresAt ? new Date(expiresAt).toISOString() : ""} />
     <p role="status" className="min-h-5 text-xs text-muted">{autosave || (draft ? "Recovered your saved draft." : "Changes save automatically while you edit.")}</p>
     <button type="button" onClick={() => setPreview((current) => !current)} className="justify-self-start text-sm font-semibold text-navy underline">{preview ? "Hide preview" : "Preview before publication"}</button>
     {preview && <article className="rounded-card border border-line bg-content-bg p-5"><p className="text-xs font-bold uppercase text-muted">{tag}</p><h3 className="mt-2 text-xl font-bold text-ink">{title || "Announcement title"}</h3><p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted"><AnnouncementBody body={body || "Announcement body"} /></p>{publishAt && <p className="mt-3 text-xs text-muted">Scheduled for {new Date(publishAt).toLocaleString()}</p>}</article>}

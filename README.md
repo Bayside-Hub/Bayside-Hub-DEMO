@@ -98,6 +98,8 @@ checks and the existing release checklist are complete.
    - `supabase/club_attendance.sql` — temporary/permanent Club check-in codes, QR redemption, and attendance records
    - `supabase/club_fair_qr_links.sql` — expiring, revocable public QR links for Club fair displays
    - `supabase/announcement_cms_workflow.sql` — private autosaved announcement drafts and scheduled publication
+   - `supabase/announcement_calendar_enhancements.sql` — announcement priority,
+     pinning and expiry plus administrator-managed calendar layers and CSV imports
    - `supabase/site_cms_workflow.sql` — page-copy drafts, previews, scheduled changes, and version recovery
    - `supabase/finance_permissions_and_reimbursements.sql` — Staff/Admin-only
      treasury writes, secure reimbursement tickets, and private receipt attachments

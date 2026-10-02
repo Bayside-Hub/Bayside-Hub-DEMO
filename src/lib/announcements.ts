@@ -14,6 +14,8 @@ function toAnnouncement(row: {
   created_at: string;
   effective_date?: string | null;
   media_id?: string | null;
+  priority?: "normal" | "important" | "urgent";
+  pinned_until?: string | null;
 }, image?: { url: string; alt: string | null }): Announcement {
   const date = row.effective_date ?? row.created_at;
   return {
@@ -28,6 +30,8 @@ function toAnnouncement(row: {
     excerpt: row.body,
     imageUrl: image?.url,
     imageAlt: image?.alt ?? undefined,
+    priority: row.priority ?? "normal",
+    pinned: Boolean(row.pinned_until && new Date(row.pinned_until).getTime() > Date.now()),
   };
 }
 
@@ -45,13 +49,15 @@ export const getAnnouncements = cache(async (limit = 100): Promise<Announcement[
   const now = new Date().toISOString();
   let { data: rows, error } = await supabase
     .from("announcements")
-    .select("id, title, tag, body, created_at, media_id")
+    .select("id, title, tag, body, created_at, media_id, priority, pinned_until")
     .eq("published", true)
     .is("archived_at", null)
     .or(`publish_at.is.null,publish_at.lte.${now}`)
+    .or(`expires_at.is.null,expires_at.gt.${now}`)
+    .order("pinned_until", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(limit);
-  if (error?.code === "42703") ({ data: rows, error } = await supabase.from("announcements").select("id, title, tag, body, created_at, media_id").eq("published", true).is("archived_at", null).order("created_at", { ascending: false }).limit(limit));
+  if (error?.code === "42703") { const fallback = await supabase.from("announcements").select("id, title, tag, body, created_at, media_id").eq("published", true).is("archived_at", null).order("created_at", { ascending: false }).limit(limit); rows = fallback.data?.map(row => ({ ...row, priority: "normal" as const, pinned_until: null })) ?? null; error = fallback.error; }
 
   if (error) throw new Error(`Unable to load announcements: ${error.message}`);
   const media = await attachAnnouncementMedia(supabase, rows ?? []);
@@ -61,7 +67,8 @@ export const getAnnouncements = cache(async (limit = 100): Promise<Announcement[
 export const getAnnouncementTags = cache(async (): Promise<string[]> => {
   if (!isSupabaseConfigured()) return Array.from(new Set(seedAnnouncements.map((a) => a.tag)));
   const supabase = await createServerClient();
-  let { data, error } = await supabase.from("announcements").select("tag").eq("published", true).is("archived_at", null).or(`publish_at.is.null,publish_at.lte.${new Date().toISOString()}`);
+  const now = new Date().toISOString();
+  let { data, error } = await supabase.from("announcements").select("tag").eq("published", true).is("archived_at", null).or(`publish_at.is.null,publish_at.lte.${now}`).or(`expires_at.is.null,expires_at.gt.${now}`);
   if (error?.code === "42703") ({ data, error } = await supabase.from("announcements").select("tag").eq("published", true).is("archived_at", null));
   if (error) throw new Error(`Unable to load announcement filters: ${error.message}`);
   return Array.from(new Set((data ?? []).map((row) => row.tag))).sort();
@@ -87,18 +94,20 @@ export const getAnnouncementsPage = cache(async (
     return { announcements: filtered.slice(start, start + safePageSize), page: Math.min(safePage, pageCount), pageCount };
   }
   const supabase = await createServerClient();
-  let query = supabase.from("announcements").select("id, title, tag, body, created_at, media_id", { count: "exact" }).eq("published", true).is("archived_at", null);
+  let query = supabase.from("announcements").select("id, title, tag, body, created_at, media_id, priority, pinned_until", { count: "exact" }).eq("published", true).is("archived_at", null);
   query = query.or(`publish_at.is.null,publish_at.lte.${new Date().toISOString()}`);
+  query = query.or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
   if (tag) query = query.eq("tag", tag);
   if (safeSearch) query = query.or(`title.ilike.%${safeSearch}%,body.ilike.%${safeSearch}%`);
   let { data, count, error } = await query
-    .order("created_at", { ascending: false })
+    .order("pinned_until", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false })
     .range((safePage - 1) * safePageSize, safePage * safePageSize - 1);
   if (error?.code === "42703") {
     let fallback = supabase.from("announcements").select("id, title, tag, body, created_at, media_id", { count: "exact" }).eq("published", true).is("archived_at", null);
     if (tag) fallback = fallback.eq("tag", tag);
     if (safeSearch) fallback = fallback.or(`title.ilike.%${safeSearch}%,body.ilike.%${safeSearch}%`);
-    ({ data, count, error } = await fallback.order("created_at", { ascending: false }).range((safePage - 1) * safePageSize, safePage * safePageSize - 1));
+    const result = await fallback.order("created_at", { ascending: false }).range((safePage - 1) * safePageSize, safePage * safePageSize - 1);
+    data = result.data?.map(row => ({ ...row, priority: "normal" as const, pinned_until: null })) ?? null; count = result.count; error = result.error;
   }
   if (error) throw new Error(`Unable to load announcements: ${error.message}`);
   const pageCount = Math.max(1, Math.ceil((count ?? 0) / safePageSize));
