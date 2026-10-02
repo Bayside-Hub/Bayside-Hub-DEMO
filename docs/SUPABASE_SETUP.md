@@ -50,7 +50,8 @@ select role, count(*) from public.profiles group by role;
 会话设置建议：在 Supabase Dashboard → Authentication → Sessions 中根据学校政策配置 Inactivity Timeout 和 Time-box。登录页默认仅使用会话 Cookie；用户明确选择“Remember this device”才会将 Cookie 最多保存 400 天。退出当前设备与退出所有设备是不同操作。清除浏览器数据、无痕模式、管理员撤销会话后都需重新登录。
 
 - 启用 Email 注册与密码登录，保持 **Confirm email 开启**；不要为了测试关闭邮箱验证。
-- Site URL 使用正式域名。Redirect URLs 允许该域名的 `/auth/callback` 路径；已有 Google OAuth 配置保留。
+- Site URL 使用正式域名。Redirect URLs 必须允许正式域名的 `/auth/callback` 和 `/auth/confirm` 路径；已有 Google OAuth 配置保留。
+- Password recovery 邮件可继续使用 Supabase 默认 `ConfirmationURL`。如使用自定义 SSR 模板，链接应为 `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`；不要把 `TokenHash` 输出到日志或支持工单。
 - 配置学校认可的邮件发送服务，验证确认邮件能够送到实际学校邮箱；密钥不要放进前端环境变量或 GitHub。
 - 测试登录页 Forgot password：在同一浏览器打开重置邮件，经 `/auth/callback` 到 `/reset-password` 设置新密码；旧密码应失效。实际邮件投递尚未验证。
 - 网站注册入口接受 `@nycstudents.net` 和 `@schools.nyc.gov`。前者为 Student，后者为 Teacher；Teacher 不自动获得 Advisor 或 Staff 权限。

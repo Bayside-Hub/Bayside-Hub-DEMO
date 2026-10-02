@@ -27,8 +27,9 @@ export default function EmailAccount({ next, recovery = false }: { next: string;
       if (mode === "login") rememberDeviceCookie(remember);
       const client = createBrowserClient();
       if (mode === "recovery") {
+        rememberDeviceCookie(false);
         const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/auth/callback?next=/reset-password` });
-        setMessage(error ? "Unable to send the recovery email. Try again later or contact Support." : "If this address has an account, you will receive a password reset email. Open it in this browser.");
+        setMessage(error ? "Unable to send the recovery email. Try again later or contact Support." : "If this address has an account, you will receive a password reset email. Use the newest link and open it in this browser.");
       } else if (mode === "signup") {
         const { error } = await client.auth.signUp({ email, password, options: {
           data: { full_name: String(form.get("name")).trim() },

@@ -71,6 +71,11 @@ export default function LoginCard() {
           This Google account is not from an approved school domain.
         </p>
       )}
+      {error === "recovery" && (
+        <p className="mt-4 rounded-light bg-orange/10 px-3 py-2 text-xs font-medium text-orange" role="alert">
+          This password reset link is invalid, expired, or was opened in a different browser. Request a new link below.
+        </p>
+      )}
       {oauthMessage && (
         <p className="mt-4 rounded-light bg-orange/10 px-3 py-2 text-xs font-medium text-orange" role="alert">
           {oauthMessage}
