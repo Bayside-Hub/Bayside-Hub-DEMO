@@ -92,6 +92,8 @@ export type Database = {
       club_budgets: TableDefinition<ClubBudgetRow>;
       club_reimbursements: TableDefinition<ClubReimbursementRow>;
       club_reimbursement_attachments: TableDefinition<ClubReimbursementAttachmentRow>;
+      club_custom_tables: TableDefinition<ClubCustomTableRow>;
+      club_custom_table_rows: TableDefinition<ClubCustomTableDataRow>;
       facility_permits: TableDefinition<FacilityPermitRow>;
       event_approval_requests: TableDefinition<EventApprovalRow>;
       event_registrations: TableDefinition<EventRegistrationRow>;
@@ -553,6 +555,9 @@ export type ClubElectionRow = { id: string; club_id: string; title: string; elec
 export type ClubBudgetRow = { id: string; club_id: string; school_year: string; allocated_cents: number; notes: string | null; updated_by: string; updated_at: string };
 export type ClubReimbursementRow = { id: string; club_id: string; school_year: string; amount_cents: number; purpose: string; receipt_reference: string; receipt_path: string | null; status: "pending" | "approved" | "rejected" | "paid"; submitted_by: string; reviewed_by: string | null; review_note: string | null; created_at: string };
 export type ClubReimbursementAttachmentRow = { id: string; reimbursement_id: string; storage_path: string; file_name: string; mime_type: "application/pdf" | "image/jpeg" | "image/png" | "image/webp"; file_size: number; uploaded_by: string; created_at: string };
+export type ClubCustomColumn = { key: string; label: string; type: "text" | "number" | "date" | "checkbox"; required: boolean };
+export type ClubCustomTableRow = { id: string; club_id: string; name: string; description: string | null; columns: ClubCustomColumn[]; created_by: string; created_at: string; updated_at: string };
+export type ClubCustomTableDataRow = { id: string; table_id: string; data: Record<string, string | number | boolean>; created_by: string; created_at: string; updated_by: string | null; updated_at: string };
 export type FacilityPermitRow = { id: string; club_id: string | null; event_id: string | null; title: string; event_date: string; start_time: string | null; end_time: string | null; room: string | null; needs_security: boolean; needs_library: boolean; needs_av: boolean; room_status: string; security_status: string; library_status: string; av_status: string; overall_status: "pending" | "approved" | "rejected"; submitted_by: string; review_note: string | null; created_at: string };
 export type EventApprovalRow = { id: string; club_id: string | null; title: string; description: string; start_at: string; end_at: string | null; location: string | null; capacity: number | null; status: "pending" | "approved" | "rejected"; submitted_by: string; reviewed_by: string | null; review_note: string | null; created_at: string };
 export type EventRegistrationRow = { id: string; approval_id: string; profile_id: string; status: "pending" | "approved" | "waitlisted" | "rejected" | "cancelled"; reviewed_by: string | null; review_note: string | null; created_at: string };

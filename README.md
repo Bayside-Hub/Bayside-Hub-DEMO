@@ -101,6 +101,8 @@ checks and the existing release checklist are complete.
    - `supabase/site_cms_workflow.sql` — page-copy drafts, previews, scheduled changes, and version recovery
    - `supabase/finance_permissions_and_reimbursements.sql` — Staff/Admin-only
      treasury writes, secure reimbursement tickets, and private receipt attachments
+   - `supabase/club_custom_tables.sql` — Club-scoped custom tables, online rows,
+     RLS isolation, and CSV export
    - `supabase/club_media_library.sql` — private-by-default Club media library,
      cover/gallery placement, Club post images, and reviewed school announcement images
    - `supabase/demo_clubs.sql` — optional, explicitly marked draft test clubs
