@@ -100,6 +100,8 @@ checks and the existing release checklist are complete.
    - `supabase/announcement_cms_workflow.sql` — private autosaved announcement drafts and scheduled publication
    - `supabase/announcement_calendar_enhancements.sql` — announcement priority,
      pinning and expiry plus administrator-managed calendar layers and CSV imports
+   - `supabase/calendar_meeting_emergency.sql` — administrator-controlled holiday
+     and Club meeting cancellations plus the emergency announcement level
    - `supabase/security_observability.sql` — PostgreSQL-backed distributed rate
      limits and authenticated client/server error reporting
    - `supabase/site_cms_workflow.sql` — page-copy drafts, previews, scheduled changes, and version recovery

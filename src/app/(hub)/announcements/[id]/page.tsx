@@ -25,13 +25,14 @@ export default async function AnnouncementDetailPage({ params }: { params: Promi
     <div className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-6 lg:py-12">
       <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-muted"><Link href="/announcements" className="font-semibold text-powder hover:text-ink">Announcements</Link><span aria-hidden>/</span><span className="line-clamp-1">{announcement.title}</span></nav>
 
-      <article className="mt-5 overflow-hidden rounded-[26px] border border-line bg-card shadow-sm">
+      <article className={`mt-5 overflow-hidden rounded-[26px] border shadow-sm ${announcement.priority === "emergency" ? "border-red-500 bg-red-50 ring-2 ring-red-500/25" : "border-line bg-card"}`}>
+        {announcement.priority === "emergency" ? <div className="bg-red-700 px-6 py-3 text-center text-sm font-black uppercase tracking-[0.2em] text-white sm:px-10">Emergency alert</div> : null}
         {announcement.imageUrl ? <div className="relative aspect-[16/7] w-full"><Image src={announcement.imageUrl} alt={announcement.imageAlt ?? ""} fill priority sizes="(max-width: 1200px) 100vw, 1152px" className="object-cover" /></div> : null}
         <div className="p-6 sm:p-10 lg:p-12">
-          <div className="flex flex-wrap items-center gap-3 text-xs"><span className="rounded-full bg-navy px-3 py-1 font-semibold text-cream">{announcement.tag}</span><time className="text-muted">Published {announcement.date}</time></div>
-          <h1 className="mt-5 max-w-5xl font-display text-4xl font-bold leading-[1.02] tracking-tight text-ink sm:text-6xl">{announcement.title}</h1>
+          <div className="flex flex-wrap items-center gap-3 text-xs"><span className={`rounded-full px-3 py-1 font-semibold ${announcement.priority === "emergency" ? "bg-red-600 text-white" : "bg-navy text-cream"}`}>{announcement.priority === "emergency" ? "Immediate action required" : announcement.tag}</span><time className={announcement.priority === "emergency" ? "text-red-800" : "text-muted"}>Published {announcement.date}</time></div>
+          <h1 className={`mt-5 max-w-5xl font-display text-4xl font-bold leading-[1.02] tracking-tight sm:text-6xl ${announcement.priority === "emergency" ? "text-red-950" : "text-ink"}`}>{announcement.title}</h1>
           <div className="mt-7 border-y border-line py-4"><AnnouncementActions title={announcement.title} /></div>
-          <div className="prose-announcement mt-8 max-w-3xl whitespace-pre-wrap text-base leading-8 text-muted sm:text-lg"><AnnouncementBody body={announcement.excerpt} /></div>
+          <div className={`prose-announcement mt-8 max-w-3xl whitespace-pre-wrap text-base leading-8 sm:text-lg ${announcement.priority === "emergency" ? "font-medium text-red-950" : "text-muted"}`}><AnnouncementBody body={announcement.excerpt} /></div>
         </div>
       </article>
 

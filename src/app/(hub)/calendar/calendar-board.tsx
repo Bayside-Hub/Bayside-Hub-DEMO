@@ -152,10 +152,10 @@ export default function CalendarBoard({ events }: { events: EventItem[] }) {
                 <Link
                   key={e.id}
                   href={`/events/${e.id}`}
-                  className="truncate rounded-md bg-navy px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-cream transition-colors hover:opacity-80"
-                  style={e.calendarColor ? { backgroundColor: e.calendarColor } : undefined}
+                  className={`truncate rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-cream transition-colors hover:opacity-80 ${e.meetingEffect ? "bg-red-700" : "bg-navy"}`}
+                  style={!e.meetingEffect && e.calendarColor ? { backgroundColor: e.calendarColor } : undefined}
                 >
-                  {e.title}
+                  {e.meetingEffect ? "NO MEETINGS · " : ""}{e.title}
                 </Link>
               ))}
               {dayEvents.length > 2 && (
@@ -170,13 +170,14 @@ export default function CalendarBoard({ events }: { events: EventItem[] }) {
       </div>
       <div className={`${view === "month" ? "hidden" : view === "auto" ? "block sm:hidden" : "block"} divide-y divide-line`}>
           {monthEvents.length ? monthEvents.map((event) => (
-            <Link key={event.id} href={`/events/${event.id}`} className="flex gap-4 px-5 py-4 transition-colors hover:bg-cream/5 sm:px-6">
+            <Link key={event.id} href={`/events/${event.id}`} className={`flex gap-4 px-5 py-4 transition-colors sm:px-6 ${event.meetingEffect ? "bg-red-950/40 hover:bg-red-950/60" : "hover:bg-cream/5"}`}>
               <time className="w-16 shrink-0 text-sm font-bold text-powder">
                 {event.dateISO ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(new Date(`${event.dateISO}T00:00:00`)) : "TBA"}
               </time>
               <span className="min-w-0">
+                {event.meetingEffect ? <span className="mb-1 inline-flex rounded-full bg-red-700 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">No meetings</span> : null}
                 <span className="block font-semibold text-cream">{event.title}</span>
-                <span className="mt-1 block text-sm text-muted">{event.time} · {event.location}</span>
+                <span className="mt-1 block text-sm text-muted">{event.meetingEffect === "club" && event.affectedClubName ? `${event.affectedClubName} meeting cancelled` : event.meetingEffect === "all" ? "All Club meetings cancelled" : `${event.time} · ${event.location}`}</span>
               </span>
             </Link>
           )) : (

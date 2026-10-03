@@ -201,12 +201,12 @@ export type AnnouncementRow = {
   version_note: string | null;
   media_id: string | null;
   publish_at: string | null;
-  priority: "normal" | "important" | "urgent";
+  priority: "normal" | "important" | "urgent" | "emergency";
   pinned_until: string | null;
   expires_at: string | null;
 };
 
-export type AnnouncementDraftRow = { user_id: string; draft_key: string; title: string; tag: string; body: string; publish_at: string | null; priority: "normal" | "important" | "urgent"; pinned_until: string | null; expires_at: string | null; updated_at: string };
+export type AnnouncementDraftRow = { user_id: string; draft_key: string; title: string; tag: string; body: string; publish_at: string | null; priority: "normal" | "important" | "urgent" | "emergency"; pinned_until: string | null; expires_at: string | null; updated_at: string };
 
 export type ClubApplicationRow = {
   id: string;
@@ -450,6 +450,8 @@ export type EventRow = {
   created_at: string;
   updated_at: string;
   calendar_id: string | null;
+  meeting_effect: "none" | "all" | "club";
+  affected_club_id: string | null;
 };
 
 export type CalendarSourceRow = { id: string; name: string; description: string | null; color: string; active: boolean; created_by: string; created_at: string; updated_at: string };

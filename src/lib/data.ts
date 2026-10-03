@@ -170,7 +170,7 @@ export type Announcement = {
   excerpt: string;
   imageUrl?: string;
   imageAlt?: string;
-  priority?: "normal" | "important" | "urgent";
+  priority?: "normal" | "important" | "urgent" | "emergency";
   pinned?: boolean;
 };
 
@@ -217,6 +217,8 @@ export type EventItem = {
   calendarId?: string;
   calendarName?: string;
   calendarColor?: string;
+  meetingEffect?: "all" | "club";
+  affectedClubName?: string;
 };
 
 export const events: EventItem[] = [

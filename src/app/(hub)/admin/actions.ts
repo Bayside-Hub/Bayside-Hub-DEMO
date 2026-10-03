@@ -14,6 +14,13 @@ function publicationTime(value: string) {
   return parsed === undefined ? undefined : parsed;
 }
 
+function effectivePin(priority: string, pinnedUntil: string | null, publishAt: string | null, expiresAt: string | null) {
+  if (priority !== "emergency" || pinnedUntil) return pinnedUntil;
+  if (expiresAt) return expiresAt;
+  const begins = publishAt ? Math.max(Date.now(), new Date(publishAt).getTime()) : Date.now();
+  return new Date(begins + 24 * 60 * 60 * 1000).toISOString();
+}
+
 export async function saveAnnouncementDraft(input: { key: string; title: string; tag: string; body: string; publishAt: string; priority: string; pinnedUntil: string; expiresAt: string }) {
   const user = await getCurrentUser();
   if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
@@ -23,10 +30,10 @@ export async function saveAnnouncementDraft(input: { key: string; title: string;
   const publishAt = publicationTime(input.publishAt);
   const pinnedUntil = publicationTime(input.pinnedUntil);
   const expiresAt = publicationTime(input.expiresAt);
-  if (title.length > 120 || body.length > 10000 || publishAt === undefined || pinnedUntil === undefined || expiresAt === undefined || !["normal","important","urgent"].includes(input.priority) || !announcementTags.includes(input.tag as (typeof announcementTags)[number])) return { ok: false, message: "Draft exceeds the allowed length or has an invalid date." };
+  if (title.length > 120 || body.length > 10000 || publishAt === undefined || pinnedUntil === undefined || expiresAt === undefined || !["normal","important","urgent","emergency"].includes(input.priority) || !announcementTags.includes(input.tag as (typeof announcementTags)[number])) return { ok: false, message: "Draft exceeds the allowed length or has an invalid date." };
   const db = await createServerClient();
-  const { error } = await db.from("announcement_drafts").upsert({ user_id: user.id, draft_key: input.key, title, tag: input.tag, body, publish_at: publishAt, priority: input.priority as "normal" | "important" | "urgent", pinned_until: pinnedUntil, expires_at: expiresAt, updated_at: new Date().toISOString() });
-  return error ? { ok: false, message: "Draft could not be saved. Apply announcement_calendar_enhancements.sql." } : { ok: true, message: "Draft saved." };
+  const { error } = await db.from("announcement_drafts").upsert({ user_id: user.id, draft_key: input.key, title, tag: input.tag, body, publish_at: publishAt, priority: input.priority as "normal" | "important" | "urgent" | "emergency", pinned_until: pinnedUntil, expires_at: expiresAt, updated_at: new Date().toISOString() });
+  return error ? { ok: false, message: input.priority === "emergency" ? "Draft could not be saved. Apply calendar_meeting_emergency.sql." : "Draft could not be saved. Apply announcement_calendar_enhancements.sql." } : { ok: true, message: "Draft saved." };
 }
 
 function invalid(): ActionState {
@@ -61,7 +68,7 @@ export async function createAnnouncement(
   }
   if (!announcementTags.includes(tag as (typeof announcementTags)[number])) return invalid();
   if (versionNote.length > 240) return { ok: false, message: "Version notes must be 240 characters or fewer." };
-  if (publishAt === undefined || pinnedUntil === undefined || expiresAt === undefined || !["normal","important","urgent"].includes(priority)) return { ok: false, message: "Enter valid publication settings." };
+  if (publishAt === undefined || pinnedUntil === undefined || expiresAt === undefined || !["normal","important","urgent","emergency"].includes(priority)) return { ok: false, message: "Enter valid publication settings." };
   if (expiresAt && publishAt && expiresAt <= publishAt) return { ok: false, message: "Expiration must be after publication." };
 
   const supabase = await createServerClient();
@@ -73,13 +80,13 @@ export async function createAnnouncement(
     updated_by: user.id,
     version_note: versionNote.slice(0, 240) || "Initial publication",
     publish_at: publishAt,
-    priority: priority as "normal" | "important" | "urgent",
-    pinned_until: pinnedUntil,
+    priority: priority as "normal" | "important" | "urgent" | "emergency",
+    pinned_until: effectivePin(priority, pinnedUntil, publishAt, expiresAt),
     expires_at: expiresAt,
     published: true,
   });
 
-  if (error) return { ok: false, message: "Could not publish. Apply announcement_cms_workflow.sql if it has not been run." };
+  if (error) return { ok: false, message: priority === "emergency" ? "Could not publish. Apply calendar_meeting_emergency.sql first." : "Could not publish. Apply announcement_cms_workflow.sql if it has not been run." };
   await supabase.from("announcement_drafts").delete().eq("user_id", user.id).eq("draft_key", "new");
 
   revalidatePath("/announcements");
@@ -157,10 +164,10 @@ export async function updateAnnouncement(_prev: ActionState, formData: FormData)
   const expiresAt = publicationTime(String(formData.get("expires_at") ?? ""));
   const priority = String(formData.get("priority") ?? "normal");
   if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
-  if (!isSupabaseConfigured() || !id || title.length < 3 || title.length > 120 || body.length < 3 || body.length > 10000 || !versionNote || versionNote.length > 240 || publishAt === undefined || pinnedUntil === undefined || expiresAt === undefined || !["normal","important","urgent"].includes(priority) || Boolean(expiresAt && publishAt && expiresAt <= publishAt)) return invalid();
+  if (!isSupabaseConfigured() || !id || title.length < 3 || title.length > 120 || body.length < 3 || body.length > 10000 || !versionNote || versionNote.length > 240 || publishAt === undefined || pinnedUntil === undefined || expiresAt === undefined || !["normal","important","urgent","emergency"].includes(priority) || Boolean(expiresAt && publishAt && expiresAt <= publishAt)) return invalid();
   if (!announcementTags.includes(tag as (typeof announcementTags)[number])) return invalid();
   const supabase = await createServerClient();
-  const { error } = await supabase.from("announcements").update({ title, tag, body, publish_at: publishAt, priority: priority as "normal" | "important" | "urgent", pinned_until: pinnedUntil, expires_at: expiresAt, updated_by: user.id, version_note: versionNote.slice(0, 240) }).eq("id", id);
+  const { error } = await supabase.from("announcements").update({ title, tag, body, publish_at: publishAt, priority: priority as "normal" | "important" | "urgent" | "emergency", pinned_until: effectivePin(priority, pinnedUntil, publishAt, expiresAt), expires_at: expiresAt, updated_by: user.id, version_note: versionNote.slice(0, 240) }).eq("id", id);
   if (error) return invalid();
   await supabase.from("announcement_drafts").delete().eq("user_id", user.id).eq("draft_key", id);
   revalidatePath(`/announcements/${id}`);
@@ -366,8 +373,10 @@ function eventInput(formData: FormData) {
   const location = String(formData.get("location") ?? "").trim();
   const priceLabel = String(formData.get("price_label") ?? "Free").trim();
   const calendarId = String(formData.get("calendar_id") ?? "").trim();
-  if (title.length < 3 || title.length > 160 || description.length < 3 || description.length > 5000 || !eventTypes.includes(eventType as (typeof eventTypes)[number]) || !startAt || endAt === undefined || (endAt && endAt < startAt) || location.length > 240 || priceLabel.length > 80) return null;
-  return { title, description, event_type: eventType as (typeof eventTypes)[number], start_at: startAt, end_at: endAt, location: location || null, price_label: priceLabel || "Free", calendar_id: calendarId || null, published: formData.get("published") === "on" };
+  const meetingEffect = String(formData.get("meeting_effect") ?? "none");
+  const affectedClubId = String(formData.get("affected_club_id") ?? "").trim();
+  if (title.length < 3 || title.length > 160 || description.length < 3 || description.length > 5000 || !eventTypes.includes(eventType as (typeof eventTypes)[number]) || !startAt || endAt === undefined || (endAt && endAt < startAt) || location.length > 240 || priceLabel.length > 80 || !["none","all","club"].includes(meetingEffect) || (meetingEffect === "club") !== Boolean(affectedClubId)) return null;
+  return { title, description, event_type: eventType as (typeof eventTypes)[number], start_at: startAt, end_at: endAt, location: location || null, price_label: priceLabel || "Free", calendar_id: calendarId || null, meeting_effect: meetingEffect as "none" | "all" | "club", affected_club_id: affectedClubId || null, published: formData.get("published") === "on" };
 }
 
 export async function createCalendar(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -428,12 +437,13 @@ export async function saveEvent(_prev: ActionState, formData: FormData): Promise
   const id = String(formData.get("id") ?? "");
   const input = eventInput(formData);
   if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (input?.meeting_effect !== "none" && user.role !== "admin") return { ok: false, message: "Only administrators can cancel Club meetings." };
   if (!input || !isSupabaseConfigured()) return { ok: false, message: "Check the title, dates, and field lengths." };
   const db = await createServerClient();
   const result = id
     ? await db.from("events").update({ ...input, updated_at: new Date().toISOString() }).eq("id", id)
     : await db.from("events").insert({ ...input, club_id: null, created_by: user.id });
-  if (result.error) return invalid();
+  if (result.error) return { ok: false, message: result.error.code === "42703" || result.error.code === "23514" ? "Apply calendar_meeting_emergency.sql, then check the meeting impact fields." : "Event could not be saved." };
   revalidatePath("/admin/events"); revalidatePath("/events", "layout"); revalidatePath("/calendar"); revalidatePath("/");
   return { ok: true, message: id ? "Event updated." : "Event created." };
 }

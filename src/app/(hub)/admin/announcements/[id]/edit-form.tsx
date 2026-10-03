@@ -6,7 +6,7 @@ import type { AnnouncementDraftRow, AnnouncementVersionRow } from "@/lib/supabas
 import { restoreAnnouncementVersion, updateAnnouncement } from "../../actions";
 import { localDateTime, useDraftAutosave } from "../use-draft-autosave";
 
-type AnnouncementEdit = { id: string; title: string; tag: string; body: string; publish_at?: string | null; priority?: "normal" | "important" | "urgent"; pinned_until?: string | null; expires_at?: string | null };
+type AnnouncementEdit = { id: string; title: string; tag: string; body: string; publish_at?: string | null; priority?: "normal" | "important" | "urgent" | "emergency"; pinned_until?: string | null; expires_at?: string | null };
 const input = "h-10 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink";
 
 function VersionRestore({ announcementId, version }: { announcementId: string; version: AnnouncementVersionRow }) {
@@ -39,7 +39,7 @@ export default function EditAnnouncementForm({ announcement, draft, versions }: 
     <input type="hidden" name="id" value={announcement.id} />
     <label className="grid gap-1 text-sm font-semibold text-ink">Title<input name="title" required minLength={3} maxLength={120} value={title} onChange={(event) => setTitle(event.target.value)} className={input} /></label>
     <label className="grid gap-1 text-sm font-semibold text-ink">Tag<select name="tag" value={tag} onChange={(event) => setTag(event.target.value)} className={input}>{["Announcements","Events","Clubs","Sports","Opportunities"].map((value) => <option key={value}>{value}</option>)}</select></label>
-    <label className="grid gap-1 text-sm font-semibold text-ink">Priority<select name="priority" value={priority} onChange={(event) => setPriority(event.target.value)} className={input}><option value="normal">Normal</option><option value="important">Important</option><option value="urgent">Urgent</option></select></label>
+    <label className="grid gap-1 text-sm font-semibold text-ink">Priority<select name="priority" value={priority} onChange={(event) => setPriority(event.target.value)} className={input}><option value="normal">Normal</option><option value="important">Important</option><option value="urgent">Urgent</option><option value="emergency">Emergency</option></select><span className="text-xs font-normal text-muted">Emergency uses the school-wide red alert style.</span></label>
     <label className="grid gap-1 text-sm font-semibold text-ink">Body<textarea name="body" required minLength={3} maxLength={10000} rows={10} value={body} onChange={(event) => setBody(event.target.value)} className={`${input} h-auto py-3`} /><span className="text-xs font-normal text-muted">Full https:// links become clickable after publication.</span></label>
     <label className="grid gap-1 text-sm font-semibold text-ink">Publication time (optional)<input type="datetime-local" value={publishAt} onChange={(event) => setPublishAt(event.target.value)} className={input} /><span className="text-xs font-normal text-muted">Future time hides this post until then; clear to publish immediately.</span></label>
     <input type="hidden" name="publish_at" value={publishAt ? new Date(publishAt).toISOString() : ""} />
@@ -47,7 +47,7 @@ export default function EditAnnouncementForm({ announcement, draft, versions }: 
     <input type="hidden" name="pinned_until" value={pinnedUntil ? new Date(pinnedUntil).toISOString() : ""} /><input type="hidden" name="expires_at" value={expiresAt ? new Date(expiresAt).toISOString() : ""} />
     <p role="status" className="text-xs text-muted">{autosave || (draft ? "Recovered your saved edit draft." : "Changes save automatically as a draft.")}</p>
     <button type="button" onClick={() => setPreview((current) => !current)} className="justify-self-start text-sm font-semibold text-navy underline">{preview ? "Hide preview" : "Preview changes"}</button>
-    {preview && <article className="rounded-card border border-line bg-content-bg p-5"><p className="text-xs font-bold uppercase text-muted">{tag}</p><h2 className="mt-2 text-xl font-bold text-ink">{title}</h2><p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted"><AnnouncementBody body={body} /></p></article>}
+    {preview && <article className={`rounded-card border p-5 ${priority === "emergency" ? "border-red-500 bg-red-50 text-red-950" : "border-line bg-content-bg"}`}>{priority === "emergency" ? <p className="text-xs font-black uppercase tracking-[0.18em] text-red-700">Emergency alert</p> : <p className="text-xs font-bold uppercase text-muted">{tag}</p>}<h2 className="mt-2 text-xl font-bold">{title}</h2><p className={`mt-3 whitespace-pre-wrap text-sm leading-6 ${priority === "emergency" ? "text-red-900" : "text-muted"}`}><AnnouncementBody body={body} /></p></article>}
     <label className="grid gap-1 text-sm font-semibold text-ink">What changed?<input name="version_note" required maxLength={240} placeholder="Corrected the event time" className={input} /></label>
     {state && <p role={state.ok ? "status" : "alert"} className="text-sm text-muted">{state.message}</p>}
     <button disabled={pending} className="h-10 rounded-full bg-navy px-6 font-semibold text-cream disabled:opacity-50">{pending ? "Saving…" : "Save new version"}</button>

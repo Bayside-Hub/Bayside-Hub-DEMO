@@ -30,10 +30,10 @@ export default async function EventDetailPage({
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8 lg:py-12">
-      <article className="relative overflow-hidden rounded-[26px] border border-[#97b4de] bg-[#d4cbbc] p-8 text-[#2a2829] shadow-sm sm:p-12">
+      <article className={`relative overflow-hidden rounded-[26px] border p-8 shadow-sm sm:p-12 ${event.meetingEffect ? "border-red-500 bg-red-50 text-red-950 ring-2 ring-red-500/25" : "border-[#97b4de] bg-[#d4cbbc] text-[#2a2829]"}`}>
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="rounded-full bg-navy px-3 py-1 font-semibold capitalize text-cream">
-            {event.category === "spirit-week" ? "Spirit Week" : event.category}
+          <span className={`rounded-full px-3 py-1 font-semibold capitalize text-cream ${event.meetingEffect ? "bg-red-700" : "bg-navy"}`}>
+            {event.meetingEffect ? "No meetings" : event.category === "spirit-week" ? "Spirit Week" : event.category}
           </span>
           <span className="rounded-full bg-peach/60 px-3 py-1 font-semibold text-black">
             {event.price}
@@ -46,8 +46,8 @@ export default async function EventDetailPage({
             <dd className="mt-0.5 font-medium">{event.date}</dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[#263a99]">Time</dt>
-            <dd className="mt-0.5 font-medium">{event.time}</dd>
+            <dt className={`text-xs font-semibold uppercase tracking-wide ${event.meetingEffect ? "text-red-700" : "text-[#263a99]"}`}>Status</dt>
+            <dd className="mt-0.5 font-medium">{event.meetingEffect === "club" && event.affectedClubName ? `${event.affectedClubName} meeting cancelled` : event.meetingEffect === "all" ? "All Club meetings cancelled" : event.time}</dd>
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide text-[#263a99]">Location</dt>
@@ -56,7 +56,7 @@ export default async function EventDetailPage({
         </dl>
         <p className="mt-6 max-w-3xl leading-8 text-[#2a2829]/75">{event.description}</p>
 
-        {rsvp.available && (
+        {!event.meetingEffect && rsvp.available && (
           <div className="mt-6 border-t border-line pt-6">
             {user ? (
               <form action={toggleEventRsvp}>

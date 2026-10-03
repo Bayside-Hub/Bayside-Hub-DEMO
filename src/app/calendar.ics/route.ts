@@ -23,9 +23,9 @@ export async function GET() {
     `DTSTAMP:${stamp}`,
     `DTSTART;VALUE=DATE:${dateValue(event.dateISO!)}`,
     `DTEND;VALUE=DATE:${dateValue(dayAfter(event.dateEndISO ?? event.dateISO!))}`,
-    `SUMMARY:${escapeIcs(event.title)}`,
-    `DESCRIPTION:${escapeIcs(`${event.description}\nTime: ${event.time}`)}`,
-    `LOCATION:${escapeIcs(event.location)}`,
+    `SUMMARY:${escapeIcs(`${event.meetingEffect ? "NO MEETINGS — " : ""}${event.title}`)}`,
+    `DESCRIPTION:${escapeIcs(event.meetingEffect === "club" && event.affectedClubName ? `${event.description}\n${event.affectedClubName} meeting cancelled` : event.meetingEffect === "all" ? `${event.description}\nAll Club meetings cancelled` : `${event.description}\nTime: ${event.time}`)}`,
+    `LOCATION:${escapeIcs(event.meetingEffect ? "" : event.location)}`,
     "END:VEVENT",
   ].join("\r\n"));
   const calendar = [

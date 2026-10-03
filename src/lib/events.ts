@@ -4,6 +4,7 @@ import { isSupabaseConfigured } from "./supabase/config";
 import { createServerClient } from "./supabase/server";
 import type { CalendarSourceRow, EventRow } from "./supabase/types";
 import { normalizeRecordId, preferLiveData } from "./live-data";
+import { isMeetingSuppressed } from "./meeting-exceptions";
 
 function formatDate(startAt: string, endAt: string | null) {
   const start = new Date(startAt);
@@ -14,7 +15,7 @@ function formatDate(startAt: string, endAt: string | null) {
     : formatter.format(start);
 }
 
-function mapEvent(row: EventRow, calendars = new Map<string, CalendarSourceRow>()): EventItem {
+function mapEvent(row: EventRow, calendars = new Map<string, CalendarSourceRow>(), clubNames = new Map<string, string>()): EventItem {
   const start = new Date(row.start_at);
   const end = row.end_at ? new Date(row.end_at) : null;
   const calendar = row.calendar_id ? calendars.get(row.calendar_id) : undefined;
@@ -34,12 +35,15 @@ function mapEvent(row: EventRow, calendars = new Map<string, CalendarSourceRow>(
     calendarId: calendar?.id,
     calendarName: calendar?.name,
     calendarColor: calendar?.color,
+    meetingEffect: row.meeting_effect === "all" || row.meeting_effect === "club" ? row.meeting_effect : undefined,
+    affectedClubName: row.affected_club_id ? clubNames.get(row.affected_club_id) : undefined,
   };
 }
 
 function meetingEvents(
   meetings: { id: string; club_id: string; day_of_week: number; start_time: string | null; end_time: string | null; location: string | null; recurrence_note: string | null }[],
   clubs: { id: string; slug: string; name: string; active_start_date: string | null; active_end_date: string | null }[],
+  exceptions: EventRow[],
 ): EventItem[] {
   const clubsById = new Map(clubs.map((club) => [club.id, club]));
   const start = new Date();
@@ -58,6 +62,7 @@ function meetingEvents(
         isoDay === meeting.day_of_week
         && (!club.active_start_date || dateISO >= club.active_start_date)
         && (!club.active_end_date || dateISO <= club.active_end_date)
+        && !isMeetingSuppressed(dateISO, club.id, exceptions)
       ) {
         output.push({
           id: `meeting-${meeting.id}-${dateISO}`,
@@ -102,10 +107,12 @@ export const getEvents = cache(async (limit?: number): Promise<EventItem[]> => {
     supabase.from("calendar_sources").select("*").eq("active", true),
   ]);
   const calendars = new Map((calendarResult.data ?? []).map(calendar => [calendar.id, calendar]));
-  const live = (data ?? []).filter(row => !row.calendar_id || calendars.has(row.calendar_id)).map(row => mapEvent(row, calendars));
+  const clubNames = new Map((clubResult.data ?? []).map(club => [club.id, club.name]));
+  const liveRows = (data ?? []).filter(row => !row.calendar_id || calendars.has(row.calendar_id));
+  const live = liveRows.map(row => mapEvent(row, calendars, clubNames));
   const recurring = meetingResult.error || clubResult.error
     ? []
-    : meetingEvents(meetingResult.data ?? [], clubResult.data ?? []);
+    : meetingEvents(meetingResult.data ?? [], clubResult.data ?? [], liveRows);
   const output = preferLiveData([...live, ...recurring], seedEvents);
   return limit === undefined ? output : output.slice(0, limit);
 });

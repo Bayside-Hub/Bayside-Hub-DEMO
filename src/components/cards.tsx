@@ -34,15 +34,17 @@ export function tagClasses(tag: string) {
 }
 
 export function AnnouncementCard({ a }: { a: Announcement }) {
+  const emergency = a.priority === "emergency";
   return (
     <article>
       <Link
         href={`/announcements/${a.id}`}
-        className="card-gradient group flex min-h-40 overflow-hidden rounded-[18px] border border-line transition-all hover:-translate-y-0.5 hover:border-cream/30 hover:shadow-lg"
+        className={`${emergency ? "bg-red-950" : "card-gradient"} group relative flex min-h-40 overflow-hidden rounded-[18px] border transition-all hover:-translate-y-0.5 hover:shadow-lg ${emergency ? "border-red-500 ring-2 ring-red-500/30" : "border-line hover:border-cream/30"}`}
       >
+        {emergency ? <span className="absolute inset-x-0 top-0 h-1.5 bg-red-500" aria-hidden /> : null}
         <div className="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${tagClasses(a.tag)}`}>{a.tag}</span>
+            {emergency ? <span className="rounded-full bg-red-500 px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-white">Emergency alert</span> : <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${tagClasses(a.tag)}`}>{a.tag}</span>}
             <time className="text-xs text-cream/55" aria-label={`Published ${a.date}`}>{a.date}</time>
           </div>
           <h3 className="mt-3 line-clamp-2 text-lg font-semibold leading-snug text-cream sm:text-xl">{a.title}</h3>
@@ -103,14 +105,14 @@ export function EventCard({ event }: { event: EventItem }) {
   return (
     <Link
       href={`/events/${event.id}`}
-      className="card-gradient group relative flex min-h-[360px] flex-col overflow-hidden rounded-[34px_34px_10px_10px] border border-line p-7 text-center transition-transform duration-200 hover:-translate-y-1"
+      className={`card-gradient group relative flex min-h-[360px] flex-col overflow-hidden rounded-[34px_34px_10px_10px] border p-7 text-center transition-transform duration-200 hover:-translate-y-1 ${event.meetingEffect ? "border-red-500 ring-2 ring-red-500/25" : "border-line"}`}
     >
       <p className="line-clamp-2 text-xs font-semibold leading-5 text-cream/85">{event.description}</p>
-      <div className={`mx-auto mt-3 inline-flex w-fit rounded-full px-4 py-1 text-xs font-semibold ${chip}`}>
-        {event.category === "sports" ? "Sports" : event.category === "spirit-week" ? "Spirit Week" : "Events"}
+      <div className={`mx-auto mt-3 inline-flex w-fit rounded-full px-4 py-1 text-xs font-semibold ${event.meetingEffect ? "bg-red-600 text-white" : chip}`}>
+        {event.meetingEffect ? "No meetings" : event.category === "sports" ? "Sports" : event.category === "spirit-week" ? "Spirit Week" : "Events"}
       </div>
       <h3 className="mt-3 font-display text-xl font-bold uppercase leading-snug text-cream">{event.title}</h3>
-      <p className="mt-2 text-xs font-semibold uppercase leading-5 text-cream">{event.date} · {event.location} · {event.time}</p>
+      <p className="mt-2 text-xs font-semibold uppercase leading-5 text-cream">{event.date} · {event.meetingEffect === "club" && event.affectedClubName ? `${event.affectedClubName} cancelled` : event.meetingEffect === "all" ? "All Club meetings cancelled" : `${event.location} · ${event.time}`}</p>
       <p className="mt-1 text-sm text-cream/75">{event.price}</p>
       <div className="pointer-events-none absolute -bottom-32 left-1/2 size-64 -translate-x-1/2 rounded-full bg-cream transition-transform group-hover:-translate-y-2" aria-hidden />
       <span className="relative mt-auto inline-flex items-center justify-center gap-1.5 pt-24 text-xs font-bold uppercase tracking-wider text-navy">

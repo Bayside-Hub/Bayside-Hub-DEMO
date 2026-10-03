@@ -9,7 +9,8 @@ import { getEvent } from "@/lib/events";
 export type RsvpState = { count: number; joined: boolean; available: boolean };
 
 export async function getEventRsvpInfo(eventId: string): Promise<RsvpState> {
-  if (!isSupabaseConfigured() || !(await getEvent(eventId))) {
+  const event = isSupabaseConfigured() ? await getEvent(eventId) : null;
+  if (!event || event.meetingEffect) {
     return { count: 0, joined: false, available: false };
   }
 
@@ -35,11 +36,8 @@ export async function getEventRsvpInfo(eventId: string): Promise<RsvpState> {
 export async function toggleEventRsvp(formData: FormData): Promise<void> {
   const user = await getCurrentUser();
   const eventId = String(formData.get("event_id") ?? "").trim();
-  if (
-    !user ||
-    !isSupabaseConfigured() ||
-    !(await getEvent(eventId))
-  ) return;
+  const event = isSupabaseConfigured() ? await getEvent(eventId) : null;
+  if (!user || !event || event.meetingEffect) return;
 
   const supabase = await createServerClient();
   const { data: existing } = await supabase

@@ -14,7 +14,7 @@ function toAnnouncement(row: {
   created_at: string;
   effective_date?: string | null;
   media_id?: string | null;
-  priority?: "normal" | "important" | "urgent";
+  priority?: "normal" | "important" | "urgent" | "emergency";
   pinned_until?: string | null;
 }, image?: { url: string; alt: string | null }): Announcement {
   const date = row.effective_date ?? row.created_at;
@@ -141,7 +141,7 @@ export async function getAnnouncement(id: string): Promise<Announcement | null> 
     const supabase = await createServerClient();
     let { data: row, error } = await supabase
       .from("announcements")
-      .select("id, title, tag, body, created_at, media_id, publish_at, published, archived_at")
+      .select("id, title, tag, body, created_at, media_id, publish_at, published, archived_at, priority, pinned_until")
       .eq("id", id)
       .or("published.eq.true,archived_at.not.is.null")
       .maybeSingle();
@@ -163,6 +163,8 @@ export async function getAnnouncement(id: string): Promise<Announcement | null> 
         excerpt: row.body,
         imageUrl: image?.url,
         imageAlt: image?.alt ?? undefined,
+        priority: "priority" in row ? row.priority ?? "normal" : "normal",
+        pinned: "pinned_until" in row ? Boolean(row.pinned_until && new Date(row.pinned_until).getTime() > Date.now()) : false,
       };
     }
     return null;

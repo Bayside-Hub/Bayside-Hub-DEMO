@@ -76,9 +76,9 @@ export default async function AdminAnnouncementsPage({ searchParams }: { searchP
           ) : (
             <ul className="mt-4 divide-y divide-black/5">
               {rows.map((row) => (
-                <li key={row.id} className="flex items-center justify-between gap-3 py-3">
+                <li key={row.id} className={`flex items-center justify-between gap-3 py-3 ${row.priority === "emergency" ? "rounded-control bg-red-50 px-3 ring-1 ring-red-300" : ""}`}>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-ink">{row.title}</p>
+                    <p className={`truncate text-sm font-semibold ${row.priority === "emergency" ? "text-red-900" : "text-ink"}`}>{row.priority === "emergency" ? "EMERGENCY · " : ""}{row.title}</p>
                     <p className="text-xs text-muted">
                       {row.tag} ·{" "}
                       {new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
