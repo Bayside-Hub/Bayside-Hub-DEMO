@@ -39,7 +39,7 @@ try {
     create publication supabase_realtime;
   `);
   const baseline = ["profiles", "admin_crud", "member_actions", "security_hardening", "core_platform", "club_governance", "release_security_hardening", "club_communication"];
-  const added = ["account_roles_and_review", "custom_permissions", "chat_recent_messages", "club_custom_tables", "demo_clubs"];
+  const added = ["account_roles_and_review", "custom_permissions", "chat_recent_messages", "club_custom_tables", "club_custom_tables_enhancements", "demo_clubs"];
   for (const name of [...baseline, ...added]) {
     await db.exec(await readFile(new URL(`../supabase/${name}.sql`, import.meta.url), "utf8"));
     console.log(`Applied ${name}`);
@@ -73,9 +73,11 @@ try {
   }
   const tableColumns = [{ key: "column_1", label: "Name", type: "text", required: true }, { key: "column_2", label: "Hours", type: "number", required: false }];
   let customTableA;
+  let customRowA;
   await asUser(ids.board, async () => {
     customTableA = await value("insert into club_custom_tables(club_id,name,columns,created_by) values($1,'Volunteer hours',$2,$3) returning id", [clubA, JSON.stringify(tableColumns), ids.board]);
-    await db.query("insert into club_custom_table_rows(table_id,data,created_by) values($1,$2,$3)", [customTableA, JSON.stringify({ column_1: "Student A", column_2: 3.5 }), ids.board]);
+    customRowA = await value("insert into club_custom_table_rows(table_id,data,created_by) values($1,$2,$3) returning id", [customTableA, JSON.stringify({ column_1: "Student A", column_2: 3.5 }), ids.board]);
+    await equal((await db.query("update club_custom_table_rows set data=$1,updated_by=$2 where id=$3 returning id", [JSON.stringify({ column_1: "Student A", column_2: 4 }), ids.board, customRowA])).rows.length, 1, "Board edits its own Club custom table row");
     await equal(await value("select count(*)::int from club_custom_table_rows where table_id=$1", [customTableA]), 1, "Board manages its own Club custom table");
   });
   let customTableB;
@@ -85,6 +87,7 @@ try {
   await asUser(ids.student, async () => {
     await equal(await value("select count(*)::int from club_custom_tables where id=$1", [customTableA]), 0, "ordinary Student cannot read Club custom tables");
     await denied(() => db.query("insert into club_custom_table_rows(table_id,data,created_by) values($1,$2,$3)", [customTableA, JSON.stringify({ column_1: "Bypass" }), ids.student]), "ordinary Student cannot add custom table rows");
+    await equal((await db.query("update club_custom_table_rows set data=$1,updated_by=$2 where id=$3 returning id", [JSON.stringify({ column_1: "Bypass" }), ids.student, customRowA])).rows.length, 0, "ordinary Student cannot edit custom table rows");
   });
   await asUser(ids.board, async () => {
     await equal(await value("select count(*)::int from club_custom_tables where id=$1", [customTableB]), 0, "Club board cannot discover another Club's custom tables");

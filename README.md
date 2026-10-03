@@ -107,6 +107,8 @@ checks and the existing release checklist are complete.
      treasury writes, secure reimbursement tickets, and private receipt attachments
    - `supabase/club_custom_tables.sql` — Club-scoped custom tables, online rows,
      RLS isolation, and CSV export
+   - `supabase/club_custom_tables_enhancements.sql` — editable schemas and rows,
+     richer field validation, CSV import, sorting, filtering, and duplication
    - `supabase/club_media_library.sql` — private-by-default Club media library,
      cover/gallery placement, Club post images, and reviewed school announcement images
    - `supabase/demo_clubs.sql` — optional, explicitly marked draft test clubs

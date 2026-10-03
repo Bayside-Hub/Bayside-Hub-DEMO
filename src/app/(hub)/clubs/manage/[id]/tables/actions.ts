@@ -2,11 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
+import { parseCsv } from "@/lib/csv";
 import { parseOptionalDateOnly } from "@/lib/input-validation";
 import { createServerClient } from "@/lib/supabase/server";
 import type { ClubCustomColumn } from "@/lib/supabase/types";
 
 const denied = { ok: false, message: "Current Club management access is required." };
+const columnTypes = new Set<ClubCustomColumn["type"]>(["text","long_text","number","date","checkbox","email","url","select"]);
 
 async function context(clubId: string) {
   const user = await getCurrentUser();
@@ -16,73 +18,112 @@ async function context(clubId: string) {
   return access.data ? { user, db } : null;
 }
 
-export async function createCustomTable(form: FormData) {
-  const clubId = String(form.get("club_id") ?? "");
-  const current = await context(clubId);
-  if (!current) return denied;
-  const name = String(form.get("name") ?? "").trim();
-  const description = String(form.get("description") ?? "").trim();
+function tableColumns(form: FormData) {
   const labels = form.getAll("column_label").map(value => String(value).trim());
   const types = form.getAll("column_type").map(value => String(value));
+  const keys = form.getAll("column_key").map(value => String(value));
+  const optionInputs = form.getAll("column_options").map(value => String(value));
   const required = new Set(form.getAll("column_required").map(String));
-  if (name.length < 2 || name.length > 80 || description.length > 500 || labels.length < 1 || labels.length > 30) return { ok: false, message: "Enter a table name and between 1 and 30 columns." };
-  if (labels.some(label => label.length < 1 || label.length > 80) || new Set(labels.map(label => label.toLowerCase())).size !== labels.length) return { ok: false, message: "Column names must be unique and no longer than 80 characters." };
-  const allowed = new Set(["text", "number", "date", "checkbox"]);
-  if (types.length !== labels.length || types.some(type => !allowed.has(type))) return { ok: false, message: "Choose a valid type for every column." };
-  const columns: ClubCustomColumn[] = labels.map((label, index) => ({ key: `column_${index + 1}`, label, type: types[index] as ClubCustomColumn["type"], required: required.has(String(index)) }));
+  if (labels.length < 1 || labels.length > 30 || types.length !== labels.length || keys.length !== labels.length || optionInputs.length !== labels.length) return null;
+  if (labels.some(label => label.length < 1 || label.length > 80) || new Set(labels.map(label => label.toLocaleLowerCase())).size !== labels.length) return null;
+  const columns: ClubCustomColumn[] = [];
+  for (let index=0; index<labels.length; index++) {
+    const type = types[index] as ClubCustomColumn["type"];
+    if (!columnTypes.has(type) || !/^column_[1-9][0-9]*$/.test(keys[index])) return null;
+    const options = optionInputs[index].split(/[\n,]/).map(value => value.trim()).filter(Boolean);
+    if (type === "select" && (!options.length || options.length > 50 || options.some(value => value.length > 100) || new Set(options.map(value => value.toLocaleLowerCase())).size !== options.length)) return null;
+    columns.push({ key: keys[index], label: labels[index], type, required: required.has(keys[index]), ...(type === "select" ? { options } : {}) });
+  }
+  return new Set(columns.map(column => column.key)).size === columns.length ? columns : null;
+}
+
+function rowData(columns: ClubCustomColumn[], read: (key: string) => unknown) {
+  const data: Record<string, string | number | boolean> = {};
+  for (const column of columns) {
+    const raw = String(read(column.key) ?? "").trim();
+    if (column.type === "checkbox") data[column.key] = ["on","true","yes","1"].includes(raw.toLocaleLowerCase());
+    else if (column.type === "number") {
+      if (!raw && !column.required) data[column.key] = "";
+      else { const value = Number(raw); if (!Number.isFinite(value)) return { error: `${column.label} must be a valid number.` }; data[column.key] = value; }
+    } else if (column.type === "date") {
+      const value = parseOptionalDateOnly(raw); if (value === undefined || (column.required && !value)) return { error: `${column.label} must be a valid date.` }; data[column.key] = value ?? "";
+    } else {
+      if (column.type === "email" && raw && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) return { error: `${column.label} must be a valid email.` };
+      if (column.type === "url" && raw && (!URL.canParse(raw) || new URL(raw).protocol !== "https:")) return { error: `${column.label} must be a valid HTTPS URL.` };
+      if (column.type === "select" && raw && !column.options?.includes(raw)) return { error: `${column.label} has an invalid option.` };
+      data[column.key] = raw;
+    }
+    if (column.required && column.type !== "checkbox" && data[column.key] === "") return { error: `${column.label} is required.` };
+    if (typeof data[column.key] === "string" && String(data[column.key]).length > 2000) return { error: `${column.label} is too long.` };
+  }
+  return { data };
+}
+
+export async function createCustomTable(form: FormData) {
+  const clubId = String(form.get("club_id") ?? ""); const current = await context(clubId); if (!current) return denied;
+  const name = String(form.get("name") ?? "").trim(); const description = String(form.get("description") ?? "").trim(); const columns = tableColumns(form);
+  if (name.length < 2 || name.length > 80 || description.length > 500 || !columns) return { ok: false, message: "Check the table name and column settings. Select fields need unique options." };
   const row = await current.db.from("club_custom_tables").insert({ club_id: clubId, name, description: description || null, columns, created_by: current.user.id }).select("id").maybeSingle();
-  if (row.error || !row.data) return { ok: false, message: row.error?.code === "23505" ? "This Club already has a table with that name." : "Table could not be created. Apply club_custom_tables.sql first." };
-  revalidatePath(`/clubs/manage/${clubId}/tables`);
-  return { ok: true, message: "Custom table created." };
+  if (row.error || !row.data) return { ok: false, message: row.error?.code === "23505" ? "This Club already has a table with that name." : "Table could not be created. Apply the custom table migrations first." };
+  revalidatePath(`/clubs/manage/${clubId}/tables`); return { ok: true, message: "Custom table created." };
+}
+
+export async function updateCustomTable(form: FormData) {
+  const clubId=String(form.get("club_id")??""); const tableId=String(form.get("table_id")??""); const current=await context(clubId); if(!current)return denied;
+  const name=String(form.get("name")??"").trim(); const description=String(form.get("description")??"").trim(); const columns=tableColumns(form);
+  if(!tableId||name.length<2||name.length>80||description.length>500||!columns)return {ok:false,message:"Check the table and column settings."};
+  const result=await current.db.from("club_custom_tables").update({name,description:description||null,columns}).eq("id",tableId).eq("club_id",clubId).select("id").maybeSingle();
+  if(result.error||!result.data)return {ok:false,message:result.error?.code==="23505"?"This Club already has a table with that name.":"Table settings could not be updated. Apply club_custom_tables_enhancements.sql first."};
+  revalidatePath(`/clubs/manage/${clubId}/tables`); revalidatePath(`/clubs/manage/${clubId}/tables/${tableId}`); return {ok:true,message:"Table settings updated."};
+}
+
+async function tableFor(current: NonNullable<Awaited<ReturnType<typeof context>>>, clubId:string, tableId:string) {
+  return current.db.from("club_custom_tables").select("id,columns,name,description").eq("id",tableId).eq("club_id",clubId).maybeSingle();
 }
 
 export async function addCustomTableRow(form: FormData) {
-  const clubId = String(form.get("club_id") ?? "");
-  const tableId = String(form.get("table_id") ?? "");
-  const current = await context(clubId);
-  if (!current) return denied;
-  const table = await current.db.from("club_custom_tables").select("id,columns").eq("id", tableId).eq("club_id", clubId).maybeSingle();
-  if (!table.data) return { ok: false, message: "Table was not found." };
-  const values: Record<string, string | number | boolean> = {};
-  for (const column of table.data.columns) {
-    const raw = String(form.get(column.key) ?? "").trim();
-    if (column.type === "checkbox") values[column.key] = form.get(column.key) === "on";
-    else if (column.type === "number") {
-      if (!raw && !column.required) values[column.key] = "";
-      else { const value = Number(raw); if (!Number.isFinite(value)) return { ok: false, message: `${column.label} must be a valid number.` }; values[column.key] = value; }
-    } else if (column.type === "date") {
-      const value = parseOptionalDateOnly(raw); if (value === undefined || (column.required && !value)) return { ok: false, message: `${column.label} must be a valid date.` }; values[column.key] = value ?? "";
-    } else values[column.key] = raw;
-    if (column.required && column.type !== "checkbox" && values[column.key] === "") return { ok: false, message: `${column.label} is required.` };
-    if (typeof values[column.key] === "string" && String(values[column.key]).length > 2000) return { ok: false, message: `${column.label} is too long.` };
-  }
-  const result = await current.db.from("club_custom_table_rows").insert({ table_id: tableId, data: values, created_by: current.user.id });
-  if (result.error) return { ok: false, message: "Row could not be saved." };
-  revalidatePath(`/clubs/manage/${clubId}/tables/${tableId}`);
-  return { ok: true, message: "Row added." };
+  const clubId=String(form.get("club_id")??""); const tableId=String(form.get("table_id")??""); const current=await context(clubId); if(!current)return denied;
+  const table=await tableFor(current,clubId,tableId); if(!table.data)return {ok:false,message:"Table was not found."};
+  const parsed=rowData(table.data.columns,key=>form.get(key)); if("error" in parsed)return {ok:false,message:parsed.error ?? "Check the row values."};
+  const result=await current.db.from("club_custom_table_rows").insert({table_id:tableId,data:parsed.data,created_by:current.user.id});
+  if(result.error)return {ok:false,message:"Row could not be saved."}; revalidatePath(`/clubs/manage/${clubId}/tables/${tableId}`); return {ok:true,message:"Row added."};
+}
+
+export async function updateCustomTableRow(form: FormData) {
+  const clubId=String(form.get("club_id")??""); const tableId=String(form.get("table_id")??""); const rowId=String(form.get("row_id")??""); const current=await context(clubId); if(!current)return denied;
+  const table=await tableFor(current,clubId,tableId); if(!table.data)return {ok:false,message:"Table was not found."};
+  const parsed=rowData(table.data.columns,key=>form.get(key)); if("error" in parsed)return {ok:false,message:parsed.error ?? "Check the row values."};
+  const result=await current.db.from("club_custom_table_rows").update({data:parsed.data,updated_by:current.user.id}).eq("id",rowId).eq("table_id",tableId).select("id").maybeSingle();
+  if(result.error||!result.data)return {ok:false,message:"Row could not be updated. Apply club_custom_tables_enhancements.sql first."}; revalidatePath(`/clubs/manage/${clubId}/tables/${tableId}`); return {ok:true,message:"Row updated."};
+}
+
+export async function importCustomTableCsv(form: FormData) {
+  const clubId=String(form.get("club_id")??""); const tableId=String(form.get("table_id")??""); const current=await context(clubId); if(!current)return denied;
+  const file=form.get("csv"); if(!(file instanceof File)||file.size>1_000_000)return {ok:false,message:"Choose a CSV file up to 1 MB."};
+  const table=await tableFor(current,clubId,tableId); if(!table.data)return {ok:false,message:"Table was not found."};
+  const csv=parseCsv(await file.text()); const headers=csv.shift()?.map(value=>value.trim().toLocaleLowerCase())??[]; if(!csv.length||csv.length>500)return {ok:false,message:"Import between 1 and 500 rows."};
+  const positions=new Map(table.data.columns.map(column=>[column.key,headers.findIndex(header=>header===column.label.toLocaleLowerCase()||header===column.key.toLocaleLowerCase())]));
+  if([...positions.values()].every(position=>position<0))return {ok:false,message:"No CSV headers match this table's column names."};
+  const rows=[];
+  for(let index=0;index<csv.length;index++){const parsed=rowData(table.data.columns,key=>{const position=positions.get(key)??-1;return position<0?"":csv[index][position]??""});if("error" in parsed)return {ok:false,message:`Row ${index+2}: ${parsed.error ?? "Check the row values."}`};rows.push({table_id:tableId,data:parsed.data,created_by:current.user.id});}
+  const result=await current.db.from("club_custom_table_rows").insert(rows); if(result.error)return {ok:false,message:"Import failed; no rows were added."}; revalidatePath(`/clubs/manage/${clubId}/tables/${tableId}`); return {ok:true,message:`Imported ${rows.length} rows.`};
+}
+
+export async function duplicateCustomTable(form: FormData) {
+  const clubId=String(form.get("club_id")??""); const tableId=String(form.get("table_id")??""); const current=await context(clubId); if(!current)return denied;
+  const table=await tableFor(current,clubId,tableId); if(!table.data)return {ok:false,message:"Table was not found."};
+  const name=String(form.get("name")??`${table.data.name} copy`).trim(); if(name.length<2||name.length>80)return {ok:false,message:"Enter a copy name between 2 and 80 characters."};
+  const copy=await current.db.from("club_custom_tables").insert({club_id:clubId,name,description:table.data.description,columns:table.data.columns,created_by:current.user.id}).select("id").maybeSingle();
+  if(copy.error||!copy.data)return {ok:false,message:copy.error?.code==="23505"?"A table with that name already exists.":"Table could not be duplicated."}; revalidatePath(`/clubs/manage/${clubId}/tables`); return {ok:true,message:"Table structure duplicated."};
 }
 
 export async function deleteCustomTableRow(form: FormData) {
-  const clubId = String(form.get("club_id") ?? "");
-  const tableId = String(form.get("table_id") ?? "");
-  const current = await context(clubId);
-  if (!current) return denied;
-  if (form.get("confirm") !== "yes") return { ok: false, message: "Confirm row deletion first." };
-  const table = await current.db.from("club_custom_tables").select("id").eq("id", tableId).eq("club_id", clubId).maybeSingle();
-  if (!table.data) return { ok: false, message: "Table was not found." };
-  const result = await current.db.from("club_custom_table_rows").delete().eq("id", String(form.get("row_id") ?? "")).eq("table_id", tableId);
-  if (result.error) return { ok: false, message: "Row could not be deleted." };
-  revalidatePath(`/clubs/manage/${clubId}/tables/${tableId}`);
-  return { ok: true, message: "Row deleted." };
+  const clubId=String(form.get("club_id")??""); const tableId=String(form.get("table_id")??""); const current=await context(clubId); if(!current)return denied;
+  if(form.get("confirm")!=="yes")return {ok:false,message:"Confirm row deletion first."}; const table=await tableFor(current,clubId,tableId); if(!table.data)return {ok:false,message:"Table was not found."};
+  const result=await current.db.from("club_custom_table_rows").delete().eq("id",String(form.get("row_id")??"")).eq("table_id",tableId); if(result.error)return {ok:false,message:"Row could not be deleted."}; revalidatePath(`/clubs/manage/${clubId}/tables/${tableId}`); return {ok:true,message:"Row deleted."};
 }
 
 export async function deleteCustomTable(form: FormData) {
-  const clubId = String(form.get("club_id") ?? "");
-  const current = await context(clubId);
-  if (!current) return denied;
-  if (form.get("confirm") !== "delete") return { ok: false, message: "Confirm permanent deletion first." };
-  const result = await current.db.from("club_custom_tables").delete().eq("id", String(form.get("table_id") ?? "")).eq("club_id", clubId);
-  if (result.error) return { ok: false, message: "Table could not be deleted." };
-  revalidatePath(`/clubs/manage/${clubId}/tables`);
-  return { ok: true, message: "Table and all of its rows were deleted." };
+  const clubId=String(form.get("club_id")??""); const current=await context(clubId); if(!current)return denied;
+  if(form.get("confirm")!=="delete")return {ok:false,message:"Confirm permanent deletion first."}; const result=await current.db.from("club_custom_tables").delete().eq("id",String(form.get("table_id")??"")).eq("club_id",clubId); if(result.error)return {ok:false,message:"Table could not be deleted."}; revalidatePath(`/clubs/manage/${clubId}/tables`); return {ok:true,message:"Table and all of its rows were deleted."};
 }
