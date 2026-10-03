@@ -13,6 +13,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test src/lib/*.test.ts",
+    "security:dependencies": "node scripts/check-dependency-audit.mjs",
     "security:secrets": "node scripts/check-secrets.mjs",
     "check:migrations": "node scripts/check-migrations.mjs"
   },
