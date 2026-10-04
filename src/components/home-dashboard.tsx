@@ -3,6 +3,7 @@ import { AnnouncementCard } from "@/components/cards";
 import type { Announcement, EventItem, Opportunity } from "@/lib/data";
 import type { StudentDashboard } from "@/lib/student-dashboard";
 import type { SessionUser } from "@/lib/supabase/types";
+import DashboardPersonalCards from "./dashboard-personal-cards";
 
 const roleLabels: Record<SessionUser["role"], string> = {
   student: "Student",
@@ -62,6 +63,8 @@ export default function HomeDashboard({
       <StatCard label="Applications" value={dashboard?.pendingApplications ?? null} href="/profile#activity" />
       <StatCard label="Open requests" value={dashboard?.openSupportRequests ?? null} href="/profile#activity" />
     </section>
+
+    {dashboard ? <DashboardPersonalCards dashboard={dashboard} /> : null}
 
     <div className="mt-7 grid gap-7 xl:grid-cols-[minmax(0,1.55fr)_minmax(300px,.75fr)]">
       <div className="min-w-0 space-y-8">

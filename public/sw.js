@@ -1,4 +1,4 @@
-const CACHE = "bayside-hub-assets-v2";
+const CACHE = "bayside-hub-assets-v3";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
@@ -26,4 +26,27 @@ self.addEventListener("fetch", (event) => {
     }
     return response;
   }).catch(() => caches.match(event.request)));
+});
+
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try { payload = event.data?.json() ?? {}; } catch { payload = { title: "Bayside Hub", body: event.data?.text() ?? "You have a new notification." }; }
+  event.waitUntil(self.registration.showNotification(payload.title || "Bayside Hub", {
+    body: payload.body || "You have a new notification.",
+    icon: "/brand-logo-light.png",
+    badge: "/icon.png",
+    tag: payload.id || "bayside-notification",
+    requireInteraction: payload.kind === "emergency_announcement",
+    data: { url: payload.href || "/notifications" },
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const requested = new URL(event.notification.data?.url || "/notifications", self.location.origin);
+  const destination = requested.origin === self.location.origin ? requested.href : new URL("/notifications", self.location.origin).href;
+  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+    const existing = clients.find((client) => client.url === destination);
+    return existing ? existing.focus() : self.clients.openWindow(destination);
+  }));
 });

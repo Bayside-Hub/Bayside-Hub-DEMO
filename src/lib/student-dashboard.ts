@@ -49,5 +49,11 @@ export const getStudentDashboard = cache(async (): Promise<StudentDashboard | nu
     pendingApplications: applicationsResult.count ?? 0,
     openSupportRequests: supportResult.count ?? 0,
     managedClubCount: managedResult.data?.length ?? 0,
+    unreadNotifications: 0,
+    nextMeeting: null,
+    recentAttendance: [],
+    registeredEvents: [],
+    upcomingDeadlines: [],
+    preferences: { cardOrder: ["meeting", "period", "attendance", "registrations", "deadlines", "notifications"], hiddenCards: [] },
   };
 });

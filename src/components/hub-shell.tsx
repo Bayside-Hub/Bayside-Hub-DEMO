@@ -6,6 +6,7 @@ import SiteFooter from "./site-footer";
 import MobileBottomNav from "./mobile-bottom-nav";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
+import RealtimeNotifications from "./realtime-notifications";
 
 /**
  * Shared application chrome for public and authenticated pages.
@@ -17,12 +18,13 @@ export default async function HubShell({ children }: { children: ReactNode }) {
   let unreadNotifications = 0;
   if (user && isSupabaseConfigured()) {
     const db = await createServerClient();
-    const result = await db.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null);
+    const result = await db.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null).is("deleted_at", null);
     unreadNotifications = result.count ?? 0;
   }
 
   return (
     <div className="theme-dark flex h-full flex-col overflow-hidden bg-content-bg">
+      {user ? <RealtimeNotifications userId={user.id} /> : null}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <a
           href="#main-content"

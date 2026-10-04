@@ -105,6 +105,9 @@ export type Database = {
       permit_approvals: TableDefinition<PermitApprovalRow>;
       notifications: TableDefinition<NotificationRow>;
       notification_outbox: TableDefinition<{ id: number; notification_id: string; channel: "email"; status: string; attempts: number; available_at: string; last_error: string | null; sent_at: string | null }>;
+      push_subscriptions: TableDefinition<PushSubscriptionRow>;
+      push_notification_deliveries: TableDefinition<{ id: number; notification_id: string; subscription_id: string; status: string; attempts: number; available_at: string; claimed_at: string | null; sent_at: string | null; last_error: string | null }>;
+      dashboard_preferences: TableDefinition<{ user_id: string; card_order: string[]; hidden_cards: string[]; updated_at: string }>;
       club_import_batches: TableDefinition<ClubImportBatchRow>;
       club_import_rows: TableDefinition<ClubImportRow>;
     };
@@ -123,7 +126,17 @@ export type Database = {
           pending_applications: number;
           open_support_requests: number;
           managed_club_count: number;
+          unread_notifications: number;
+          next_meeting: Record<string, unknown> | null;
+          recent_attendance: Record<string, unknown>[];
+          registered_events: Record<string, unknown>[];
+          upcoming_deadlines: Record<string, unknown>[];
+          preferences: { card_order: string[]; hidden_cards: string[] };
         } | null;
+      };
+      claim_push_deliveries: {
+        Args: { p_limit?: number };
+        Returns: PushDeliveryClaim[];
       };
       get_managed_club_ids: { Args: Record<string, never>; Returns: string[] };
       has_custom_permission: { Args: { p_permission: string; p_club_id?: string | null }; Returns: boolean };
@@ -597,6 +610,8 @@ export type AnalyticsEventRow = { id: number; event_name: string; route: string 
 export type ElectionCandidateRow = { id: string; election_id: string; profile_id: string; position: string; statement: string | null; status: "pending" | "approved" | "withdrawn" | "disqualified"; created_at: string };
 export type ElectionBallotRow = { id: string; election_id: string; voter_id: string; position: string; candidate_id: string; created_at: string };
 export type PermitApprovalRow = { id: string; permit_id: string; department: "room" | "security" | "library" | "av"; step_order: number; assigned_to: string | null; status: "pending" | "approved" | "rejected" | "skipped"; note: string | null; decided_by: string | null; decided_at: string | null; created_at: string };
-export type NotificationRow = { id: string; user_id: string; kind: string; title: string; body: string; href: string | null; read_at: string | null; dedupe_key: string | null; created_at: string };
+export type NotificationRow = { id: string; user_id: string; kind: string; title: string; body: string; href: string | null; read_at: string | null; dedupe_key: string | null; created_at: string; deleted_at: string | null };
+export type PushSubscriptionRow = { id: string; user_id: string; endpoint: string; p256dh: string; auth: string; expires_at: string | null; user_agent: string | null; created_at: string; updated_at: string };
+export type PushDeliveryClaim = { delivery_id: number; notification_id: string; subscription_id: string; endpoint: string; p256dh: string; auth: string; title: string; body: string; href: string | null; kind: string };
 export type ClubImportBatchRow = { id: string; created_by: string; file_name: string; status: "preview" | "applied" | "rolled_back" | "failed"; total_rows: number; valid_rows: number; error_rows: number; created_at: string; applied_at: string | null; rolled_back_at: string | null };
 export type ClubImportRow = { id: number; batch_id: string; row_number: number; payload: Record<string,string>; errors: string[]; before_state: Record<string,unknown> | null; club_id: string | null; action: "insert" | "update" | null };

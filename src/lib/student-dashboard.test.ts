@@ -9,12 +9,24 @@ test("dashboard payload keeps scoped management access", () => {
     pending_applications: 1,
     open_support_requests: 3,
     managed_club_count: 1,
+    unread_notifications: 4,
+    next_meeting: { club_id: "club-1", club_slug: "robotics", club_name: "Robotics", location: "305", starts_at: "2026-10-05T19:00:00Z" },
+    recent_attendance: [],
+    registered_events: [],
+    upcoming_deadlines: [],
+    preferences: { card_order: ["notifications", "meeting"], hidden_cards: ["period"] },
   }), {
     activeClubs: [{ id: "club-1", slug: "robotics", name: "Robotics" }],
     pendingMemberships: 2,
     pendingApplications: 1,
     openSupportRequests: 3,
     managedClubCount: 1,
+    unreadNotifications: 4,
+    nextMeeting: { clubId: "club-1", clubSlug: "robotics", clubName: "Robotics", location: "305", startsAt: "2026-10-05T19:00:00Z" },
+    recentAttendance: [],
+    registeredEvents: [],
+    upcomingDeadlines: [],
+    preferences: { cardOrder: ["notifications", "meeting", "period", "attendance", "registrations", "deadlines"], hiddenCards: ["period"] },
   });
 });
 
@@ -26,5 +38,11 @@ test("dashboard payload rejects invalid roots and sanitizes malformed fields", (
     pendingApplications: 0,
     openSupportRequests: 0,
     managedClubCount: 0,
+    unreadNotifications: 0,
+    nextMeeting: null,
+    recentAttendance: [],
+    registeredEvents: [],
+    upcomingDeadlines: [],
+    preferences: { cardOrder: ["meeting", "period", "attendance", "registrations", "deadlines", "notifications"], hiddenCards: [] },
   });
 });

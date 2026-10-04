@@ -121,6 +121,8 @@ checks and the existing release checklist are complete.
      Club-scoped Storage policies for the public Meet the board section
    - `supabase/home_dashboard.sql` — one-query signed-in dashboard summary with
      board, Advisor, custom-role, Staff, and Admin management detection
+   - `supabase/realtime_notifications_dashboard.sql` — Realtime/PWA Push delivery,
+     filtered and paginated notification history, and cross-device dashboard card preferences
    - `supabase/demo_clubs.sql` — optional, explicitly marked draft test clubs
 
 4. Enable Google OAuth:
