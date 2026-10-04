@@ -5,7 +5,6 @@ import {
   PrimaryButton,
   SectionHeader,
 } from "@/components/cards";
-import Link from "next/link";
 import HubShell from "@/components/hub-shell";
 import { getAnnouncements } from "@/lib/announcements";
 import { getAllClubs } from "@/lib/clubs";
@@ -15,12 +14,25 @@ import { getOpportunities } from "@/lib/opportunities";
 import { getCurrentUser } from "@/lib/auth";
 import { getStudentDashboard } from "@/lib/student-dashboard";
 import { getSiteText } from "@/lib/site-content";
+import HomeDashboard from "@/components/home-dashboard";
+
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [text, user, dashboard, announcements, clubs, events, opportunities] = await Promise.all([
+  const user = await getCurrentUser();
+  if (user) {
+    const [dashboard, announcements, events, opportunities] = await Promise.all([
+      getStudentDashboard(),
+      getAnnouncements(3),
+      getEvents(),
+      getOpportunities(3),
+    ]);
+    const upcomingEvents = events.filter((event) => isEventUpcoming(event));
+    return <HubShell><HomeDashboard user={user} dashboard={dashboard} announcements={announcements} events={upcomingEvents} opportunities={opportunities} /></HubShell>;
+  }
+
+  const [text, announcements, clubs, events, opportunities] = await Promise.all([
     getSiteText(),
-    getCurrentUser(),
-    getStudentDashboard(),
     getAnnouncements(1),
     getAllClubs(3),
     getEvents(),
@@ -49,11 +61,7 @@ export default async function Home() {
         </div>
         <div className="relative mx-auto flex max-w-7xl flex-col items-start px-6 pb-24 pt-20 sm:pt-28">
           <p className="font-display text-3xl font-bold tracking-wide text-cream sm:text-5xl lg:text-[61px] lg:leading-[75px]">
-            {user ? (
-              <>Welcome, <span className="font-normal italic">{user.name}</span></>
-            ) : (
-              "Welcome to Bayside Hub"
-            )}
+            Welcome to Bayside Hub
           </p>
           <h1 className="mt-4 font-display text-5xl font-bold uppercase leading-[1.05] tracking-wide text-cream sm:text-7xl lg:text-[96px] xl:text-[105px] xl:leading-[131px]">
             {text.home_title}
@@ -73,30 +81,6 @@ export default async function Home() {
       </section>
 
       <main className="mx-auto w-full max-w-6xl px-6 py-10">
-        {user && dashboard ? (
-          <section className="mb-10" aria-labelledby="your-hub-title">
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2 id="your-hub-title" className="font-display text-2xl font-bold uppercase text-cream">Your Hub</h2>
-                <p className="mt-1 text-sm text-muted">Your memberships, requests, and next actions in one place.</p>
-              </div>
-              <PrimaryButton href="/profile">View profile</PrimaryButton>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <DashboardCard label="Joined clubs" value={dashboard.activeClubs.length} href="/profile" />
-              <DashboardCard label="Pending joins" value={dashboard.pendingMemberships} href="/profile" />
-              <DashboardCard label="Club applications" value={dashboard.pendingApplications} href="/profile" />
-              <DashboardCard label="Open support requests" value={dashboard.openSupportRequests} href="/support" />
-            </div>
-            {dashboard.activeClubs.length ? (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {dashboard.activeClubs.slice(0, 5).map((club) => (
-                  <PrimaryButton key={club.id} href={`/clubs/${club.slug}`}>{club.name}</PrimaryButton>
-                ))}
-              </div>
-            ) : null}
-          </section>
-        ) : null}
         <section className="mt-2">
           <SectionHeader
             title="Announcements"
@@ -187,15 +171,6 @@ export default async function Home() {
       </main>
       </div>
     </HubShell>
-  );
-}
-
-function DashboardCard({ label, value, href }: { label: string; value: number; href: string }) {
-  return (
-    <Link href={href} className="card-gradient rounded-[10px] p-5 transition-transform hover:-translate-y-0.5">
-      <p className="text-sm text-cream/70">{label}</p>
-      <p className="mt-2 font-display text-3xl font-bold text-cream">{value}</p>
-    </Link>
   );
 }
 
