@@ -119,6 +119,8 @@ checks and the existing release checklist are complete.
      cover/gallery placement, Club post images, and reviewed school announcement images
    - `supabase/club_officer_avatars.sql` — self-managed board portraits with
      Club-scoped Storage policies for the public Meet the board section
+   - `supabase/home_dashboard.sql` — one-query signed-in dashboard summary with
+     board, Advisor, custom-role, Staff, and Admin management detection
    - `supabase/demo_clubs.sql` — optional, explicitly marked draft test clubs
 
 4. Enable Google OAuth:

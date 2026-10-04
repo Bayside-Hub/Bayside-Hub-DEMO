@@ -44,7 +44,8 @@ select role, count(*) from public.profiles group by role;
 17. `supabase/club_custom_tables_enhancements.sql`：表结构与数据编辑、更多字段类型、CSV 导入和更新权限。
 18. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
 19. `supabase/club_officer_avatars.sql`：董事会成员上传自己的公开头像，按本人和 Club 限制 Storage 写入权限。
-20. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
+20. `supabase/home_dashboard.sql`：一次查询返回登录首页统计，并识别董事会、Advisor、自定义角色、Staff 和 Admin 的实际 Club 管理权限。
+21. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
 
 旧账号不会按域名自动改身份。Advisor 改为其他基础身份时，会移除该账号全部 Advisor 社团绑定；独立董事会任命和自定义权限不随之撤销。
 自定义权限不是任意数据库权限：支持社团内容、社团治理、网站介绍文字，不能授予管理员审核/账号管理能力。

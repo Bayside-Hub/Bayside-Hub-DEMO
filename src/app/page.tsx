@@ -13,33 +13,51 @@ import { getEvents } from "@/lib/events";
 import { getOpportunities } from "@/lib/opportunities";
 import { getCurrentUser } from "@/lib/auth";
 import { getStudentDashboard } from "@/lib/student-dashboard";
-import { getSiteText } from "@/lib/site-content";
+import { getSiteText, siteTextDefaults } from "@/lib/site-content";
+import { recordServerError } from "@/lib/server-error-reporting";
 import HomeDashboard from "@/components/home-dashboard";
 
 export const dynamic = "force-dynamic";
+
+type HomeSection<T> = { data: T; failed: boolean };
+
+async function loadHomeSection<T>(source: string, load: () => Promise<T>, fallback: T, userId?: string): Promise<HomeSection<T>> {
+  try {
+    return { data: await load(), failed: false };
+  } catch (error) {
+    await recordServerError(`home-${source}`, error, userId ? { userId } : {});
+    return { data: fallback, failed: true };
+  }
+}
 
 export default async function Home() {
   const user = await getCurrentUser();
   if (user) {
     const [dashboard, announcements, events, opportunities] = await Promise.all([
-      getStudentDashboard(),
-      getAnnouncements(3),
-      getEvents(),
-      getOpportunities(3),
+      loadHomeSection("dashboard", getStudentDashboard, null, user.id),
+      loadHomeSection("announcements", () => getAnnouncements(3), [], user.id),
+      loadHomeSection("events", getEvents, [], user.id),
+      loadHomeSection("opportunities", () => getOpportunities(3), [], user.id),
     ]);
-    const upcomingEvents = events.filter((event) => isEventUpcoming(event));
-    return <HubShell><HomeDashboard user={user} dashboard={dashboard} announcements={announcements} events={upcomingEvents} opportunities={opportunities} /></HubShell>;
+    const upcomingEvents = events.data.filter((event) => isEventUpcoming(event));
+    const unavailableSections = [
+      ...(dashboard.failed || !dashboard.data ? ["personal overview"] : []),
+      ...(announcements.failed ? ["announcements"] : []),
+      ...(events.failed ? ["events"] : []),
+      ...(opportunities.failed ? ["opportunities"] : []),
+    ];
+    return <HubShell><HomeDashboard user={user} dashboard={dashboard.data} announcements={announcements.data} events={upcomingEvents} opportunities={opportunities.data} unavailableSections={unavailableSections} /></HubShell>;
   }
 
   const [text, announcements, clubs, events, opportunities] = await Promise.all([
-    getSiteText(),
-    getAnnouncements(1),
-    getAllClubs(3),
-    getEvents(),
-    getOpportunities(3),
+    loadHomeSection("site-content", getSiteText, siteTextDefaults),
+    loadHomeSection("announcements", () => getAnnouncements(1), []),
+    loadHomeSection("clubs", () => getAllClubs(3), []),
+    loadHomeSection("events", getEvents, []),
+    loadHomeSection("opportunities", () => getOpportunities(3), []),
   ]);
-  const [featured] = announcements;
-  const upcomingEvents = events.filter((event) => isEventUpcoming(event));
+  const [featured] = announcements.data;
+  const upcomingEvents = events.data.filter((event) => isEventUpcoming(event));
   return (
     <HubShell>
       <div className="min-h-full bg-transparent">
@@ -64,17 +82,17 @@ export default async function Home() {
             Welcome to Bayside Hub
           </p>
           <h1 className="mt-4 font-display text-5xl font-bold uppercase leading-[1.05] tracking-wide text-cream sm:text-7xl lg:text-[96px] xl:text-[105px] xl:leading-[131px]">
-            {text.home_title}
+            {text.data.home_title}
           </h1>
           <p className="mt-6 max-w-3xl text-lg font-semibold leading-8 text-cream lg:text-2xl lg:leading-[30px]">
-            {text.home_intro}
+            {text.data.home_intro}
           </p>
           <div className="mt-10">
             <PrimaryButton
               href="/clubs"
               className="h-16 px-14 text-lg"
             >
-              {text.home_cta_label}
+              {text.data.home_cta_label}
             </PrimaryButton>
           </div>
         </div>
@@ -100,7 +118,7 @@ export default async function Home() {
         <section className="mt-10">
           <SectionHeader title="Opportunities" subtitle="Deadlines, programs, service, and student offers." href="/opportunities" linkLabel="VIEW ALL" />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {opportunities.slice(0, 3).map((opportunity) => (
+            {opportunities.data.slice(0, 3).map((opportunity) => (
               <article key={opportunity.id} className="card-gradient rounded-[10px] p-5">
                 <p className="text-xs font-bold uppercase tracking-wider text-orange">{opportunity.type}</p>
                 <h3 className="mt-2 font-display text-lg font-bold uppercase text-cream">{opportunity.title}</h3>
@@ -119,7 +137,7 @@ export default async function Home() {
             linkLabel="VIEW ALL"
           />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {clubs.slice(0, 3).map((club) => (
+            {clubs.data.slice(0, 3).map((club) => (
               <ClubCard key={club.slug} club={club} />
             ))}
           </div>

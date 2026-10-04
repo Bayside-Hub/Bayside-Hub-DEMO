@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { recordServerError } from "@/lib/server-error-reporting";
 
 export const siteTextDefaults = {
   site_name: "Bayside Hub",
@@ -69,12 +70,16 @@ export const getSiteText = cache(async () => {
   if (!isSupabaseConfigured()) return siteTextDefaults;
   const db = await createServerClient();
   const { data, error } = await db.from("site_content").select("key,body");
-  if (error) throw new Error(`Unable to load site content: ${error.message}`);
+  if (error) {
+    await recordServerError("site-content", error);
+    return siteTextDefaults;
+  }
   const result = { ...siteTextDefaults };
   for (const item of data ?? []) {
     if (Object.hasOwn(result, item.key)) result[item.key as keyof typeof result] = item.body;
   }
-  const { data: scheduled } = await db.from("site_content_scheduled").select("key,body").lte("publish_at", new Date().toISOString());
+  const { data: scheduled, error: scheduledError } = await db.from("site_content_scheduled").select("key,body").lte("publish_at", new Date().toISOString());
+  if (scheduledError) await recordServerError("site-content-scheduled", scheduledError);
   for (const item of scheduled ?? []) {
     if (Object.hasOwn(result, item.key)) result[item.key as keyof typeof result] = item.body;
   }

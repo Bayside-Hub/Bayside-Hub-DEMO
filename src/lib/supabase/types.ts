@@ -115,6 +115,16 @@ export type Database = {
       };
     };
     Functions: {
+      get_home_dashboard: {
+        Args: Record<string, never>;
+        Returns: {
+          active_clubs: { id: string; slug: string; name: string }[];
+          pending_memberships: number;
+          pending_applications: number;
+          open_support_requests: number;
+          managed_club_count: number;
+        } | null;
+      };
       get_managed_club_ids: { Args: Record<string, never>; Returns: string[] };
       has_custom_permission: { Args: { p_permission: string; p_club_id?: string | null }; Returns: boolean };
       can_manage_club: { Args: { p_club_id: string }; Returns: boolean };
