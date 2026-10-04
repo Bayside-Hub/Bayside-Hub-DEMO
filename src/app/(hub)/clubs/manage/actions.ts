@@ -321,12 +321,59 @@ export async function removeClubOfficer(formData: FormData) {
   const officerId = String(formData.get("officer_id") ?? "");
   const context = await managerContext(clubId);
   if (!context?.canGovern || !officerId) return denied;
+  const portrait = await context.supabase.from("club_officers").select("avatar_path").eq("id", officerId).eq("club_id", clubId).maybeSingle();
   const { data, error } = await context.supabase.from("club_officers").delete().eq("id", officerId).eq("club_id", clubId).select("id").maybeSingle();
   if (error || !data) return failed;
+  if (portrait.data?.avatar_path) await context.supabase.storage.from("board-avatars").remove([portrait.data.avatar_path]);
   revalidatePath(`/clubs/manage/${clubId}`);
   revalidatePath("/clubs/manage");
   revalidatePath("/clubs");
   return saved;
+}
+
+export async function uploadOwnBoardAvatar(formData: FormData) {
+  const user = await getCurrentUser();
+  const clubId = String(formData.get("club_id") ?? "");
+  const officerId = String(formData.get("officer_id") ?? "");
+  const image = formData.get("avatar");
+  if (!user || !clubId || !officerId || !isSupabaseConfigured()) return denied;
+  if (!(image instanceof File) || image.size <= 0 || image.size > MAX_IMAGE_UPLOAD_BYTES || !["image/jpeg", "image/png", "image/webp"].includes(image.type)) {
+    return { ok: false, message: "Choose a JPG, PNG, or WebP portrait up to 4 MB." };
+  }
+  const supabase = await createServerClient();
+  const [{ data: officer, error: officerError }, { data: canGovern }] = await Promise.all([
+    supabase.from("club_officers").select("id,club_id,profile_id,avatar_path").eq("id", officerId).eq("club_id", clubId).maybeSingle(),
+    supabase.rpc("can_govern_club", { p_club_id: clubId }),
+  ]);
+  if (officerError?.code === "42703") return { ok: false, message: "Board portraits require club_officer_avatars.sql." };
+  if (!officer || !officer.profile_id || (officer.profile_id !== user.id && canGovern !== true)) return { ok: false, message: "You may upload only your own board portrait." };
+  const extension = ({ "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" } as Record<string, string>)[image.type];
+  const storagePath = `${clubId}/${officer.profile_id}/${crypto.randomUUID()}.${extension}`;
+  const upload = await supabase.storage.from("board-avatars").upload(storagePath, image, { contentType: image.type, upsert: false });
+  if (upload.error) return { ok: false, message: "Portrait upload failed. Apply club_officer_avatars.sql and check your board assignment." };
+  const savedAvatar = await supabase.rpc("set_club_officer_avatar", { p_officer_id: officerId, p_avatar_path: storagePath });
+  if (savedAvatar.error) {
+    await supabase.storage.from("board-avatars").remove([storagePath]);
+    return { ok: false, message: "Portrait could not be attached to this board position." };
+  }
+  if (savedAvatar.data && savedAvatar.data !== storagePath) await supabase.storage.from("board-avatars").remove([savedAvatar.data]);
+  revalidatePath(`/clubs/manage/${clubId}`);
+  revalidatePath("/clubs", "layout");
+  return { ok: true, message: "Board portrait updated." };
+}
+
+export async function removeOwnBoardAvatar(formData: FormData) {
+  const user = await getCurrentUser();
+  const clubId = String(formData.get("club_id") ?? "");
+  const officerId = String(formData.get("officer_id") ?? "");
+  if (!user || !clubId || !officerId || !isSupabaseConfigured()) return denied;
+  const supabase = await createServerClient();
+  const result = await supabase.rpc("set_club_officer_avatar", { p_officer_id: officerId, p_avatar_path: null });
+  if (result.error) return { ok: false, message: "You may remove only your own board portrait." };
+  if (result.data) await supabase.storage.from("board-avatars").remove([result.data]);
+  revalidatePath(`/clubs/manage/${clubId}`);
+  revalidatePath("/clubs", "layout");
+  return { ok: true, message: "Board portrait removed." };
 }
 
 export async function addClubAdvisor(formData: FormData) {

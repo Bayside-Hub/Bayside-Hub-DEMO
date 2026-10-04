@@ -11,7 +11,7 @@ export type Club = {
   commitment: number;
   communityService: boolean;
   stem: boolean;
-  officers: { role: string; name: string }[];
+  officers: { role: string; name: string; avatarUrl?: string }[];
   advisors?: { name: string; email?: string }[];
   activeStartDate?: string;
   activeEndDate?: string;

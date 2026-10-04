@@ -163,6 +163,7 @@ export type Database = {
       cancel_event_registration: { Args: { p_registration_id: string }; Returns: string };
       cast_election_vote: { Args: { p_election_id: string; p_position: string; p_candidate_id: string }; Returns: undefined };
       lock_election_results: { Args: { p_election_id: string }; Returns: unknown };
+      set_club_officer_avatar: { Args: { p_officer_id: string; p_avatar_path: string | null }; Returns: string | null };
       set_profile_grade: { Args: { p_user_id: string; p_grade_level: number | null }; Returns: undefined };
       dispatch_due_announcement_notifications: { Args: { p_announcement_id?: string | null }; Returns: number };
     };
@@ -286,6 +287,7 @@ export type ClubOfficerRow = {
   title: string;
   term_start: string | null;
   term_end: string | null;
+  avatar_path: string | null;
   created_at: string;
 };
 

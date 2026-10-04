@@ -1,3 +1,4 @@
+import Image from "next/image";
 import ActionFeedbackForm from "@/components/action-feedback-form";
 import {
   addClubAdvisor,
@@ -8,6 +9,8 @@ import {
   uploadClubImage,
   updateClubPublication,
   updateClubImagePlacement,
+  uploadOwnBoardAvatar,
+  removeOwnBoardAvatar,
 } from "../actions";
 import type { ClubAdvisorRow, ClubAuditLogRow, ClubMediaRow, ClubOfficerRow, Role } from "@/lib/supabase/types";
 import AttendancePanel from "./attendance-panel";
@@ -17,6 +20,7 @@ const input = "h-10 w-full rounded-control border border-line bg-content-bg px-3
 export default function ClubGovernancePanel({
   clubId,
   clubStatus,
+  userId,
   role,
   canGovern,
   officers,
@@ -26,6 +30,7 @@ export default function ClubGovernancePanel({
 }: {
   clubId: string;
   clubStatus: string;
+  userId: string;
   role: Role;
   canGovern: boolean;
   officers: ClubOfficerRow[];
@@ -41,9 +46,10 @@ export default function ClubGovernancePanel({
         <p className="mt-2 text-sm text-cream/65">Board access is club-specific. Students keep their student account and may serve on more than one board.</p>
         <div className="mt-4 space-y-2">
           {officers.map((officer) => (
-            <div key={officer.id} className="flex items-center justify-between gap-3 rounded-control border border-line p-3 text-sm">
-              <div><p className="font-semibold text-cream">{officer.display_name ?? "Student officer"}</p><p className="text-cream/60">{officer.title}</p></div>
-              {canGovern ? <ActionFeedbackForm action={removeClubOfficer}><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="officer_id" value={officer.id} /><button className="text-xs font-semibold text-orange">Remove</button></ActionFeedbackForm> : null}
+            <div key={officer.id} className="rounded-control border border-line p-3 text-sm">
+              <div className="flex items-center justify-between gap-3"><div className="flex min-w-0 items-center gap-3">{officer.avatar_path ? <Image src={new URL(`/storage/v1/object/public/board-avatars/${officer.avatar_path}`, process.env.NEXT_PUBLIC_SUPABASE_URL).toString()} alt="" width={48} height={48} className="size-12 shrink-0 rounded-full object-cover" /> : <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-cream/10 font-bold text-cream">{(officer.display_name ?? "O").split(" ").map((word) => word[0]).join("").slice(0,2)}</div>}<div className="min-w-0"><p className="truncate font-semibold text-cream">{officer.display_name ?? "Student officer"}</p><p className="text-cream/60">{officer.title}</p></div></div>
+              {canGovern ? <ActionFeedbackForm action={removeClubOfficer}><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="officer_id" value={officer.id} /><button className="text-xs font-semibold text-orange">Remove</button></ActionFeedbackForm> : null}</div>
+              {(officer.profile_id === userId || canGovern) && <details className="mt-3 border-t border-line pt-3"><summary className="cursor-pointer text-xs font-semibold text-powder">{officer.avatar_path ? "Change portrait" : officer.profile_id === userId ? "Upload my portrait" : "Upload portrait"}</summary><ActionFeedbackForm action={uploadOwnBoardAvatar} className="mt-3 grid gap-2"><input type="hidden" name="club_id" value={clubId}/><input type="hidden" name="officer_id" value={officer.id}/><input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" required className="block w-full rounded-control border border-line p-2 text-xs text-cream file:mr-2 file:rounded-full file:border-0 file:px-3 file:py-1.5"/><p className="text-xs text-cream/55">JPG, PNG, or WebP up to 4 MB. A square portrait works best.</p><button className="justify-self-start rounded-full bg-cream px-4 py-2 text-xs font-bold text-navy">Save portrait</button></ActionFeedbackForm>{officer.avatar_path && <ActionFeedbackForm action={removeOwnBoardAvatar} className="mt-2"><input type="hidden" name="club_id" value={clubId}/><input type="hidden" name="officer_id" value={officer.id}/><button className="text-xs font-semibold text-orange">Remove portrait</button></ActionFeedbackForm>}</details>}
             </div>
           ))}
           {advisors.map((advisor) => <div key={advisor.id} className="flex items-center justify-between gap-3 rounded-control border border-line p-3 text-sm"><div className="min-w-0"><p className="truncate font-semibold text-cream">{advisor.display_name ?? "Faculty advisor"}</p><p className="truncate text-cream/60">Advisor{advisor.contact_email ? ` · ${advisor.contact_email}` : ""}</p></div>{["staff", "admin"].includes(role) ? <ActionFeedbackForm action={removeClubAdvisor}><input type="hidden" name="club_id" value={clubId}/><input type="hidden" name="advisor_id" value={advisor.id}/><button className="text-xs font-semibold text-orange">Remove</button></ActionFeedbackForm> : null}</div>)}

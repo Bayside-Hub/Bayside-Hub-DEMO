@@ -310,15 +310,13 @@ export default async function ClubDetailPage({
             <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {club.officers.map((o) => (
                 <div
-                  key={o.role}
+                  key={`${o.role}-${o.name}`}
                   className="relative flex min-h-[285px] flex-col items-center overflow-hidden rounded-[18px] border border-[#2a2829] bg-white p-5 text-center"
                 >
                   <span className="rounded-full bg-[#263a99] px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-[#f0ebe5]">{o.role}</span>
                   <p className="mt-4 font-display text-sm font-bold uppercase tracking-wide text-[#2a2829]">{o.name}</p>
-                  <div className="absolute -bottom-20 flex size-[210px] items-start justify-center rounded-full bg-[#dcd0be] pt-12 shadow-[0_4px_30px_-8px_rgba(252,241,221,0.7)]">
-                    <span className="font-display text-xl font-extrabold text-[#263a99]">
-                      {o.name.split(" ").map((w) => w[0]).join("")}
-                    </span>
+                  <div className="absolute -bottom-20 flex size-[210px] items-start justify-center overflow-hidden rounded-full bg-[#dcd0be] pt-12 shadow-[0_4px_30px_-8px_rgba(252,241,221,0.7)]">
+                    {o.avatarUrl ? <Image src={o.avatarUrl} alt={`${o.name}, ${o.role}`} fill sizes="210px" className="object-cover object-center" /> : <span className="font-display text-xl font-extrabold text-[#263a99]">{o.name.split(" ").map((w) => w[0]).join("")}</span>}
                   </div>
                 </div>
               ))}

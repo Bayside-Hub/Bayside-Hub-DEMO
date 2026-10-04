@@ -55,7 +55,7 @@ function mapDatabaseClub(
     commitment: 0,
     communityService: row.is_community_service,
     stem: row.is_stem,
-    officers: officers.map((officer) => ({ role: officer.title, name: officer.display_name ?? "Officer" })),
+    officers: officers.map((officer) => ({ role: officer.title, name: officer.display_name ?? "Officer", avatarUrl: officer.avatar_path ?? undefined })),
     advisors: advisors.map((advisor) => ({
       name: advisor.display_name ?? "Club Advisor",
       email: advisor.contact_email ?? undefined,
@@ -135,7 +135,10 @@ export const getAllClubs = cache(async (limit?: number): Promise<Club[]> => {
     const canonical = canonicalRows.map((row) => mapDatabaseClub(
       row,
       (meetingResult.data ?? []).filter((item) => item.club_id === row.id),
-      (officerResult.data ?? []).filter((item) => item.club_id === row.id),
+      (officerResult.data ?? []).filter((item) => item.club_id === row.id).map((item) => ({
+        ...item,
+        avatar_path: item.avatar_path ? supabase.storage.from("board-avatars").getPublicUrl(item.avatar_path).data.publicUrl : null,
+      })),
       (advisorResult.data ?? []).filter((item) => item.club_id === row.id),
       (announcementResult.data ?? []).filter((item) => item.club_id === row.id),
       (mediaResult.data ?? [])

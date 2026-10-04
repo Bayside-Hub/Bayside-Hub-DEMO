@@ -116,6 +116,8 @@ checks and the existing release checklist are complete.
      richer field validation, CSV import, sorting, filtering, and duplication
    - `supabase/club_media_library.sql` — private-by-default Club media library,
      cover/gallery placement, Club post images, and reviewed school announcement images
+   - `supabase/club_officer_avatars.sql` — self-managed board portraits with
+     Club-scoped Storage policies for the public Meet the board section
    - `supabase/demo_clubs.sql` — optional, explicitly marked draft test clubs
 
 4. Enable Google OAuth:
