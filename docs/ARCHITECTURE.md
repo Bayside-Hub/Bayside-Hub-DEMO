@@ -32,10 +32,12 @@ understand a security boundary, business rule, or non-obvious tradeoff.
 
 ## Data strategy
 
-The app prefers published Supabase records. Curated static records in
-`src/lib/data.ts` are an intentional fallback for local development and for a
-temporary backend outage; they are not duplicate production storage. Mapping
-functions convert database rows into small public view models before rendering.
+The app uses published Supabase records whenever Supabase is configured.
+Curated static records in `src/lib/data.ts` are available only outside
+production so local development remains usable without credentials. Production
+never substitutes demo records for an empty database, missing configuration, or
+a backend outage. Mapping functions convert database rows into small public
+view models before rendering.
 
 ## Authorization model
 

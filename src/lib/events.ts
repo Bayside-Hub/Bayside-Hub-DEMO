@@ -3,7 +3,7 @@ import { events as seedEvents, type EventItem } from "./data";
 import { isSupabaseConfigured } from "./supabase/config";
 import { createServerClient } from "./supabase/server";
 import type { CalendarSourceRow, EventRow } from "./supabase/types";
-import { normalizeRecordId, preferLiveData } from "./live-data";
+import { developmentFallback, normalizeRecordId } from "./live-data";
 import { isMeetingSuppressed } from "./meeting-exceptions";
 
 function formatDate(startAt: string, endAt: string | null) {
@@ -91,7 +91,10 @@ function shortTime(value: string | null) {
 }
 
 export const getEvents = cache(async (limit?: number): Promise<EventItem[]> => {
-  if (!isSupabaseConfigured()) return limit === undefined ? seedEvents : seedEvents.slice(0, limit);
+  if (!isSupabaseConfigured()) {
+    const demoEvents = developmentFallback(seedEvents);
+    return limit === undefined ? demoEvents : demoEvents.slice(0, limit);
+  }
   const supabase = await createServerClient();
   let query = supabase
     .from("events")
@@ -113,7 +116,7 @@ export const getEvents = cache(async (limit?: number): Promise<EventItem[]> => {
   const recurring = meetingResult.error || clubResult.error
     ? []
     : meetingEvents(meetingResult.data ?? [], clubResult.data ?? [], liveRows);
-  const output = preferLiveData([...live, ...recurring], seedEvents);
+  const output = [...live, ...recurring];
   return limit === undefined ? output : output.slice(0, limit);
 });
 

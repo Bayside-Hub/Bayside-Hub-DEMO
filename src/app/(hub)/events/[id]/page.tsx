@@ -1,15 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { events } from "@/lib/data";
 import { getEvent } from "@/lib/events";
 import { getCurrentUser } from "@/lib/auth";
 import { getEventRsvpInfo, toggleEventRsvp } from "../actions";
 import PendingSubmitButton from "@/components/pending-submit-button";
 import type { Metadata } from "next";
 
-export function generateStaticParams() {
-  return events.map((e) => ({ id: e.id }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;

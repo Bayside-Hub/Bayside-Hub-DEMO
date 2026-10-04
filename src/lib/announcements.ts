@@ -2,6 +2,7 @@ import { cache } from "react";
 import { createServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { announcements as seedAnnouncements, type Announcement } from "./data";
+import { developmentFallback } from "./live-data";
 import type { AnnouncementVersionRow } from "./supabase/types";
 
 export const ANNOUNCEMENTS_PAGE_SIZE = 12;
@@ -43,7 +44,7 @@ async function attachAnnouncementMedia(supabase: Awaited<ReturnType<typeof creat
 }
 
 export const getAnnouncements = cache(async (limit = 100, schoolOnly = false): Promise<Announcement[]> => {
-  if (!isSupabaseConfigured()) return seedAnnouncements.slice(0, limit);
+  if (!isSupabaseConfigured()) return developmentFallback(seedAnnouncements).slice(0, limit);
 
   const supabase = await createServerClient();
   const now = new Date().toISOString();
@@ -67,7 +68,7 @@ export const getAnnouncements = cache(async (limit = 100, schoolOnly = false): P
 });
 
 export const getAnnouncementTags = cache(async (): Promise<string[]> => {
-  if (!isSupabaseConfigured()) return Array.from(new Set(seedAnnouncements.map((a) => a.tag)));
+  if (!isSupabaseConfigured()) return Array.from(new Set(developmentFallback(seedAnnouncements).map((a) => a.tag)));
   const supabase = await createServerClient();
   const now = new Date().toISOString();
   let { data, error } = await supabase.from("announcements").select("tag").eq("published", true).is("archived_at", null).or(`publish_at.is.null,publish_at.lte.${now}`).or(`expires_at.is.null,expires_at.gt.${now}`);
@@ -86,7 +87,7 @@ export const getAnnouncementsPage = cache(async (
   const safePage = Math.max(1, page);
   const safeSearch = search?.normalize("NFKC").replace(/[^\p{L}\p{N}\s'-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 80);
   if (!isSupabaseConfigured()) {
-    const filtered = seedAnnouncements.filter((item) => {
+    const filtered = developmentFallback(seedAnnouncements).filter((item) => {
       const matchesTag = !tag || item.tag === tag;
       const haystack = `${item.title} ${item.excerpt} ${item.tag}`.toLocaleLowerCase();
       return matchesTag && (!safeSearch || haystack.includes(safeSearch.toLocaleLowerCase()));
@@ -171,7 +172,7 @@ export async function getAnnouncement(id: string): Promise<Announcement | null> 
     }
     return null;
   }
-  return seedAnnouncements.find((a) => a.id === id) ?? null;
+  return developmentFallback(seedAnnouncements).find((a) => a.id === id) ?? null;
 }
 
 export async function getAnnouncementVersions(id: string): Promise<AnnouncementVersionRow[]> {

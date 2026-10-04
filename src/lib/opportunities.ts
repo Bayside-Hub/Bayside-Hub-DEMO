@@ -3,7 +3,7 @@ import { opportunities as seedOpportunities, type Opportunity } from "./data";
 import { isSupabaseConfigured } from "./supabase/config";
 import { createServerClient } from "./supabase/server";
 import type { OpportunityRow } from "./supabase/types";
-import { preferLiveData } from "./live-data";
+import { developmentFallback } from "./live-data";
 
 const labels: Record<OpportunityRow["category"], string> = {
   election: "Elections",
@@ -30,7 +30,10 @@ function mapOpportunity(row: OpportunityRow): Opportunity {
 
 export const getOpportunities = cache(async (limit?: number): Promise<Opportunity[]> => {
   const visibleSeed = seedOpportunities.filter((item) => item.type !== "Elections");
-  if (!isSupabaseConfigured()) return limit === undefined ? visibleSeed : visibleSeed.slice(0, limit);
+  if (!isSupabaseConfigured()) {
+    const demoOpportunities = developmentFallback(visibleSeed);
+    return limit === undefined ? demoOpportunities : demoOpportunities.slice(0, limit);
+  }
   const supabase = await createServerClient();
   let query = supabase
     .from("opportunities")
@@ -43,8 +46,7 @@ export const getOpportunities = cache(async (limit?: number): Promise<Opportunit
   const { data, error } = await query;
   if (error) throw new Error(`Unable to load opportunities: ${error.message}`);
   const live = (data ?? []).map(mapOpportunity);
-  const output = preferLiveData(live, visibleSeed);
-  return limit === undefined ? output : output.slice(0, limit);
+  return limit === undefined ? live : live.slice(0, limit);
 });
 
 export async function getOpportunity(id: string) {

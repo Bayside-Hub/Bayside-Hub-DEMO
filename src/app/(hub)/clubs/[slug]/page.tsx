@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { PrimaryButton } from "@/components/cards";
-import { clubs } from "@/lib/data";
 import { getClubBySlug } from "@/lib/clubs";
 import { getCurrentUser } from "@/lib/auth";
 import {
@@ -33,10 +32,6 @@ function clubLinkHref(platform: string, value: string) {
   } catch {
     return null;
   }
-}
-
-export function generateStaticParams() {
-  return clubs.map((club) => ({ slug: club.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

@@ -1,18 +1,15 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PageHeader, Button } from "@/components/ui";
-import { opportunities } from "@/lib/data";
 import { getOpportunity } from "@/lib/opportunities";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const opportunity = await getOpportunity(id);
   return opportunity ? { title: opportunity.title, description: opportunity.description } : { title: "Opportunity not found" };
-}
-
-export function generateStaticParams() {
-  return opportunities.map((o) => ({ id: o.id }));
 }
 
 export default async function OpportunityDetailPage({

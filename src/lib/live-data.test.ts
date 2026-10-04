@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { normalizeRecordId, preferLiveData } from "./live-data.ts";
+import { developmentFallback, normalizeRecordId } from "./live-data.ts";
 
-test("preferLiveData does not mix production and fallback records", () => {
-  assert.deepEqual(preferLiveData(["live"], ["fallback"]), ["live"]);
-  assert.deepEqual(preferLiveData([], ["fallback"]), ["fallback"]);
+test("demo records are available outside production only", () => {
+  assert.deepEqual(developmentFallback(["demo"], "development"), ["demo"]);
+  assert.deepEqual(developmentFallback(["demo"], "test"), ["demo"]);
+  assert.deepEqual(developmentFallback(["demo"], "production"), []);
 });
 
 test("normalizeRecordId supports legacy numeric and canonical string IDs", () => {

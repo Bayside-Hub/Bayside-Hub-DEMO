@@ -12,7 +12,7 @@ import type {
   ClubOfficerRow,
   ClubRow,
 } from "@/lib/supabase/types";
-import { preferLiveData } from "./live-data";
+import { developmentFallback } from "./live-data";
 import { bellPeriodFromStartTime } from "./bell-schedule";
 
 const dayNames = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -110,7 +110,10 @@ export function mapApprovedClub(row: ApprovedClubRow): Club {
  * administrator approved — approved charters go live automatically.
  */
 export const getAllClubs = cache(async (limit?: number): Promise<Club[]> => {
-  if (!isSupabaseConfigured()) return limit === undefined ? staticClubs : staticClubs.slice(0, limit);
+  if (!isSupabaseConfigured()) {
+    const demoClubs = developmentFallback(staticClubs);
+    return limit === undefined ? demoClubs : demoClubs.slice(0, limit);
+  }
 
   const supabase = await createServerClient();
   let canonicalQuery = supabase
@@ -162,8 +165,7 @@ export const getAllClubs = cache(async (limit?: number): Promise<Club[]> => {
 
   const approved: Club[] = (rows ?? []).map(mapApprovedClub);
 
-  const output = preferLiveData(approved, staticClubs);
-  return limit === undefined ? output : output.slice(0, limit);
+  return limit === undefined ? approved : approved.slice(0, limit);
 });
 
 /** Look up a single club by slug across static + approved applications. */
