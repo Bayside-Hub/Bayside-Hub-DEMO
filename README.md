@@ -102,6 +102,9 @@ checks and the existing release checklist are complete.
      pinning and expiry plus administrator-managed calendar layers and CSV imports
    - `supabase/calendar_meeting_emergency.sql` — administrator-controlled holiday
      and Club meeting cancellations plus the emergency announcement level
+   - `supabase/announcement_audience_notifications.sql` — school, grade, or Club
+     announcement audiences, database-enforced visibility, Inbox/email delivery,
+     and grade assignment for member accounts
    - `supabase/security_observability.sql` — PostgreSQL-backed distributed rate
      limits and authenticated client/server error reporting
    - `supabase/site_cms_workflow.sql` — page-copy drafts, previews, scheduled changes, and version recovery

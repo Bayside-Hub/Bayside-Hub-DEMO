@@ -6,6 +6,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getCurrentUser } from "@/lib/auth";
 import { announcementTags, parseOptionalIsoDateTime } from "@/lib/input-validation";
 import { parseCsv } from "@/lib/csv";
+import { normalizeAnnouncementAudience } from "@/lib/announcement-audience";
 
 export type ActionState = { ok: boolean; message: string } | null;
 
@@ -21,7 +22,15 @@ function effectivePin(priority: string, pinnedUntil: string | null, publishAt: s
   return new Date(begins + 24 * 60 * 60 * 1000).toISOString();
 }
 
-export async function saveAnnouncementDraft(input: { key: string; title: string; tag: string; body: string; publishAt: string; priority: string; pinnedUntil: string; expiresAt: string }) {
+function audienceFromForm(formData: FormData) {
+  return normalizeAnnouncementAudience({
+    audienceType: String(formData.get("audience_type") ?? "school"),
+    audienceGrades: formData.getAll("audience_grades").map(Number),
+    audienceClubIds: formData.getAll("audience_club_ids").map(String),
+  });
+}
+
+export async function saveAnnouncementDraft(input: { key: string; title: string; tag: string; body: string; publishAt: string; priority: string; pinnedUntil: string; expiresAt: string; audienceType: string; audienceGrades: number[]; audienceClubIds: string[]; notifyInApp: boolean; notifyEmail: boolean }) {
   const user = await getCurrentUser();
   if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
   if (input.key !== "new" && !/^[0-9a-f-]{36}$/i.test(input.key)) return { ok: false, message: "Invalid draft." };
@@ -30,10 +39,11 @@ export async function saveAnnouncementDraft(input: { key: string; title: string;
   const publishAt = publicationTime(input.publishAt);
   const pinnedUntil = publicationTime(input.pinnedUntil);
   const expiresAt = publicationTime(input.expiresAt);
-  if (title.length > 120 || body.length > 10000 || publishAt === undefined || pinnedUntil === undefined || expiresAt === undefined || !["normal","important","urgent","emergency"].includes(input.priority) || !announcementTags.includes(input.tag as (typeof announcementTags)[number])) return { ok: false, message: "Draft exceeds the allowed length or has an invalid date." };
+  const audience = normalizeAnnouncementAudience(input);
+  if (title.length > 120 || body.length > 10000 || publishAt === undefined || pinnedUntil === undefined || expiresAt === undefined || !audience || !["normal","important","urgent","emergency"].includes(input.priority) || !announcementTags.includes(input.tag as (typeof announcementTags)[number])) return { ok: false, message: "Draft exceeds the allowed length or has invalid publication settings." };
   const db = await createServerClient();
-  const { error } = await db.from("announcement_drafts").upsert({ user_id: user.id, draft_key: input.key, title, tag: input.tag, body, publish_at: publishAt, priority: input.priority as "normal" | "important" | "urgent" | "emergency", pinned_until: pinnedUntil, expires_at: expiresAt, updated_at: new Date().toISOString() });
-  return error ? { ok: false, message: input.priority === "emergency" ? "Draft could not be saved. Apply calendar_meeting_emergency.sql." : "Draft could not be saved. Apply announcement_calendar_enhancements.sql." } : { ok: true, message: "Draft saved." };
+  const { error } = await db.from("announcement_drafts").upsert({ user_id: user.id, draft_key: input.key, title, tag: input.tag, body, publish_at: publishAt, priority: input.priority as "normal" | "important" | "urgent" | "emergency", pinned_until: pinnedUntil, expires_at: expiresAt, ...audience, notify_in_app: input.notifyInApp, notify_email: input.notifyInApp && input.notifyEmail, updated_at: new Date().toISOString() });
+  return error ? { ok: false, message: "Draft could not be saved. Apply announcement_audience_notifications.sql." } : { ok: true, message: "Draft saved." };
 }
 
 function invalid(): ActionState {
@@ -53,6 +63,9 @@ export async function createAnnouncement(
   const pinnedUntil = publicationTime(String(formData.get("pinned_until") ?? ""));
   const expiresAt = publicationTime(String(formData.get("expires_at") ?? ""));
   const priority = String(formData.get("priority") ?? "normal");
+  const audience = audienceFromForm(formData);
+  const notifyInApp = formData.get("notify_in_app") === "on";
+  const notifyEmail = notifyInApp && formData.get("notify_email") === "on";
 
   if (!user || !["staff", "admin"].includes(user.role)) {
     return { ok: false, message: "Staff only." };
@@ -68,11 +81,11 @@ export async function createAnnouncement(
   }
   if (!announcementTags.includes(tag as (typeof announcementTags)[number])) return invalid();
   if (versionNote.length > 240) return { ok: false, message: "Version notes must be 240 characters or fewer." };
-  if (publishAt === undefined || pinnedUntil === undefined || expiresAt === undefined || !["normal","important","urgent","emergency"].includes(priority)) return { ok: false, message: "Enter valid publication settings." };
+  if (publishAt === undefined || pinnedUntil === undefined || expiresAt === undefined || !audience || !["normal","important","urgent","emergency"].includes(priority)) return { ok: false, message: "Choose a valid audience and publication settings." };
   if (expiresAt && publishAt && expiresAt <= publishAt) return { ok: false, message: "Expiration must be after publication." };
 
   const supabase = await createServerClient();
-  const { error } = await supabase.from("announcements").insert({
+  const { data: created, error } = await supabase.from("announcements").insert({
     title,
     tag,
     body,
@@ -83,10 +96,14 @@ export async function createAnnouncement(
     priority: priority as "normal" | "important" | "urgent" | "emergency",
     pinned_until: effectivePin(priority, pinnedUntil, publishAt, expiresAt),
     expires_at: expiresAt,
+    ...audience,
+    notify_in_app: notifyInApp,
+    notify_email: notifyEmail,
     published: true,
-  });
+  }).select("id").maybeSingle();
 
-  if (error) return { ok: false, message: priority === "emergency" ? "Could not publish. Apply calendar_meeting_emergency.sql first." : "Could not publish. Apply announcement_cms_workflow.sql if it has not been run." };
+  if (error || !created) return { ok: false, message: "Could not publish. Apply announcement_audience_notifications.sql after the earlier announcement migrations." };
+  if (!publishAt || new Date(publishAt).getTime() <= Date.now()) await supabase.rpc("dispatch_due_announcement_notifications", { p_announcement_id: created.id });
   await supabase.from("announcement_drafts").delete().eq("user_id", user.id).eq("draft_key", "new");
 
   revalidatePath("/announcements");
@@ -163,12 +180,16 @@ export async function updateAnnouncement(_prev: ActionState, formData: FormData)
   const pinnedUntil = publicationTime(String(formData.get("pinned_until") ?? ""));
   const expiresAt = publicationTime(String(formData.get("expires_at") ?? ""));
   const priority = String(formData.get("priority") ?? "normal");
+  const audience = audienceFromForm(formData);
+  const notifyInApp = formData.get("notify_in_app") === "on";
+  const notifyEmail = notifyInApp && formData.get("notify_email") === "on";
   if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
-  if (!isSupabaseConfigured() || !id || title.length < 3 || title.length > 120 || body.length < 3 || body.length > 10000 || !versionNote || versionNote.length > 240 || publishAt === undefined || pinnedUntil === undefined || expiresAt === undefined || !["normal","important","urgent","emergency"].includes(priority) || Boolean(expiresAt && publishAt && expiresAt <= publishAt)) return invalid();
+  if (!isSupabaseConfigured() || !id || !audience || title.length < 3 || title.length > 120 || body.length < 3 || body.length > 10000 || !versionNote || versionNote.length > 240 || publishAt === undefined || pinnedUntil === undefined || expiresAt === undefined || !["normal","important","urgent","emergency"].includes(priority) || Boolean(expiresAt && publishAt && expiresAt <= publishAt)) return invalid();
   if (!announcementTags.includes(tag as (typeof announcementTags)[number])) return invalid();
   const supabase = await createServerClient();
-  const { error } = await supabase.from("announcements").update({ title, tag, body, publish_at: publishAt, priority: priority as "normal" | "important" | "urgent" | "emergency", pinned_until: effectivePin(priority, pinnedUntil, publishAt, expiresAt), expires_at: expiresAt, updated_by: user.id, version_note: versionNote.slice(0, 240) }).eq("id", id);
+  const { error } = await supabase.from("announcements").update({ title, tag, body, publish_at: publishAt, priority: priority as "normal" | "important" | "urgent" | "emergency", pinned_until: effectivePin(priority, pinnedUntil, publishAt, expiresAt), expires_at: expiresAt, ...audience, notify_in_app: notifyInApp, notify_email: notifyEmail, updated_by: user.id, version_note: versionNote.slice(0, 240) }).eq("id", id);
   if (error) return invalid();
+  if (!publishAt || new Date(publishAt).getTime() <= Date.now()) await supabase.rpc("dispatch_due_announcement_notifications", { p_announcement_id: id });
   await supabase.from("announcement_drafts").delete().eq("user_id", user.id).eq("draft_key", id);
   revalidatePath(`/announcements/${id}`);
   revalidatePath(`/admin/announcements/${id}`);
@@ -229,10 +250,13 @@ export async function updateUserRole(_prev: ActionState, formData: FormData): Pr
   const user = await getCurrentUser();
   const id = String(formData.get("id") ?? "");
   const role = String(formData.get("role") ?? "");
+  const gradeValue = String(formData.get("grade_level") ?? "");
+  const gradeLevel = gradeValue ? Number(gradeValue) : null;
 
   if (!user || user.role !== "admin") return { ok: false, message: "Admins only." };
   if (!isSupabaseConfigured() || !id) return invalid();
   if (!["student", "teacher", "advisor", "staff", "admin"].includes(role)) return invalid();
+  if (gradeLevel !== null && ![9, 10, 11, 12].includes(gradeLevel)) return { ok: false, message: "Choose a valid grade." };
   const clubId = String(formData.get("club_id") ?? "");
   if (role === "advisor" && !clubId) return { ok: false, message: "Choose the club this advisor will manage." };
 
@@ -244,6 +268,8 @@ export async function updateUserRole(_prev: ActionState, formData: FormData): Pr
   });
 
   if (error) return invalid();
+  const gradeResult = await supabase.rpc("set_profile_grade", { p_user_id: id, p_grade_level: gradeLevel });
+  if (gradeResult.error) return { ok: false, message: "Role saved, but grade requires announcement_audience_notifications.sql." };
 
   revalidatePath("/admin/users");
   revalidatePath("/admin");

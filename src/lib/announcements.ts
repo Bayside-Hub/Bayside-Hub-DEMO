@@ -42,18 +42,20 @@ async function attachAnnouncementMedia(supabase: Awaited<ReturnType<typeof creat
   return new Map((data ?? []).map((item) => [item.id, { url: supabase.storage.from("club-media").getPublicUrl(item.storage_path).data.publicUrl, alt: item.alt_text }]));
 }
 
-export const getAnnouncements = cache(async (limit = 100): Promise<Announcement[]> => {
+export const getAnnouncements = cache(async (limit = 100, schoolOnly = false): Promise<Announcement[]> => {
   if (!isSupabaseConfigured()) return seedAnnouncements.slice(0, limit);
 
   const supabase = await createServerClient();
   const now = new Date().toISOString();
-  let { data: rows, error } = await supabase
+  let query = supabase
     .from("announcements")
     .select("id, title, tag, body, created_at, media_id, priority, pinned_until")
     .eq("published", true)
     .is("archived_at", null)
     .or(`publish_at.is.null,publish_at.lte.${now}`)
-    .or(`expires_at.is.null,expires_at.gt.${now}`)
+    .or(`expires_at.is.null,expires_at.gt.${now}`);
+  if (schoolOnly) query = query.eq("audience_type", "school");
+  let { data: rows, error } = await query
     .order("pinned_until", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(limit);

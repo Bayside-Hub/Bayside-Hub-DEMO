@@ -6,7 +6,7 @@ function xml(value: string) {
 
 export async function GET() {
   const origin = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
-  const announcements = await getAnnouncements(50);
+  const announcements = await getAnnouncements(50, true);
   const items = announcements.map((item) => {
     const link = `${origin}/announcements/${encodeURIComponent(item.id)}`;
     const date = new Date(item.date);

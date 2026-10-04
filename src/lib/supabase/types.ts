@@ -6,6 +6,7 @@ export type Profile = {
   full_name: string | null;
   avatar_url: string | null;
   role: Role;
+  grade_level: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -162,6 +163,8 @@ export type Database = {
       cancel_event_registration: { Args: { p_registration_id: string }; Returns: string };
       cast_election_vote: { Args: { p_election_id: string; p_position: string; p_candidate_id: string }; Returns: undefined };
       lock_election_results: { Args: { p_election_id: string }; Returns: unknown };
+      set_profile_grade: { Args: { p_user_id: string; p_grade_level: number | null }; Returns: undefined };
+      dispatch_due_announcement_notifications: { Args: { p_announcement_id?: string | null }; Returns: number };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -204,9 +207,15 @@ export type AnnouncementRow = {
   priority: "normal" | "important" | "urgent" | "emergency";
   pinned_until: string | null;
   expires_at: string | null;
+  audience_type: "school" | "grades" | "clubs";
+  audience_grades: number[];
+  audience_club_ids: string[];
+  notify_in_app: boolean;
+  notify_email: boolean;
+  notifications_sent_at: string | null;
 };
 
-export type AnnouncementDraftRow = { user_id: string; draft_key: string; title: string; tag: string; body: string; publish_at: string | null; priority: "normal" | "important" | "urgent" | "emergency"; pinned_until: string | null; expires_at: string | null; updated_at: string };
+export type AnnouncementDraftRow = { user_id: string; draft_key: string; title: string; tag: string; body: string; publish_at: string | null; priority: "normal" | "important" | "urgent" | "emergency"; pinned_until: string | null; expires_at: string | null; audience_type: "school" | "grades" | "clubs"; audience_grades: number[]; audience_club_ids: string[]; notify_in_app: boolean; notify_email: boolean; updated_at: string };
 
 export type ClubApplicationRow = {
   id: string;

@@ -35,19 +35,21 @@ select role, count(*) from public.profiles group by role;
 8. `supabase/announcement_cms_workflow.sql`：工作人员私人自动草稿、定时公告和对应的公开可见性规则。
 9. `supabase/announcement_calendar_enhancements.sql`：公告优先级、置顶、自动过期，以及 Admin 自定义日历和 CSV 导入。
 10. `supabase/calendar_meeting_emergency.sql`：节假日/取消会议会停止生成对应的周期性 Club 会议，并增加 Emergency 公告级别。
-11. `supabase/security_observability.sql`：跨实例共享限流计数、前端和服务端异常写入保护。
-12. `supabase/site_cms_workflow.sql`：网站页面文字私人草稿、预览、定时生效和版本恢复。
-13. `supabase/finance_permissions_and_reimbursements.sql`：金额、预算和募款记录仅限 Staff/Admin 修改；Advisor 与董事会成员只读，并可提交带私人附件的报销工单。
-14. `supabase/club_custom_tables.sql`：Club 管理者自定义表格、在线录入数据、按 Club 隔离并导出 CSV。
-15. `supabase/club_custom_tables_enhancements.sql`：表结构与数据编辑、更多字段类型、CSV 导入和更新权限。
-16. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
-17. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
+11. `supabase/announcement_audience_notifications.sql`：全校、指定年级或指定 Club 公告，数据库级可见性隔离，以及站内/邮件通知队列。
+12. `supabase/security_observability.sql`：跨实例共享限流计数、前端和服务端异常写入保护。
+13. `supabase/site_cms_workflow.sql`：网站页面文字私人草稿、预览、定时生效和版本恢复。
+14. `supabase/finance_permissions_and_reimbursements.sql`：金额、预算和募款记录仅限 Staff/Admin 修改；Advisor 与董事会成员只读，并可提交带私人附件的报销工单。
+15. `supabase/club_custom_tables.sql`：Club 管理者自定义表格、在线录入数据、按 Club 隔离并导出 CSV。
+16. `supabase/club_custom_tables_enhancements.sql`：表结构与数据编辑、更多字段类型、CSV 导入和更新权限。
+17. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
+18. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
 
 旧账号不会按域名自动改身份。Advisor 改为其他基础身份时，会移除该账号全部 Advisor 社团绑定；独立董事会任命和自定义权限不随之撤销。
 自定义权限不是任意数据库权限：支持社团内容、社团治理、网站介绍文字，不能授予管理员审核/账号管理能力。
 角色定义删除会同时撤销其分配；请先检查影响范围。
 
 公告编辑器选择的时间按编辑者设备的本地时区转换为 UTC 保存。定时公告由数据库可见性规则在到点后自动公开，无需额外 cron；未到点前公开页面和公告版本历史均不可见。版本恢复仅还原标题、正文和分类，不会意外更改排期或归档状态。自动草稿按工作人员账号隔离。要永久删除公告，必须先归档并再次确认；归档可恢复。
+指定年级与 Club 的公告仅对匹配的已登录账号可见，公开 RSS 始终只包含全校公告。即时公告会立刻写入 Inbox；启用 Supabase Cron 后，迁移会自动建立每分钟派发定时公告的任务。邮件选项写入 `notification_outbox`，仍需已配置的邮件 worker/SMTP 消费该队列。
 生产环境还应配置仅服务端可见的 `SUPABASE_SERVICE_ROLE_KEY`，供 Next.js instrumentation 写入未捕获的 Route 与 Server Action 异常；不要使用 `NEXT_PUBLIC_` 前缀。已登录用户的浏览器错误通过受限 API 写入，同一错误会在客户端去重并由数据库限流。
 站点页面文字也按编辑者设备的本地时区排期。到点后的文字由公开读取逻辑自动显示，无需额外 cron；手动发布或恢复旧版本会取消该字段之前的排期。页面草稿按工作人员账号隔离，版本恢复会立即公开所选内容。
 

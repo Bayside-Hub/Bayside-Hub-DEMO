@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { saveAnnouncementDraft } from "../actions";
 
-export type DraftFields = { title: string; tag: string; body: string; publishAt: string; priority: string; pinnedUntil: string; expiresAt: string };
+export type DraftFields = { title: string; tag: string; body: string; publishAt: string; priority: string; pinnedUntil: string; expiresAt: string; audienceType: string; audienceGrades: number[]; audienceClubIds: string[]; notifyInApp: boolean; notifyEmail: boolean };
 
 export function useDraftAutosave(key: string, fields: DraftFields, disabled = false) {
   const [status, setStatus] = useState("");

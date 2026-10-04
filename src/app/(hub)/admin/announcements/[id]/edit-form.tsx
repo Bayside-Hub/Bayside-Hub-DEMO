@@ -5,8 +5,9 @@ import AnnouncementBody from "@/components/announcement-body";
 import type { AnnouncementDraftRow, AnnouncementVersionRow } from "@/lib/supabase/types";
 import { restoreAnnouncementVersion, updateAnnouncement } from "../../actions";
 import { localDateTime, useDraftAutosave } from "../use-draft-autosave";
+import AudienceFields from "../audience-fields";
 
-type AnnouncementEdit = { id: string; title: string; tag: string; body: string; publish_at?: string | null; priority?: "normal" | "important" | "urgent" | "emergency"; pinned_until?: string | null; expires_at?: string | null };
+type AnnouncementEdit = { id: string; title: string; tag: string; body: string; publish_at?: string | null; priority?: "normal" | "important" | "urgent" | "emergency"; pinned_until?: string | null; expires_at?: string | null; audience_type?: "school" | "grades" | "clubs"; audience_grades?: number[]; audience_club_ids?: string[]; notify_in_app?: boolean; notify_email?: boolean };
 const input = "h-10 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink";
 
 function VersionRestore({ announcementId, version }: { announcementId: string; version: AnnouncementVersionRow }) {
@@ -22,7 +23,7 @@ function VersionRestore({ announcementId, version }: { announcementId: string; v
   </form>;
 }
 
-export default function EditAnnouncementForm({ announcement, draft, versions }: { announcement: AnnouncementEdit; draft?: AnnouncementDraftRow | null; versions: AnnouncementVersionRow[] }) {
+export default function EditAnnouncementForm({ announcement, draft, versions, clubs }: { announcement: AnnouncementEdit; draft?: AnnouncementDraftRow | null; versions: AnnouncementVersionRow[]; clubs: { id: string; name: string }[] }) {
   const [state, action, pending] = useActionState(updateAnnouncement, null);
   const [title, setTitle] = useState(draft?.title ?? announcement.title);
   const [tag, setTag] = useState(draft?.tag ?? announcement.tag);
@@ -31,8 +32,13 @@ export default function EditAnnouncementForm({ announcement, draft, versions }: 
   const [priority, setPriority] = useState<string>(draft?.priority ?? announcement.priority ?? "normal");
   const [pinnedUntil, setPinnedUntil] = useState(localDateTime(draft?.pinned_until ?? announcement.pinned_until));
   const [expiresAt, setExpiresAt] = useState(localDateTime(draft?.expires_at ?? announcement.expires_at));
+  const [audienceType, setAudienceType] = useState(draft?.audience_type ?? announcement.audience_type ?? "school");
+  const [audienceGrades, setAudienceGrades] = useState<number[]>(draft?.audience_grades ?? announcement.audience_grades ?? []);
+  const [audienceClubIds, setAudienceClubIds] = useState<string[]>(draft?.audience_club_ids ?? announcement.audience_club_ids ?? []);
+  const [notifyInApp, setNotifyInApp] = useState(draft?.notify_in_app ?? announcement.notify_in_app ?? true);
+  const [notifyEmail, setNotifyEmail] = useState(draft?.notify_email ?? announcement.notify_email ?? false);
   const [preview, setPreview] = useState(false);
-  const fields = useMemo(() => ({ title, tag, body, publishAt, priority, pinnedUntil, expiresAt }), [title, tag, body, publishAt, priority, pinnedUntil, expiresAt]);
+  const fields = useMemo(() => ({ title, tag, body, publishAt, priority, pinnedUntil, expiresAt, audienceType, audienceGrades, audienceClubIds, notifyInApp, notifyEmail }), [title, tag, body, publishAt, priority, pinnedUntil, expiresAt, audienceType, audienceGrades, audienceClubIds, notifyInApp, notifyEmail]);
   const autosave = useDraftAutosave(announcement.id, fields, state?.ok === true);
 
   return <div className="space-y-7"><form action={action} className="grid gap-4">
@@ -45,6 +51,7 @@ export default function EditAnnouncementForm({ announcement, draft, versions }: 
     <input type="hidden" name="publish_at" value={publishAt ? new Date(publishAt).toISOString() : ""} />
     <div className="grid gap-3 sm:grid-cols-2"><label className="grid gap-1 text-sm font-semibold text-ink">Pin until<input type="datetime-local" value={pinnedUntil} onChange={(event) => setPinnedUntil(event.target.value)} className={input} /></label><label className="grid gap-1 text-sm font-semibold text-ink">Expire automatically<input type="datetime-local" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} className={input} /></label></div>
     <input type="hidden" name="pinned_until" value={pinnedUntil ? new Date(pinnedUntil).toISOString() : ""} /><input type="hidden" name="expires_at" value={expiresAt ? new Date(expiresAt).toISOString() : ""} />
+    <AudienceFields clubs={clubs} audienceType={audienceType} setAudienceType={setAudienceType} grades={audienceGrades} setGrades={setAudienceGrades} clubIds={audienceClubIds} setClubIds={setAudienceClubIds} notifyInApp={notifyInApp} setNotifyInApp={setNotifyInApp} notifyEmail={notifyEmail} setNotifyEmail={setNotifyEmail} />
     <p role="status" className="text-xs text-muted">{autosave || (draft ? "Recovered your saved edit draft." : "Changes save automatically as a draft.")}</p>
     <button type="button" onClick={() => setPreview((current) => !current)} className="justify-self-start text-sm font-semibold text-navy underline">{preview ? "Hide preview" : "Preview changes"}</button>
     {preview && <article className={`rounded-card border p-5 ${priority === "emergency" ? "border-red-500 bg-red-50 text-red-950" : "border-line bg-content-bg"}`}>{priority === "emergency" ? <p className="text-xs font-black uppercase tracking-[0.18em] text-red-700">Emergency alert</p> : <p className="text-xs font-bold uppercase text-muted">{tag}</p>}<h2 className="mt-2 text-xl font-bold">{title}</h2><p className={`mt-3 whitespace-pre-wrap text-sm leading-6 ${priority === "emergency" ? "text-red-900" : "text-muted"}`}><AnnouncementBody body={body} /></p></article>}

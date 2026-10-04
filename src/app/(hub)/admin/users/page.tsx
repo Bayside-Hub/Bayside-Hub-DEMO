@@ -21,13 +21,19 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
 
   const supabase = configured ? await createServerClient() : null;
   const { data: clubs } = supabase ? await supabase.from("clubs").select("id, name").order("name") : { data: [] };
-  const { data: rows, count } = supabase
+  let { data: rows, count, error: usersError } = supabase
     ? await supabase
         .from("profiles")
-        .select("id, email, full_name, role, created_at", { count: "exact" })
+        .select("id, email, full_name, role, grade_level, created_at", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(from, from + PAGE_SIZE - 1)
-    : { data: null, count: 0 };
+    : { data: null, count: 0, error: null };
+  if (supabase && usersError?.code === "42703") {
+    const fallback = await supabase.from("profiles").select("id,email,full_name,role,created_at", { count: "exact" }).order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
+    rows = fallback.data?.map((row) => ({ ...row, grade_level: null })) ?? null;
+    count = fallback.count;
+    usersError = fallback.error;
+  }
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
@@ -70,7 +76,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                       )}
                     </p>
                   </div>
-                  <UserRoleForm id={row.id} role={row.role} clubs={clubs ?? []} />
+                  <UserRoleForm id={row.id} role={row.role} gradeLevel={row.grade_level} clubs={clubs ?? []} />
                 </li>
               ))}
             </ul>
