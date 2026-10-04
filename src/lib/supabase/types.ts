@@ -392,6 +392,7 @@ export type ClubAttendanceSessionRow = {
   label: string;
   code: string;
   code_type: "temporary" | "permanent";
+  starts_at: string;
   expires_at: string | null;
   active: boolean;
   created_by: string;

@@ -31,19 +31,20 @@ select role, count(*) from public.profiles group by role;
 4. `supabase/site_cms_content.sql`：扩展首页、About、Support、站点名称与页脚 CMS 字段。
 5. `supabase/chat_recent_messages.sql`：聊天显示最新 100 条，而不是最早 100 条。
 6. `supabase/club_attendance.sql`：Club 活动临时/永久验证码、二维码签到与签到记录。
-7. `supabase/club_fair_qr_links.sql`：展会用可设有效期、可撤销的 Club 页面二维码链接。
-8. `supabase/announcement_cms_workflow.sql`：工作人员私人自动草稿、定时公告和对应的公开可见性规则。
-9. `supabase/announcement_calendar_enhancements.sql`：公告优先级、置顶、自动过期，以及 Admin 自定义日历和 CSV 导入。
-10. `supabase/calendar_meeting_emergency.sql`：节假日/取消会议会停止生成对应的周期性 Club 会议，并增加 Emergency 公告级别。
-11. `supabase/announcement_audience_notifications.sql`：全校、指定年级或指定 Club 公告，数据库级可见性隔离，以及站内/邮件通知队列。
-12. `supabase/security_observability.sql`：跨实例共享限流计数、前端和服务端异常写入保护。
-13. `supabase/site_cms_workflow.sql`：网站页面文字私人草稿、预览、定时生效和版本恢复。
-14. `supabase/finance_permissions_and_reimbursements.sql`：金额、预算和募款记录仅限 Staff/Admin 修改；Advisor 与董事会成员只读，并可提交带私人附件的报销工单。
-15. `supabase/club_custom_tables.sql`：Club 管理者自定义表格、在线录入数据、按 Club 隔离并导出 CSV。
-16. `supabase/club_custom_tables_enhancements.sql`：表结构与数据编辑、更多字段类型、CSV 导入和更新权限。
-17. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
-18. `supabase/club_officer_avatars.sql`：董事会成员上传自己的公开头像，按本人和 Club 限制 Storage 写入权限。
-19. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
+7. `supabase/attendance_scheduling.sql`：可提前创建 Quick Attendance，并在设定开始时间后才开放签到。
+8. `supabase/club_fair_qr_links.sql`：展会用可设有效期、可撤销的 Club 页面二维码链接。
+9. `supabase/announcement_cms_workflow.sql`：工作人员私人自动草稿、定时公告和对应的公开可见性规则。
+10. `supabase/announcement_calendar_enhancements.sql`：公告优先级、置顶、自动过期，以及 Admin 自定义日历和 CSV 导入。
+11. `supabase/calendar_meeting_emergency.sql`：节假日/取消会议会停止生成对应的周期性 Club 会议，并增加 Emergency 公告级别。
+12. `supabase/announcement_audience_notifications.sql`：全校、指定年级或指定 Club 公告，数据库级可见性隔离，以及站内/邮件通知队列。
+13. `supabase/security_observability.sql`：跨实例共享限流计数、前端和服务端异常写入保护。
+14. `supabase/site_cms_workflow.sql`：网站页面文字私人草稿、预览、定时生效和版本恢复。
+15. `supabase/finance_permissions_and_reimbursements.sql`：金额、预算和募款记录仅限 Staff/Admin 修改；Advisor 与董事会成员只读，并可提交带私人附件的报销工单。
+16. `supabase/club_custom_tables.sql`：Club 管理者自定义表格、在线录入数据、按 Club 隔离并导出 CSV。
+17. `supabase/club_custom_tables_enhancements.sql`：表结构与数据编辑、更多字段类型、CSV 导入和更新权限。
+18. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
+19. `supabase/club_officer_avatars.sql`：董事会成员上传自己的公开头像，按本人和 Club 限制 Storage 写入权限。
+20. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。
 
 旧账号不会按域名自动改身份。Advisor 改为其他基础身份时，会移除该账号全部 Advisor 社团绑定；独立董事会任命和自定义权限不随之撤销。
 自定义权限不是任意数据库权限：支持社团内容、社团治理、网站介绍文字，不能授予管理员审核/账号管理能力。

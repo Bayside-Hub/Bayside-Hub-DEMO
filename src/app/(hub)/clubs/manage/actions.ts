@@ -4,11 +4,11 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
-import { parseOptionalDateOnly } from "@/lib/input-validation";
+import { parseOptionalDateOnly, parseOptionalIsoDateTime } from "@/lib/input-validation";
 import { parseMeetingInput, parseClubPostInput } from "@/lib/club-content-input";
 import { MAX_IMAGE_UPLOAD_BYTES } from "@/lib/upload-limits";
 import { parseClubShareLinkInput } from "@/lib/club-share-link";
-import { isTemporaryAttendanceDuration } from "@/lib/attendance-session";
+import { attendanceExpiresAt, isAttendanceStartAllowed, isTemporaryAttendanceDuration } from "@/lib/attendance-session";
 
 const denied = { ok: false, message: "You no longer have permission for this club. Refresh or contact your advisor." };
 const invalid = { ok: false, message: "Check the required fields, lengths and dates, then try again." };
@@ -108,11 +108,16 @@ export async function createAttendanceSession(formData: FormData) {
   const label = String(formData.get("label") ?? "").trim();
   const codeType = formData.get("code_type") === "permanent" ? "permanent" : "temporary";
   const duration = Number(formData.get("duration_minutes"));
+  const requestedStart = parseOptionalIsoDateTime(String(formData.get("starts_at") ?? ""));
   if (label.length < 3 || label.length > 120) return invalid;
-  if (codeType === "temporary" && !isTemporaryAttendanceDuration(duration)) return invalid;
+  if (requestedStart === undefined || (codeType === "temporary" && !isTemporaryAttendanceDuration(duration))) return invalid;
 
+  const now = Date.now();
+  const startsAt = requestedStart ?? new Date(now).toISOString();
+  const startsAtTime = new Date(startsAt).getTime();
+  if (!isAttendanceStartAllowed(startsAtTime, now)) return { ok: false, message: "Choose a start time between now and one year from now." };
   const expiresAt = codeType === "temporary"
-    ? new Date(Date.now() + duration * 60_000).toISOString()
+    ? attendanceExpiresAt(startsAtTime, duration)
     : null;
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const code = randomAttendanceCode();
@@ -121,13 +126,15 @@ export async function createAttendanceSession(formData: FormData) {
       label,
       code,
       code_type: codeType,
+      starts_at: startsAt,
       expires_at: expiresAt,
       created_by: context.user.id,
     });
     if (!error) {
       revalidatePath(`/clubs/manage/${clubId}`);
-      return { ok: true, message: `${codeType === "temporary" ? "Temporary" : "Permanent"} check-in code created.` };
+      return { ok: true, message: `${startsAtTime > now + 60_000 ? "Scheduled" : codeType === "temporary" ? "Temporary" : "Permanent"} check-in code created.` };
     }
+    if (["42703", "PGRST204"].includes(error.code)) return { ok: false, message: "Scheduled attendance requires attendance_scheduling.sql." };
     if (error.code !== "23505") return failed;
   }
   return { ok: false, message: "A unique code could not be generated. Please try again." };
