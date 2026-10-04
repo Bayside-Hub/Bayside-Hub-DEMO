@@ -6,6 +6,7 @@ import ActionFeedbackForm from "@/components/action-feedback-form";
 import type { ClubAttendanceRecordDetail, ClubAttendanceSessionRow } from "@/lib/supabase/types";
 import { createServerClient } from "@/lib/supabase/server";
 import { closeAttendanceSession, createAttendanceSession } from "../actions";
+import { attendanceDurationLabel, temporaryAttendanceDurations } from "@/lib/attendance-session";
 
 const input = "h-10 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink";
 
@@ -43,7 +44,7 @@ export default async function AttendancePanel({ clubId }: { clubId: string }) {
       <input type="hidden" name="club_id" value={clubId} />
       <label className="text-sm text-cream sm:col-span-2">Activity name<input name="label" required minLength={3} maxLength={120} placeholder="September 9 meeting" className={`${input} mt-1`} /></label>
       <label className="text-sm text-cream">Code type<select name="code_type" className={`${input} mt-1`}><option value="temporary">Temporary</option><option value="permanent">Permanent until closed</option></select></label>
-      <label className="text-sm text-cream">Temporary duration<select name="duration_minutes" defaultValue="60" className={`${input} mt-1`}><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option><option value="120">2 hours</option><option value="240">4 hours</option></select></label>
+      <label className="text-sm text-cream">Temporary duration<select name="duration_minutes" defaultValue="15" className={`${input} mt-1`}>{temporaryAttendanceDurations.map((minutes) => <option key={minutes} value={minutes}>{attendanceDurationLabel(minutes)}</option>)}</select><span className="mt-1 block text-xs text-cream/55">Short windows are useful when the code is displayed only at the start of a meeting.</span></label>
       <button className="h-10 rounded-full bg-cream px-5 font-bold text-black sm:col-span-2">Generate check-in code</button>
     </ActionFeedbackForm>
     {rows.length ? <div className="mt-5 grid gap-4 lg:grid-cols-2">{rows.map((session) => {

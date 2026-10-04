@@ -8,6 +8,7 @@ import { parseOptionalDateOnly } from "@/lib/input-validation";
 import { parseMeetingInput, parseClubPostInput } from "@/lib/club-content-input";
 import { MAX_IMAGE_UPLOAD_BYTES } from "@/lib/upload-limits";
 import { parseClubShareLinkInput } from "@/lib/club-share-link";
+import { isTemporaryAttendanceDuration } from "@/lib/attendance-session";
 
 const denied = { ok: false, message: "You no longer have permission for this club. Refresh or contact your advisor." };
 const invalid = { ok: false, message: "Check the required fields, lengths and dates, then try again." };
@@ -108,7 +109,7 @@ export async function createAttendanceSession(formData: FormData) {
   const codeType = formData.get("code_type") === "permanent" ? "permanent" : "temporary";
   const duration = Number(formData.get("duration_minutes"));
   if (label.length < 3 || label.length > 120) return invalid;
-  if (codeType === "temporary" && ![15, 30, 60, 120, 240].includes(duration)) return invalid;
+  if (codeType === "temporary" && !isTemporaryAttendanceDuration(duration)) return invalid;
 
   const expiresAt = codeType === "temporary"
     ? new Date(Date.now() + duration * 60_000).toISOString()

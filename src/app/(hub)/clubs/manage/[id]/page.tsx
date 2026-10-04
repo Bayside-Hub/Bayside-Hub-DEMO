@@ -11,10 +11,14 @@ import ClubGovernancePanel from "./club-governance-panel";
 import FairQrPanel from "./fair-qr-panel";
 
 const input = "h-11 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink outline-none focus:border-powder focus:ring-2 focus:ring-powder/20";
+const MEMBER_PAGE_SIZE = 25;
 
-export default async function ManageClubPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ManageClubPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ memberPage?: string }> }) {
   const user = await getCurrentUser();
   const { id } = await params;
+  const { memberPage: memberPageValue } = await searchParams;
+  const memberPage = Math.max(1, Math.min(1000, Number.parseInt(memberPageValue ?? "1", 10) || 1));
+  const memberFrom = (memberPage - 1) * MEMBER_PAGE_SIZE;
   if (!user) redirect(`/login?next=/clubs/manage/${id}`);
   if (!isSupabaseConfigured()) redirect("/clubs");
 
@@ -31,7 +35,7 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
     { data: club },
     { data: meetings },
     { data: memberships },
-    { data: members },
+    activeMemberResult,
     { data: officers },
     { data: advisors },
     { data: media },
@@ -45,7 +49,7 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
     supabase.from("clubs").select("*").eq("id", id).maybeSingle(),
     supabase.from("club_meetings").select("*").eq("club_id", id).order("day_of_week"),
     supabase.from("club_memberships").select("id, profile_id, status, requested_at").eq("club_id", id).eq("status", "pending").order("requested_at"),
-    supabase.from("club_memberships").select("id, profile_id, status, requested_at").eq("club_id", id).eq("status", "active").order("requested_at").limit(200),
+    supabase.from("club_memberships").select("id, profile_id, status, requested_at", { count: "exact" }).eq("club_id", id).eq("status", "active").order("requested_at").range(memberFrom, memberFrom + MEMBER_PAGE_SIZE - 1),
     supabase.from("club_officers").select("*").eq("club_id", id).order("title"),
     supabase.from("club_advisors").select("*").eq("club_id", id),
     supabase.from("club_media").select("*").eq("club_id", id).eq("media_type", "image").order("created_at", { ascending: false }),
@@ -58,6 +62,9 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
   ]);
   if (!club) notFound();
 
+  const members = activeMemberResult.data ?? [];
+  const memberTotal = activeMemberResult.count ?? 0;
+  const memberPageCount = Math.max(1, Math.ceil(memberTotal / MEMBER_PAGE_SIZE));
   const profileIds = [...(memberships ?? []), ...(members ?? [])].map((membership) => membership.profile_id);
   const { data: profiles } = profileIds.length ? await supabase.from("profiles").select("id, full_name, email").in("id", profileIds) : { data: [] };
   const profileMap = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
@@ -153,8 +160,8 @@ export default async function ManageClubPage({ params }: { params: Promise<{ id:
             <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-powder">People</p><h2 className="mt-1 text-xl font-bold text-ink">Membership requests</h2></div>{memberships?.length ? <span className="rounded-full bg-orange px-2.5 py-1 text-xs font-bold text-black">{memberships.length}</span> : null}</div>
             {canGovern && memberships?.length ? <ul className="mt-4 space-y-3">{memberships.map((membership) => { const profile = profileMap.get(membership.profile_id); return <li key={membership.id} className="rounded-control border border-line p-3"><p className="font-semibold text-ink">{profile?.full_name ?? profile?.email ?? "Student"}</p><p className="mt-0.5 text-xs text-muted">Requested {new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(membership.requested_at))}</p><div className="mt-3 grid gap-2"><ActionFeedbackForm action={reviewClubMembership}><input type="hidden" name="club_id" value={club.id} /><input type="hidden" name="membership_id" value={membership.id} /><input type="hidden" name="status" value="active" /><button className="rounded-full bg-navy px-4 py-2 text-xs font-semibold text-cream">Approve</button></ActionFeedbackForm><ActionFeedbackForm action={reviewClubMembership} className="grid gap-2"><input type="hidden" name="club_id" value={club.id} /><input type="hidden" name="membership_id" value={membership.id} /><input type="hidden" name="status" value="rejected" /><label className="text-xs font-semibold text-muted">Reason for rejection<input name="rejection_reason" required minLength={3} maxLength={1000} placeholder="Tell the student what they can do next" className={`${input} mt-1`} /></label><button className="justify-self-start rounded-full border border-line px-4 py-2 text-xs font-semibold text-muted">Decline with reason</button></ActionFeedbackForm></div></li>; })}</ul> : <p className="mt-4 text-sm leading-6 text-muted">{canGovern ? "You’re all caught up—there are no pending requests." : "Membership review is available to advisors and staff."}</p>}
             <details className="mt-5 border-t border-line pt-4" open={!memberships?.length}>
-              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-bold text-ink [&::-webkit-details-marker]:hidden"><span>Active member directory</span><span className="rounded-full bg-content-bg px-2.5 py-1 text-xs text-muted">{members?.length ?? 0}</span></summary>
-              {members?.length ? <ul className="mt-3 max-h-72 divide-y divide-line overflow-y-auto">{members.map((membership) => { const profile = profileMap.get(membership.profile_id); return <li key={membership.id} className="py-3"><p className="truncate text-sm font-semibold text-ink">{profile?.full_name ?? "Student"}</p><p className="truncate text-xs text-muted">{profile?.email ?? "School account"}</p></li>; })}</ul> : <p className="mt-3 text-sm text-muted">No active members yet.</p>}
+              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-bold text-ink [&::-webkit-details-marker]:hidden"><span>Active member directory</span><span className="rounded-full bg-content-bg px-2.5 py-1 text-xs text-muted">{memberTotal}</span></summary>
+              {members.length ? <><ul className="mt-3 divide-y divide-line">{members.map((membership) => { const profile = profileMap.get(membership.profile_id); return <li key={membership.id} className="py-3"><p className="truncate text-sm font-semibold text-ink">{profile?.full_name ?? "Student"}</p><p className="truncate text-xs text-muted">{profile?.email ?? "School account"}</p></li>; })}</ul>{memberPageCount > 1 && <nav aria-label="Member directory pages" className="mt-3 flex items-center justify-between gap-3 border-t border-line pt-3"><span className="text-xs text-muted">Page {Math.min(memberPage, memberPageCount)} of {memberPageCount} · {MEMBER_PAGE_SIZE} per page</span><div className="flex gap-2">{memberPage > 1 && <Link href={`/clubs/manage/${id}?memberPage=${memberPage - 1}#members`} className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-muted">Previous</Link>}{memberPage < memberPageCount && <Link href={`/clubs/manage/${id}?memberPage=${memberPage + 1}#members`} className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-navy">Next</Link>}</div></nav>}</> : memberTotal ? <p className="mt-3 text-sm text-muted">This member page is empty. <Link href={`/clubs/manage/${id}?memberPage=1#members`} className="font-semibold text-navy underline">Return to the first page</Link>.</p> : <p className="mt-3 text-sm text-muted">No active members yet.</p>}
             </details>
           </section>
 
