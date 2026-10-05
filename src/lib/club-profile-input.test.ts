@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseClubProfileInput } from "./club-profile-input.ts";
+import { parseClubProfileInput, parseClubTags } from "./club-profile-input.ts";
 
 function profile(tags = ["STEM", "Robotics", "Competition"]) {
   const form = new FormData();
@@ -20,4 +20,10 @@ test("club profiles accept three normalized, unique tags", () => {
 test("club profiles reject too many or duplicate tags", () => {
   assert.equal(parseClubProfileInput(profile(["One", "Two", "Three", "Four"])), null);
   assert.equal(parseClubProfileInput(profile(["STEM", "stem"])), null);
+});
+
+test("standalone tag management uses the same three-tag rules", () => {
+  assert.deepEqual(parseClubTags(["Arts", "Photography", "Community"]), ["Arts", "Photography", "Community"]);
+  assert.equal(parseClubTags(["Arts", "arts"]), null);
+  assert.equal(parseClubTags(["One", "Two", "Three", "Four"]), null);
 });

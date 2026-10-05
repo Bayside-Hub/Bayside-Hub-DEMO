@@ -53,7 +53,7 @@ export default async function AdminClubsPage({
         title="Manage Clubs"
         subtitle="Review teacher-submitted Club proposals. Approval publishes the Club and assigns the submitting teacher as its Advisor automatically."
       />
-      <div className="mb-5 flex justify-end"><Link href="/clubs/manage" className="rounded-full bg-navy px-5 py-2.5 text-sm font-bold text-cream">Manage all Clubs &amp; Teams →</Link></div>
+      <div className="mb-5 flex flex-wrap justify-end gap-2"><Link href="/admin/clubs/tags" className="rounded-full border border-navy px-5 py-2.5 text-sm font-bold text-navy">Manage all Club tags</Link><Link href="/clubs/manage" className="rounded-full bg-navy px-5 py-2.5 text-sm font-bold text-cream">Manage all Clubs &amp; Teams →</Link></div>
 
       {!configured && (
         <div className="mb-6 rounded-card border border-orange/30 bg-orange/10 p-4 text-sm leading-6 text-ink">
