@@ -123,6 +123,8 @@ checks and the existing release checklist are complete.
      board, Advisor, custom-role, Staff, and Admin management detection
    - `supabase/realtime_notifications_dashboard.sql` — Realtime/PWA Push delivery,
      filtered and paginated notification history, and cross-device dashboard card preferences
+   - `supabase/club_profile_tags_club101.sql` — detailed Club profile sections,
+     one-to-three validated discovery tags, and weekly commitment data for Club 101
    - `supabase/demo_clubs.sql` — optional, explicitly marked draft test clubs
 
 4. Enable Google OAuth:

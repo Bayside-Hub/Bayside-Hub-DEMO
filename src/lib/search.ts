@@ -25,8 +25,8 @@ export async function getSearchResults(query: string, limit = 24): Promise<Searc
       kind: "Club" as const,
       title: club.name,
       href: `/clubs/${club.slug}`,
-      meta: club.category,
-      keywords: `${club.description} ${club.meetingDays.join(" ")} ${club.location} ${club.communityService ? "volunteer community service" : ""}`,
+      meta: (club.tags ?? [club.category]).join(" · "),
+      keywords: `${(club.tags ?? []).join(" ")} ${club.description} ${club.fullDescription ?? ""} ${club.mission ?? ""} ${club.activities ?? ""} ${club.whoShouldJoin ?? ""} ${club.membershipExpectations ?? ""} ${club.meetingDays.join(" ")} ${club.location} ${club.communityService ? "volunteer community service" : ""}`,
     })),
     ...announcements.map((announcement) => ({
       kind: "Announcement" as const,

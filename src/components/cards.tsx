@@ -78,6 +78,7 @@ export function ClubCard({ club }: { club: Club }) {
       <span className={`mt-2 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${club.recruitingStatus === "closed" ? "bg-white/10 text-cream/60" : club.recruitingStatus === "paused" ? "bg-orange/90 text-black" : "bg-[#d8f3df] text-[#176b35]"}`}>{club.recruitingStatus ?? "Recruiting"}</span>
       <h3 className="mt-2 font-display text-xl font-bold uppercase leading-snug text-cream">{club.name}</h3>
       <p className="mt-3 line-clamp-3 text-sm leading-6 text-cream/70">{club.description}</p>
+      <div className="mt-3 flex flex-wrap justify-center gap-1.5">{(club.tags ?? [club.category]).slice(0, 3).map((tag) => <span key={tag} className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold text-powder">#{tag}</span>)}</div>
       <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-[11px] text-cream/80">
         <span className="rounded-full border border-line px-2.5 py-1">{club.meetingDays.join(", ")}</span>
         <span className="rounded-full border border-line px-2.5 py-1">{club.meetingTime}</span>

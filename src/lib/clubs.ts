@@ -47,12 +47,18 @@ function mapDatabaseClub(
     slug: row.slug,
     name: row.name,
     category: row.interest_tags[0] ?? (row.is_stem ? "STEM" : row.is_community_service ? "Community Service" : "Other"),
+    tags: row.interest_tags.slice(0, 3),
     description: row.short_description,
+    fullDescription: row.full_description ?? row.short_description,
+    mission: row.mission ?? undefined,
+    activities: row.activities ?? undefined,
+    whoShouldJoin: row.who_should_join ?? undefined,
+    membershipExpectations: row.membership_expectations ?? undefined,
     meetingDays: [...new Set(meetings.map((meeting) => dayNames[meeting.day_of_week]).filter(Boolean))],
     meetingDate: firstMeeting?.recurrence_note ?? (meetings.length ? "Weekly" : "Schedule TBA"),
     meetingTime: bellPeriod ? `Period ${bellPeriod.period}` : start ? `${start}${end ? ` – ${end}` : ""}` : "TBA",
     location: firstMeeting?.location ?? "TBA",
-    commitment: 0,
+    commitment: Number(row.weekly_commitment_hours ?? 0),
     communityService: row.is_community_service,
     stem: row.is_stem,
     officers: officers.map((officer) => ({ role: officer.title, name: officer.display_name ?? "Officer", avatarUrl: officer.avatar_path ?? undefined })),
@@ -91,6 +97,7 @@ export function mapApprovedClub(row: ApprovedClubRow): Club {
     slug: `${slugify(row.club_name)}-${row.id.slice(0, 8)}`,
     name: row.club_name,
     category: row.category,
+    tags: [row.category],
     description: row.description,
     meetingDays: row.meeting_days
       ? row.meeting_days.split(/\s*,\s*/).filter(Boolean)
@@ -118,7 +125,7 @@ export const getAllClubs = cache(async (limit?: number): Promise<Club[]> => {
   const supabase = await createServerClient();
   let canonicalQuery = supabase
     .from("clubs")
-    .select("id, slug, name, short_description, interest_tags, is_stem, is_community_service, active_start_date, active_end_date, google_classroom_code, contact_email, join_policy, recruiting_status, status, created_by, created_at, updated_at")
+    .select("*")
     .eq("status", "published")
     .order("name");
   if (limit !== undefined) canonicalQuery = canonicalQuery.limit(limit);

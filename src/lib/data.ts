@@ -3,7 +3,13 @@ export type Club = {
   slug: string;
   name: string;
   category: string;
+  tags?: string[];
   description: string;
+  fullDescription?: string;
+  mission?: string;
+  activities?: string;
+  whoShouldJoin?: string;
+  membershipExpectations?: string;
   meetingDays: string[];
   meetingDate: string;
   meetingTime: string;

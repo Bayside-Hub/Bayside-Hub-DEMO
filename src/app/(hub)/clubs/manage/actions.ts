@@ -9,6 +9,7 @@ import { parseMeetingInput, parseClubPostInput } from "@/lib/club-content-input"
 import { MAX_IMAGE_UPLOAD_BYTES } from "@/lib/upload-limits";
 import { parseClubShareLinkInput } from "@/lib/club-share-link";
 import { attendanceExpiresAt, isAttendanceStartAllowed, isTemporaryAttendanceDuration } from "@/lib/attendance-session";
+import { parseClubProfileInput } from "@/lib/club-profile-input";
 
 const denied = { ok: false, message: "You no longer have permission for this club. Refresh or contact your advisor." };
 const invalid = { ok: false, message: "Check the required fields, lengths and dates, then try again." };
@@ -51,18 +52,23 @@ export async function updateManagedClub(formData: FormData) {
   const slug = String(formData.get("slug") ?? "");
   const context = await managerContext(clubId);
   if (!context) return denied;
-  const description = String(formData.get("short_description") ?? "").trim();
+  const profile = parseClubProfileInput(formData);
   const contactEmail = String(formData.get("contact_email") ?? "").trim();
-  if (description.length < 10 || description.length > 1000) return invalid;
+  if (!profile) return { ok: false, message: "Add a short and full introduction, 1–3 unique tags, and a valid weekly commitment." };
   if (contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) return invalid;
-  const tags = String(formData.get("interest_tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean).slice(0, 12);
   const activeStartDate = parseOptionalDateOnly(String(formData.get("active_start_date") ?? ""));
   const activeEndDate = parseOptionalDateOnly(String(formData.get("active_end_date") ?? ""));
   if (activeStartDate === undefined || activeEndDate === undefined) return invalid;
   if (activeStartDate && activeEndDate && activeEndDate < activeStartDate) return invalid;
   const { data, error } = await context.supabase.from("clubs").update({
-    short_description: description,
-    interest_tags: tags,
+    short_description: profile.shortDescription,
+    full_description: profile.fullDescription,
+    mission: profile.mission,
+    activities: profile.activities,
+    who_should_join: profile.whoShouldJoin,
+    membership_expectations: profile.membershipExpectations,
+    weekly_commitment_hours: profile.weeklyCommitmentHours,
+    interest_tags: profile.tags,
     is_stem: formData.get("is_stem") === "on",
     is_community_service: formData.get("is_community_service") === "on",
     active_start_date: activeStartDate,
@@ -75,6 +81,8 @@ export async function updateManagedClub(formData: FormData) {
   revalidatePath(`/clubs/${slug}`);
   revalidatePath(`/clubs/manage/${clubId}`);
   revalidatePath("/clubs");
+  revalidatePath("/clubs/quiz");
+  revalidatePath("/search");
   return saved;
 }
 

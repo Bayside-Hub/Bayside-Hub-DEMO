@@ -14,7 +14,7 @@ const base: Omit<Club, "slug" | "name" | "category" | "meetingDays" | "community
 
 test("rankClubs explains and ranks strong matches first", () => {
   const clubs: Club[] = [
-    { ...base, slug: "robotics", name: "Robotics", category: "STEM", meetingDays: ["Tue"], communityService: false, stem: true },
+    { ...base, slug: "robotics", name: "Robotics", category: "STEM", tags: ["STEM", "Robotics", "Competition"], meetingDays: ["Tue"], communityService: false, stem: true },
     { ...base, slug: "art", name: "Art", category: "Arts & Crafts", meetingDays: ["Fri"], communityService: false, stem: false },
   ];
   const ranked = rankClubs(clubs, {
@@ -27,4 +27,14 @@ test("rankClubs explains and ranks strong matches first", () => {
   assert.equal(ranked[0].club.slug, "robotics");
   assert.ok(ranked[0].reasons.length >= 3);
   assert.ok(ranked[0].score > ranked[1].score);
+});
+
+test("rankClubs uses all three profile tags instead of only the primary category", () => {
+  const clubs: Club[] = [
+    { ...base, slug: "robotics", name: "Robotics", category: "STEM", tags: ["STEM", "Robotics", "Competition"], meetingDays: ["Tue"], communityService: false, stem: true },
+    { ...base, slug: "science", name: "Science", category: "STEM", tags: ["STEM", "Research"], meetingDays: ["Tue"], communityService: false, stem: true },
+  ];
+  const ranked = rankClubs(clubs, { interests: ["Competition"], days: [], wantsStem: false, wantsService: false, maxCommitment: 0 });
+  assert.equal(ranked[0].club.slug, "robotics");
+  assert.match(ranked[0].reasons[0], /Competition/);
 });

@@ -285,6 +285,12 @@ export type ClubRow = {
   slug: string;
   name: string;
   short_description: string;
+  full_description: string;
+  mission: string | null;
+  activities: string | null;
+  who_should_join: string | null;
+  membership_expectations: string | null;
+  weekly_commitment_hours: number;
   interest_tags: string[];
   is_stem: boolean;
   is_community_service: boolean;

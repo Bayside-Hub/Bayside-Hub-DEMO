@@ -15,9 +15,11 @@ export function rankClubs(clubs: Club[], answers: QuizAnswers): ClubRecommendati
     .map((club) => {
       let score = 0;
       const reasons: string[] = [];
-      if (answers.interests.includes(club.category)) {
-        score += 5;
-        reasons.push(`Matches your ${club.category} interest`);
+      const selected = new Set(answers.interests.map((interest) => interest.toLocaleLowerCase()));
+      const matchedTags = (club.tags ?? [club.category]).filter((tag) => selected.has(tag.toLocaleLowerCase()));
+      if (matchedTags.length) {
+        score += matchedTags.length * 5;
+        reasons.push(`Matches ${matchedTags.join(" and ")}`);
       }
       if (answers.days.length && club.meetingDays.some((day) => answers.days.includes(day))) {
         score += 3;
@@ -31,9 +33,9 @@ export function rankClubs(clubs: Club[], answers: QuizAnswers): ClubRecommendati
         score += 3;
         reasons.push("Offers community service");
       }
-      if (!answers.maxCommitment || club.commitment <= answers.maxCommitment) {
+      if (!answers.maxCommitment || !club.commitment || club.commitment <= answers.maxCommitment) {
         score += 2;
-        reasons.push("Fits your weekly time commitment");
+        reasons.push(club.commitment ? "Fits your weekly time commitment" : "Offers flexible participation");
       }
       return { club, score, reasons };
     })

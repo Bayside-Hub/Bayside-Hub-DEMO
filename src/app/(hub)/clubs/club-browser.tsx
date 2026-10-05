@@ -4,36 +4,37 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ClubCard } from "@/components/cards";
 import { PageHeader } from "@/components/ui";
-import { clubCategories, type Club } from "@/lib/data";
+import type { Club } from "@/lib/data";
 
 const meetingDays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
 export default function ClubBrowser({ clubs, joinedClubSlugs, signedIn }: { clubs: Club[]; joinedClubSlugs: string[]; signedIn: boolean }) {
   const [scope, setScope] = useState<"all" | "mine">("all");
-  const [category, setCategory] = useState<string>("All");
+  const [tag, setTag] = useState<string>("All");
   const [day, setDay] = useState<string>("Any");
   const [commitment, setCommitment] = useState(0);
   const [query, setQuery] = useState("");
   const [grouped, setGrouped] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const joined = useMemo(() => new Set(joinedClubSlugs), [joinedClubSlugs]);
+  const tags = useMemo(() => [...new Set(clubs.flatMap((club) => club.tags?.length ? club.tags : [club.category]))].sort((a, b) => a.localeCompare(b)), [clubs]);
 
   const filtered = useMemo(() => {
     return clubs.filter((club) => {
       if (scope === "mine" && !joined.has(club.slug)) return false;
-      if (category !== "All" && club.category !== category) return false;
+      if (tag !== "All" && !(club.tags ?? [club.category]).includes(tag)) return false;
       if (day !== "Any" && !club.meetingDays.includes(day)) return false;
-      if (commitment > 0 && club.commitment < commitment) return false;
+      if (commitment > 0 && club.commitment > commitment) return false;
       if (
         query &&
-        !`${club.name} ${club.category} ${club.description}`
+        !`${club.name} ${club.category} ${(club.tags ?? []).join(" ")} ${club.description} ${club.fullDescription ?? ""} ${club.activities ?? ""}`
           .toLowerCase()
           .includes(query.toLowerCase())
       )
         return false;
       return true;
     });
-  }, [clubs, category, day, commitment, query, scope, joined]);
+  }, [clubs, tag, day, commitment, query, scope, joined]);
 
   const byCategory = useMemo(() => {
     const map = new Map<string, Club[]>();
@@ -46,13 +47,13 @@ export default function ClubBrowser({ clubs, joinedClubSlugs, signedIn }: { club
   }, [filtered]);
 
   const clear = () => {
-    setCategory("All");
+    setTag("All");
     setDay("Any");
     setCommitment(0);
     setQuery("");
   };
 
-  const hasFilters = category !== "All" || day !== "Any" || commitment > 0 || query !== "";
+  const hasFilters = tag !== "All" || day !== "Any" || commitment > 0 || query !== "";
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
@@ -139,15 +140,15 @@ export default function ClubBrowser({ clubs, joinedClubSlugs, signedIn }: { club
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-1 text-sm font-semibold text-ink">Category:</span>
-          {["All", ...clubCategories].map((c) => (
+          <span className="mr-1 text-sm font-semibold text-ink">Interest tag:</span>
+          {["All", ...tags].map((c) => (
             <button
               key={c}
               type="button"
-              onClick={() => setCategory(c)}
-              aria-pressed={category === c}
+              onClick={() => setTag(c)}
+              aria-pressed={tag === c}
               className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                category === c
+                tag === c
                   ? "bg-navy text-cream"
                   : "bg-content-bg text-ink hover:bg-cream/10"
               }`}
@@ -185,11 +186,11 @@ export default function ClubBrowser({ clubs, joinedClubSlugs, signedIn }: { club
               max={5}
               value={commitment}
               onChange={(e) => setCommitment(Number(e.target.value))}
-              aria-label="Minimum weekly commitment hours"
+              aria-label="Maximum weekly commitment hours"
               className="h-2 w-40 cursor-pointer appearance-none rounded-full bg-content-bg accent-powder"
             />
             <span className="w-8 text-sm font-semibold text-powder">
-              {commitment > 0 ? `${commitment}+hours` : "Any"}
+              {commitment > 0 ? `≤${commitment} hours` : "Any"}
             </span>
           </div>
         </div>

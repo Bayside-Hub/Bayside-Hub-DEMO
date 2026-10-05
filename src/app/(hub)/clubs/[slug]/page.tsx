@@ -96,6 +96,7 @@ export default async function ClubDetailPage({
               Community Service
             </span>
           )}
+          {(club.tags ?? [club.category]).map((tag) => <span key={tag} className="rounded-full border border-[#263a99]/30 bg-[#97b4de]/20 px-3 py-1.5 font-semibold text-[#263a99]">#{tag}</span>)}
           </div>
         </div>
         <div>
@@ -158,6 +159,18 @@ export default async function ClubDetailPage({
               : `${club.joinPolicy === "instant" ? "Open membership · join instantly" : "Approval required"}. Sign in with your NYC student account to continue.`}
           </p>
         </div>
+      </section>
+
+      <section className="mt-8 rounded-[20px] bg-[#f0ebe5]/95 p-6 text-[#2a2829] lg:p-10" aria-labelledby="club-about-title">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#263a99]">Discover the Club</p>
+        <h2 id="club-about-title" className="mt-2 font-display text-3xl font-bold uppercase sm:text-4xl">About {club.name}</h2>
+        <p className="mt-5 max-w-4xl whitespace-pre-wrap text-base leading-8 text-[#2a2829]/80">{club.fullDescription ?? club.description}</p>
+        {[club.mission, club.activities, club.whoShouldJoin, club.membershipExpectations].some(Boolean) ? <div className="mt-8 grid gap-4 md:grid-cols-2">
+          {club.mission ? <ProfileSection title="Our mission" body={club.mission} /> : null}
+          {club.activities ? <ProfileSection title="What we do" body={club.activities} /> : null}
+          {club.whoShouldJoin ? <ProfileSection title="Who should join" body={club.whoShouldJoin} /> : null}
+          {club.membershipExpectations ? <ProfileSection title="What members can expect" body={club.membershipExpectations} /> : null}
+        </div> : null}
       </section>
 
       {(club.links?.length || club.googleClassroomCode) && (
@@ -273,14 +286,10 @@ export default async function ClubDetailPage({
 
         <aside className="card-gradient rounded-[10px] p-6">
           <h2 className="font-display text-xl font-bold uppercase text-cream">About</h2>
-          <p className="mt-3 text-sm leading-6 text-cream/75">
-            {club.name} welcomes all students. Meetings are open — come by to
-            see what we&apos;re about, no commitment required. Join our Remind
-            channel or ask an officer for details.
-          </p>
+          <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-cream/75">{club.whoShouldJoin ?? `${club.name} welcomes interested students. Visit a meeting or contact the Club to learn whether it is a good fit.`}</p>
           <ul className="mt-4 space-y-2 text-sm text-cream/75">
-            <li>• Open to all grades</li>
             <li>• {commitmentLabel}</li>
+            <li>• {club.recruitingStatus === "recruiting" ? "Currently welcoming new members" : club.recruitingStatus === "paused" ? "Membership requests are temporarily paused" : "Membership is currently closed"}</li>
           </ul>
           <div className="mt-5 border-t border-white/10 pt-4">
             <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-powder">Advisor{advisors.length === 1 ? "" : "s"}</h3>
@@ -322,4 +331,8 @@ export default async function ClubDetailPage({
       <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium text-[#f0ebe5]"><span>CLUB PROFILE</span><span className="h-px flex-1 bg-[#f0ebe5]" /><span className="text-[#dcd0be]">{club.name.toUpperCase()}</span></footer>
     </div>
   );
+}
+
+function ProfileSection({ title, body }: { title: string; body: string }) {
+  return <article className="rounded-[14px] border border-[#2a2829]/10 bg-white/65 p-5"><h3 className="font-display text-lg font-bold uppercase text-[#263a99]">{title}</h3><p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[#2a2829]/75">{body}</p></article>;
 }
