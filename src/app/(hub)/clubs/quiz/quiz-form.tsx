@@ -14,7 +14,17 @@ export default function QuizForm({ clubs }: { clubs: Club[] }) {
   const [wantsService, setWantsService] = useState(false);
   const [maxCommitment, setMaxCommitment] = useState(3);
   const [submitted, setSubmitted] = useState(false);
-  const interestOptions = useMemo(() => [...new Set(clubs.flatMap((club) => club.tags?.length ? club.tags : [club.category]))].sort((a, b) => a.localeCompare(b)), [clubs]);
+  const [tagQuery, setTagQuery] = useState("");
+  const interestOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    clubs.flatMap((club) => club.tags?.length ? club.tags : [club.category]).forEach((tag) => counts.set(tag, (counts.get(tag) ?? 0) + 1));
+    return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([tag]) => tag);
+  }, [clubs]);
+  const visibleInterests = useMemo(() => {
+    const query = tagQuery.trim().toLocaleLowerCase();
+    if (query) return interestOptions.filter((tag) => tag.toLocaleLowerCase().includes(query)).slice(0, 20);
+    return [...new Set([...interests, ...interestOptions.slice(0, 12)])];
+  }, [interestOptions, interests, tagQuery]);
 
   const results = useMemo(() => rankClubs(clubs, {
     interests,
@@ -53,7 +63,7 @@ export default function QuizForm({ clubs }: { clubs: Club[] }) {
 
   return (
     <form onSubmit={(event) => { event.preventDefault(); setSubmitted(true); }} className="space-y-8">
-      <fieldset><legend className="font-display text-xl font-bold uppercase text-cream">1. What interests you?</legend><p className="mt-1 text-sm text-cream/60">Choose any topics that sound like you. These come directly from current Club profiles.</p><div className="mt-3 flex flex-wrap gap-2">{interestOptions.map((interest) => <button key={interest} type="button" aria-pressed={interests.includes(interest)} onClick={() => toggle(interest, interests, setInterests)} className={`rounded-full px-4 py-2 text-sm font-semibold ${interests.includes(interest) ? "bg-orange text-black" : "border border-line text-cream"}`}>{interest}</button>)}</div></fieldset>
+      <fieldset><legend className="font-display text-xl font-bold uppercase text-cream">1. What interests you?</legend><p className="mt-1 text-sm text-cream/60">Choose from the most-used topics, or search all {interestOptions.length} Club tags.</p>{interestOptions.length > 12 ? <label className="mt-4 block"><span className="sr-only">Search all Club tags</span><input type="search" value={tagQuery} onChange={(event) => setTagQuery(event.target.value)} placeholder="Search all tags…" className="h-11 w-full max-w-md rounded-control border border-line bg-white/5 px-4 text-sm text-cream outline-none placeholder:text-cream/40 focus:border-powder" /></label> : null}<div className="mt-3 flex flex-wrap gap-2">{visibleInterests.map((interest) => <button key={interest} type="button" aria-pressed={interests.includes(interest)} onClick={() => toggle(interest, interests, setInterests)} className={`rounded-full px-4 py-2 text-sm font-semibold ${interests.includes(interest) ? "bg-orange text-black" : "border border-line text-cream"}`}>{interest}</button>)}</div>{tagQuery && !visibleInterests.length ? <p className="mt-3 text-sm text-cream/60">No tags match “{tagQuery}”. Try a broader word.</p> : null}</fieldset>
       <fieldset><legend className="font-display text-xl font-bold uppercase text-cream">2. When are you available?</legend><div className="mt-3 flex flex-wrap gap-2">{days.map((day) => <button key={day} type="button" aria-pressed={availableDays.includes(day)} onClick={() => toggle(day, availableDays, setAvailableDays)} className={`rounded-full px-4 py-2 text-sm font-semibold ${availableDays.includes(day) ? "bg-orange text-black" : "border border-line text-cream"}`}>{day}</button>)}</div></fieldset>
       <fieldset><legend className="font-display text-xl font-bold uppercase text-cream">3. What do you want to get from a Club?</legend><div className="mt-3 flex flex-wrap gap-5"><label className="flex items-center gap-2 text-sm text-cream"><input type="checkbox" checked={wantsStem} onChange={(event) => setWantsStem(event.target.checked)} /> STEM activities</label><label className="flex items-center gap-2 text-sm text-cream"><input type="checkbox" checked={wantsService} onChange={(event) => setWantsService(event.target.checked)} /> Community service</label></div></fieldset>
       <label className="block font-display text-xl font-bold uppercase text-cream">4. Maximum hours per week: {maxCommitment || "Any"}<input type="range" min={0} max={10} value={maxCommitment} onChange={(event) => setMaxCommitment(Number(event.target.value))} className="mt-3 block w-full accent-orange" /></label>

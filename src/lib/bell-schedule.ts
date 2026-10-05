@@ -45,3 +45,37 @@ export function getCurrentBellPeriod(now: Date) {
   const minutes = Number(value("hour")) * 60 + Number(value("minute"));
   return bellPeriods.find((item) => minutes >= item.startMinutes && minutes < item.endMinutes) ?? null;
 }
+
+function getNewYorkClock(now: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: BAYSIDE_TIME_ZONE,
+    weekday: "short",
+    hour: "numeric",
+    minute: "numeric",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value;
+  return {
+    weekday: value("weekday"),
+    hour: Number(value("hour")),
+    minutes: Number(value("hour")) * 60 + Number(value("minute")),
+  };
+}
+
+export function getTimeOfDayGreeting(now: Date) {
+  const { hour } = getNewYorkClock(now);
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+export function getSchoolDayStatus(now: Date) {
+  const period = getCurrentBellPeriod(now);
+  if (period) return { label: `Period ${period.period}`, detail: `${period.start}–${period.end}`, period };
+
+  const { weekday, minutes } = getNewYorkClock(now);
+  if (weekday === "Sat" || weekday === "Sun") return { label: "No classes today", detail: "Weekend", period: null };
+  if (minutes < bellPeriods[0].startMinutes) return { label: "Before school", detail: `Period 1 begins at ${bellPeriods[0].start}`, period: null };
+  if (minutes >= bellPeriods[bellPeriods.length - 1].endMinutes) return { label: "School day finished", detail: `The last period ended at ${bellPeriods[bellPeriods.length - 1].end}`, period: null };
+  return { label: "Passing time", detail: "Your next period begins shortly", period: null };
+}

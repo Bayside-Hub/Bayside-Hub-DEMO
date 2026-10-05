@@ -4,6 +4,7 @@ import type { Announcement, EventItem, Opportunity } from "@/lib/data";
 import type { StudentDashboard } from "@/lib/student-dashboard";
 import type { SessionUser } from "@/lib/supabase/types";
 import DashboardPersonalCards from "./dashboard-personal-cards";
+import DashboardNow from "./dashboard-now";
 
 const roleLabels: Record<SessionUser["role"], string> = {
   student: "Student",
@@ -50,7 +51,7 @@ export default function HomeDashboard({
   return <div className="profile-backdrop min-h-full px-5 py-7 sm:px-8 lg:px-10"><div className="mx-auto max-w-7xl">
     <header className="overflow-hidden rounded-panel border border-line bg-card shadow-[0_24px_80px_-52px_rgba(88,154,239,.75)]">
       <div className="grid gap-6 bg-[radial-gradient(circle_at_10%_0%,rgba(151,191,244,.34),transparent_34%),radial-gradient(circle_at_92%_30%,rgba(255,142,104,.25),transparent_30%)] px-6 py-7 sm:px-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-powder">{today}</p><h1 className="mt-2 font-display text-3xl font-bold text-ink sm:text-4xl">Good to see you, {firstName}.</h1><p className="mt-2 text-sm text-muted">Here is the latest from your Bayside Hub.</p></div>
+        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-powder">{today}</p><DashboardNow firstName={firstName} /></div>
         <div className="flex flex-wrap gap-2"><span className="inline-flex items-center rounded-full border border-line bg-content-bg px-4 py-2 text-xs font-bold text-ink">{roleLabels[user.role]}</span><Link href="/profile" className="rounded-full bg-navy px-4 py-2 text-xs font-bold text-cream">Open my profile</Link></div>
       </div>
     </header>
