@@ -29,7 +29,8 @@ select role, count(*) from public.profiles group by role;
 2. `supabase/custom_permissions.sql`：自定义权限、社团权限查询、网站文字与管理日志。
 3. `supabase/editable_support_content.sql`：可编辑的 Support FAQ 与 Help Guide。
 4. `supabase/site_cms_content.sql`：扩展首页、About、Support、站点名称与页脚 CMS 字段。
-5. `supabase/chat_recent_messages.sql`：聊天显示最新 100 条，而不是最早 100 条。
+5. `supabase/top_school_notice.sql`：顶部全校通知文字、背景/文字颜色与显示开关。
+6. `supabase/chat_recent_messages.sql`：聊天显示最新 100 条，而不是最早 100 条。
 6. `supabase/club_attendance.sql`：Club 活动临时/永久验证码、二维码签到与签到记录。
 7. `supabase/attendance_scheduling.sql`：可提前创建 Quick Attendance，并在设定开始时间后才开放签到。
 8. `supabase/club_fair_qr_links.sql`：展会用可设有效期、可撤销的 Club 页面二维码链接。

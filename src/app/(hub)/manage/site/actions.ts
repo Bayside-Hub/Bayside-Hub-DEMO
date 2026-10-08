@@ -29,6 +29,7 @@ export async function saveSiteText(_state: string, form: FormData) {
   const optionalKeys = new Set(["footer_contact", "support_location", "school_notice_text"]);
   if (!Object.hasOwn(siteTextDefaults, key) || (!body && !optionalKeys.has(key)) || body.length > 4000) return "Enter 1–4,000 characters in a supported field; optional fields may be blank.";
   if (["school_notice_background", "school_notice_text_color"].includes(key) && !/^#[0-9a-f]{6}$/i.test(body)) return "Enter a six-digit hex color, such as #ff8500.";
+  if (key === "school_notice_enabled" && !["true", "false"].includes(body)) return "Choose whether the notice is on or off.";
   const rawTime = String(form.get("publish_at") ?? "");
   const publishAt = rawTime ? new Date(rawTime) : null;
   if (publishAt && Number.isNaN(publishAt.getTime())) return "Enter a valid publication time.";

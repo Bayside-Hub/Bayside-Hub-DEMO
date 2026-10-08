@@ -94,6 +94,7 @@ checks and the existing release checklist are complete.
      public text settings, publication guards and management audit
    - `supabase/editable_support_content.sql` — editable Support FAQs and Help Guide content
    - `supabase/site_cms_content.sql` — expanded Home, About, Support, identity, and footer CMS fields
+   - `supabase/top_school_notice.sql` — compact global notice content, color controls, and visibility switch
    - `supabase/chat_recent_messages.sql` — latest messages in chronological order
    - `supabase/club_attendance.sql` — temporary/permanent Club check-in codes, QR redemption, and attendance records
    - `supabase/attendance_scheduling.sql` — advance start times for Quick Attendance codes with server-enforced opening windows

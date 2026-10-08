@@ -28,6 +28,7 @@ export default async function HubShell({ children }: { children: ReactNode }) {
     <div className="theme-dark flex h-full flex-col overflow-hidden bg-content-bg">
       {user ? <RealtimeNotifications userId={user.id} /> : null}
       <SchoolNotice
+        enabled={siteText.school_notice_enabled === "true"}
         message={siteText.school_notice_text}
         backgroundColor={siteText.school_notice_background}
         textColor={siteText.school_notice_text_color}

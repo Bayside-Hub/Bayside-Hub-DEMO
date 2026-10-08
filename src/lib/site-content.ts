@@ -23,6 +23,7 @@ export const siteTextDefaults = {
   support_location: "For in-person help, visit the S.O. office in Room 131.",
   footer_note: "A student-built community platform for Bayside High School.",
   footer_contact: "",
+  school_notice_enabled: "true",
   school_notice_text: "No clubs may meet on October 14th or 15th due to the Fall Open House, and no unsupervised clubs may meet on floors 2, 3, and 4 on October 8th and October 22nd due to PSAT preparations.",
   school_notice_background: "#ff8500",
   school_notice_text_color: "#101010",
@@ -35,7 +36,7 @@ export type SiteTextKey = keyof typeof siteTextDefaults;
 export const siteContentSections: Array<{
   title: string;
   description: string;
-  fields: Array<{ key: SiteTextKey; label: string; help: string; rows?: number; optional?: boolean }>;
+  fields: Array<{ key: SiteTextKey; label: string; help: string; rows?: number; optional?: boolean; control?: "text" | "color" | "toggle" }>;
 }> = [
   { title: "Site identity", description: "Shared naming and footer information.", fields: [
     { key: "site_name", label: "Site name", help: "Displayed in the global footer." },
@@ -43,9 +44,10 @@ export const siteContentSections: Array<{
     { key: "footer_contact", label: "Public contact", help: "Optional public email, office, or phone information.", rows: 2, optional: true },
   ] },
   { title: "Top school notice", description: "A dismissible, school-wide notice displayed above the site navigation.", fields: [
-    { key: "school_notice_text", label: "Notice text", help: "Leave this blank to hide the notice everywhere. Publishing new text makes the notice reappear for people who dismissed an older version.", rows: 4, optional: true },
-    { key: "school_notice_background", label: "Background color", help: "Enter a six-digit hex color, for example #ff8500." },
-    { key: "school_notice_text_color", label: "Text and icon color", help: "Enter a six-digit hex color, for example #101010." },
+    { key: "school_notice_enabled", label: "Notice visibility", help: "Turn the school-wide top notice on or off without deleting its content.", control: "toggle" },
+    { key: "school_notice_text", label: "Notice text", help: "Publishing new text makes the notice reappear for people who dismissed an older version.", rows: 3, optional: true },
+    { key: "school_notice_background", label: "Background color", help: "Choose a color or enter a six-digit hex value.", control: "color" },
+    { key: "school_notice_text_color", label: "Text and icon color", help: "Choose a readable contrasting color.", control: "color" },
   ] },
   { title: "Home page", description: "Main landing-page message and action.", fields: [
     { key: "home_title", label: "Hero title", help: "Primary home-page heading." },

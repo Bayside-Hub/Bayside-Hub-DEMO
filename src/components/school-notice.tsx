@@ -18,10 +18,12 @@ function noticeKey(message: string, backgroundColor: string, textColor: string) 
 }
 
 export default function SchoolNotice({
+  enabled,
   message,
   backgroundColor,
   textColor,
 }: {
+  enabled: boolean;
   message: string;
   backgroundColor: string;
   textColor: string;
@@ -36,7 +38,7 @@ export default function SchoolNotice({
     return () => window.clearTimeout(timer);
   }, [storageKey]);
 
-  if (!message.trim() || !visible) return null;
+  if (!enabled || !message.trim() || !visible) return null;
 
   const style = {
     "--notice-background": safeColor(backgroundColor, "#ff8500"),
