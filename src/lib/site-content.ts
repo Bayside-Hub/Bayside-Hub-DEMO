@@ -23,6 +23,9 @@ export const siteTextDefaults = {
   support_location: "For in-person help, visit the S.O. office in Room 131.",
   footer_note: "A student-built community platform for Bayside High School.",
   footer_contact: "",
+  school_notice_text: "No clubs may meet on October 14th or 15th due to the Fall Open House, and no unsupervised clubs may meet on floors 2, 3, and 4 on October 8th and October 22nd due to PSAT preparations.",
+  school_notice_background: "#ff8500",
+  school_notice_text_color: "#101010",
   support_faqs: "Who can I contact about a technical issue? || Submit a Technical Support request below. The support team will respond in the request conversation.\nHow do I track a request? || Open My requests on this page to view its status and replies.",
   manual_content: "STUDENTS\nSign in with your school account, browse Activities & Clubs, join a Club, follow Updates & Calendar, and track requests from Support.\n\nADVISORS & CLUB OFFICERS\nOpen Manage My Clubs to update Club information, meetings, members, announcements, media, attendance, treasury records, and the Constitution.\n\nADMINISTRATORS\nUse Admin to review Club applications, announcements, support requests, accounts, and public content.\n\nNEED HELP?\nSubmit a Support request and continue the conversation from My requests.",
 };
@@ -38,6 +41,11 @@ export const siteContentSections: Array<{
     { key: "site_name", label: "Site name", help: "Displayed in the global footer." },
     { key: "footer_note", label: "Footer description", help: "Short public description shown on every page.", rows: 3 },
     { key: "footer_contact", label: "Public contact", help: "Optional public email, office, or phone information.", rows: 2, optional: true },
+  ] },
+  { title: "Top school notice", description: "A dismissible, school-wide notice displayed above the site navigation.", fields: [
+    { key: "school_notice_text", label: "Notice text", help: "Leave this blank to hide the notice everywhere. Publishing new text makes the notice reappear for people who dismissed an older version.", rows: 4, optional: true },
+    { key: "school_notice_background", label: "Background color", help: "Enter a six-digit hex color, for example #ff8500." },
+    { key: "school_notice_text_color", label: "Text and icon color", help: "Enter a six-digit hex color, for example #101010." },
   ] },
   { title: "Home page", description: "Main landing-page message and action.", fields: [
     { key: "home_title", label: "Hero title", help: "Primary home-page heading." },

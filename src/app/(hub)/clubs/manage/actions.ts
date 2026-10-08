@@ -196,6 +196,42 @@ export async function revokeClubShareLink(formData: FormData) {
   return { ok: true, message: "QR link revoked. Existing printed codes will no longer open the Club." };
 }
 
+function randomInviteCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
+  return `BH-${Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("")}`;
+}
+
+export async function createClubInviteCode(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context) return denied;
+  const label = String(formData.get("label") ?? "").trim();
+  const maxUsesValue = String(formData.get("max_uses") ?? "").trim();
+  const maxUses = maxUsesValue ? Number(maxUsesValue) : null;
+  const expiresValue = String(formData.get("expires_at") ?? "").trim();
+  const expiresAt = expiresValue ? new Date(expiresValue) : null;
+  if (label.length < 3 || label.length > 100 || (maxUses !== null && (!Number.isInteger(maxUses) || maxUses < 1 || maxUses > 1000)) || (expiresAt && (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() < Date.now() + 5 * 60_000))) return invalid;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const { error } = await context.supabase.from("club_invite_codes").insert({ club_id: clubId, code: randomInviteCode(), label, expires_at: expiresAt?.toISOString() ?? null, max_uses: maxUses, created_by: context.user.id });
+    if (!error) { revalidatePath(`/clubs/manage/${clubId}`); return { ok: true, message: "Registration invite code created." }; }
+    if (["42P01", "PGRST205"].includes(error.code)) return { ok: false, message: "Apply student_registration_invites.sql before creating invite codes." };
+    if (error.code !== "23505") return failed;
+  }
+  return { ok: false, message: "A unique invite code could not be generated. Try again." };
+}
+
+export async function revokeClubInviteCode(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const inviteId = String(formData.get("invite_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context || !inviteId) return denied;
+  const { data, error } = await context.supabase.from("club_invite_codes").update({ active: false }).eq("id", inviteId).eq("club_id", clubId).select("id").maybeSingle();
+  if (error || !data) return failed;
+  revalidatePath(`/clubs/manage/${clubId}`);
+  return { ok: true, message: "Invite code revoked." };
+}
+
 export async function publishClubAnnouncement(formData: FormData) {
   const clubId = String(formData.get("club_id") ?? "");
   const context = await managerContext(clubId);

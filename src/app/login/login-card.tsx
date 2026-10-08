@@ -13,7 +13,7 @@ export function LoginCardSkeleton() {
   return (
     <div>
       <LoginBrand />
-      <h1 className="mt-7 text-4xl font-bold text-black sm:text-5xl">Log In</h1>
+      <h1 className="mt-6 text-4xl font-bold text-black sm:text-5xl">Welcome</h1>
       <p className="mt-3 text-sm text-[#5f6368]">
         Sign in with your NYC student account to get started.
       </p>
@@ -29,9 +29,9 @@ export default function LoginCard() {
   return (
     <div>
       <LoginBrand />
-      <p className="login-welcome mt-3 text-sm text-black sm:text-base">Welcome back!</p>
-      <h1 className="mt-2 text-4xl font-bold text-black sm:text-5xl xl:text-6xl">Log In</h1>
-      <p className="login-description mt-3 text-sm leading-6 text-[#5f6368]">Sign in with your school email, or create a new school account below.</p>
+      <p className="login-welcome mt-3 text-xs font-bold uppercase tracking-[0.2em] text-[#5269bd]">Bayside starts here</p>
+      <h1 className="mt-2 text-4xl font-bold tracking-[-0.04em] text-black sm:text-5xl">Welcome</h1>
+      <p className="login-description mt-3 text-sm leading-6 text-[#5f6368]">Sign in with your school email, or create your Bayside Hub account.</p>
 
       {error === "auth" && (
         <p className="mt-4 rounded-light bg-orange/10 px-3 py-2 text-xs font-medium text-orange">

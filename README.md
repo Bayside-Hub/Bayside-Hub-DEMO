@@ -98,6 +98,7 @@ checks and the existing release checklist are complete.
    - `supabase/club_attendance.sql` — temporary/permanent Club check-in codes, QR redemption, and attendance records
    - `supabase/attendance_scheduling.sql` — advance start times for Quick Attendance codes with server-enforced opening windows
    - `supabase/club_fair_qr_links.sql` — expiring, revocable public QR links for Club fair displays
+   - `supabase/student_registration_invites.sql` — required student OSIS/grade registration fields and multi-Club registration invite codes
    - `supabase/announcement_cms_workflow.sql` — private autosaved announcement drafts and scheduled publication
    - `supabase/announcement_calendar_enhancements.sql` — announcement priority,
      pinning and expiry plus administrator-managed calendar layers and CSV imports

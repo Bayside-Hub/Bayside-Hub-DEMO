@@ -7,6 +7,7 @@ export type Profile = {
   avatar_url: string | null;
   role: Role;
   grade_level: number | null;
+  osis_number: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -76,6 +77,8 @@ export type Database = {
       club_attendance_sessions: TableDefinition<ClubAttendanceSessionRow>;
       club_attendance_records: TableDefinition<ClubAttendanceRecordRow>;
       club_share_links: TableDefinition<ClubShareLinkRow>;
+      club_invite_codes: TableDefinition<ClubInviteCodeRow>;
+      club_invite_redemptions: TableDefinition<{ id: string; invite_id: string; club_id: string; profile_id: string; redeemed_at: string }>;
       announcement_versions: TableDefinition<AnnouncementVersionRow>;
       announcement_drafts: TableDefinition<AnnouncementDraftRow>;
       calendar_sources: TableDefinition<CalendarSourceRow>;
@@ -441,6 +444,19 @@ export type ClubShareLinkRow = {
   club_id: string;
   label: string;
   expires_at: string;
+  active: boolean;
+  created_by: string;
+  created_at: string;
+};
+
+export type ClubInviteCodeRow = {
+  id: string;
+  club_id: string;
+  code: string;
+  label: string;
+  expires_at: string | null;
+  max_uses: number | null;
+  use_count: number;
   active: boolean;
   created_by: string;
   created_at: string;

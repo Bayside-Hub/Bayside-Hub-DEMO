@@ -9,6 +9,7 @@ import { bellPeriodFromStartTime, bellPeriods } from "@/lib/bell-schedule";
 import { addClubLink, addClubMeeting, publishClubAnnouncement, removeClubLink, reviewClubMembership, updateManagedClub } from "../actions";
 import ClubGovernancePanel from "./club-governance-panel";
 import FairQrPanel from "./fair-qr-panel";
+import InviteCodePanel from "./invite-code-panel";
 
 const input = "h-11 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink outline-none focus:border-powder focus:ring-2 focus:ring-powder/20";
 const MEMBER_PAGE_SIZE = 25;
@@ -77,6 +78,7 @@ export default async function ManageClubPage({ params, searchParams }: { params:
     { href: "#media", label: "Media", icon: MediaIcon },
     { href: "#attendance", label: "Attendance", icon: AttendanceIcon },
     { href: "#fair-qr", label: "Fair QR", icon: MediaIcon },
+    { href: "#invite-codes", label: "Invite codes", icon: UserIcon },
     { href: `/clubs/manage/${id}/finance`, label: "Finance", icon: GearIcon },
     { href: `/clubs/manage/${id}/tables`, label: "Tables", icon: CalendarIcon },
     { href: `/clubs/manage/${id}/operations`, label: "Constitution", icon: CalendarIcon },
@@ -155,6 +157,7 @@ export default async function ManageClubPage({ params, searchParams }: { params:
         </main>
 
         <aside className="space-y-6">
+          <InviteCodePanel clubId={club.id} />
           <FairQrPanel clubId={club.id} clubName={club.name} />
           <section id="members" className="scroll-mt-28 rounded-[20px] border border-line bg-card p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-powder">People</p><h2 className="mt-1 text-xl font-bold text-ink">Membership requests</h2></div>{memberships?.length ? <span className="rounded-full bg-orange px-2.5 py-1 text-xs font-bold text-black">{memberships.length}</span> : null}</div>

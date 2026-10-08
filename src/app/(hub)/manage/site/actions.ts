@@ -26,8 +26,9 @@ export async function saveSiteText(_state: string, form: FormData) {
   if (!context) return "You do not have permission to edit public content.";
   const key = String(form.get("key") ?? "");
   const body = String(form.get("body") ?? "").trim();
-  const optionalKeys = new Set(["footer_contact", "support_location"]);
-  if (!Object.hasOwn(siteTextDefaults, key) || (!body && !optionalKeys.has(key)) || body.length > 4000) return "Enter 1–4,000 characters in a supported field; only contact and location may be blank.";
+  const optionalKeys = new Set(["footer_contact", "support_location", "school_notice_text"]);
+  if (!Object.hasOwn(siteTextDefaults, key) || (!body && !optionalKeys.has(key)) || body.length > 4000) return "Enter 1–4,000 characters in a supported field; optional fields may be blank.";
+  if (["school_notice_background", "school_notice_text_color"].includes(key) && !/^#[0-9a-f]{6}$/i.test(body)) return "Enter a six-digit hex color, such as #ff8500.";
   const rawTime = String(form.get("publish_at") ?? "");
   const publishAt = rawTime ? new Date(rawTime) : null;
   if (publishAt && Number.isNaN(publishAt.getTime())) return "Enter a valid publication time.";

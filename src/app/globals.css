@@ -112,6 +112,62 @@ body {
   transition: background-color 220ms ease, color 220ms ease;
 }
 
+.school-notice-shell {
+  flex: none;
+  padding: 8px;
+  background: #0b0d13;
+}
+
+.school-notice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 14px;
+  border-radius: 15px;
+  background: var(--notice-background);
+  color: var(--notice-foreground);
+  padding: 15px 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.school-notice p {
+  margin: 0;
+  font-size: clamp(0.9rem, 1.25vw, 1.12rem);
+  font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.school-notice-icon {
+  width: 25px;
+  height: 25px;
+  margin-top: 1px;
+  flex: none;
+}
+
+.school-notice button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin-top: -2px;
+  place-items: center;
+  border-radius: 999px;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.school-notice button svg { width: 23px; height: 23px; }
+.school-notice button:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+.school-notice button:active { transform: scale(0.94); }
+.school-notice button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+@media (max-width: 639px) {
+  .school-notice-shell { padding: 6px; }
+  .school-notice { gap: 10px; border-radius: 12px; padding: 12px; }
+  .school-notice-icon { width: 22px; height: 22px; }
+}
+
 
 ::selection { background: var(--powder); color: #111111; }
 
@@ -150,19 +206,21 @@ body {
   .card-gradient:hover { border-color: rgba(151, 191, 244, 0.36); box-shadow: 0 24px 60px -34px rgba(151, 191, 244, 0.95); }
 }
 
-/* Figma login backdrop: layered midnight-blue gradient */
+/* Login backdrop: responsive layered motion that never controls layout. */
 .login-gradient {
-  background: linear-gradient(180deg, #141d40 33%, #1b2548 51%, #0b1127 59%, #10102b 70%);
+  background:
+    radial-gradient(circle at 15% 18%, rgba(84, 137, 216, .34), transparent 28rem),
+    radial-gradient(circle at 82% 76%, rgba(224, 113, 109, .23), transparent 32rem),
+    linear-gradient(145deg, #071022 0%, #111b3e 48%, #090d22 100%);
 }
 
 @keyframes login-orb-intro {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.35); }
-  55% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
-  100% { opacity: 0.75; transform: translate(-50%, -50%) scale(1); }
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.45); }
+  100% { opacity: .9; transform: translate(-50%, -50%) scale(1); }
 }
 
 @keyframes login-card-intro {
-  from { opacity: 0; transform: translateY(22px) scale(0.98); }
+  from { opacity: 0; transform: translateY(24px) scale(0.975); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
@@ -171,32 +229,28 @@ body {
   to { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes login-ambient-drift {
-  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.22; }
-  50% { transform: translate3d(54px, -34px, 0) scale(1.14); opacity: 0.42; }
-  100% { transform: translate3d(-28px, 42px, 0) scale(0.92); opacity: 0.25; }
+@keyframes login-orbit-drift {
+  from { transform: translate3d(-3%, 2%, 0) rotate(-8deg); }
+  to { transform: translate3d(4%, -3%, 0) rotate(10deg); }
 }
 
-.login-intro-orb { animation: login-orb-intro 650ms cubic-bezier(.2,.8,.2,1) both; }
-.login-intro-card { animation: login-card-intro 420ms cubic-bezier(.2,.8,.2,1) both; }
-.login-intro-copy { animation: login-copy-intro 520ms 80ms ease-out both; }
-.login-ambient { animation: login-ambient-drift 12s ease-in-out infinite alternate; contain: paint; }
-.login-ambient-one { left: 4%; top: 10%; width: 18rem; height: 18rem; background: rgba(96, 150, 180, .28); box-shadow: 0 0 110px rgba(96, 150, 180, .5); }
-.login-ambient-two { right: 5%; bottom: 4%; width: 22rem; height: 22rem; background: rgba(41, 69, 168, .3); box-shadow: 0 0 130px rgba(151, 180, 222, .34); animation-delay: -4s; animation-duration: 12s; }
+.login-grid { opacity: .16; background-image: linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px); background-size: 64px 64px; mask-image: linear-gradient(to bottom, black, transparent 78%); }
+.login-intro-orb { background: rgba(188, 221, 255, .78); box-shadow: 0 0 110px rgba(123, 184, 255, .7); animation: login-orb-intro 900ms cubic-bezier(.2,.8,.2,1) both; }
+.login-intro-card { animation: login-card-intro 560ms cubic-bezier(.2,.8,.2,1) both; }
+.login-intro-copy { animation: login-copy-intro 620ms 80ms ease-out both; }
+.login-orbit { border: 1px solid rgba(185,217,255,.18); border-radius: 42% 58% 54% 46%; animation: login-orbit-drift 11s ease-in-out infinite alternate; }
+.login-orbit-one { left: -12vw; top: 12vh; width: min(48rem, 70vw); height: min(48rem, 70vw); }
+.login-orbit-two { right: -10vw; bottom: -26vh; width: min(42rem, 68vw); height: min(42rem, 68vw); animation-duration: 15s; animation-delay: -5s; }
 
-/* Keep the complete sign-in form visible on common 13–14 inch laptop screens. */
-@media (min-width: 1280px) and (max-height: 900px) {
-  .login-intro-card { padding-top: 1.5rem; padding-bottom: 1.5rem; }
-  .login-intro-card .login-brand,
-  .login-intro-card .login-welcome,
-  .login-intro-card .login-description,
-  .login-intro-card .login-domain-note,
-  .login-intro-card .login-card-support,
-  .login-intro-card .login-card-policies { display: none; }
-  .login-intro-card h1 { margin-top: .5rem; font-size: 2.5rem; line-height: 1; }
-  .login-intro-card .login-email { margin-top: 1rem; padding-top: .875rem; }
-  .login-intro-card .login-email form { gap: .625rem; }
-  .login-intro-card .login-oauth { margin-top: 1rem; }
+@media (max-width: 1023px) {
+  .login-page { overflow-y: auto; }
+  .login-intro-card { animation-duration: 440ms; }
+}
+
+@media (max-width: 639px) {
+  .login-nav-wordmark { display: none; }
+  .login-orbit-one { left: -55vw; top: 8vh; width: 120vw; height: 120vw; }
+  .login-orbit-two { right: -60vw; bottom: -10vh; width: 115vw; height: 115vw; }
 }
 
 @media (max-width: 639px) {
@@ -208,7 +262,7 @@ body {
   .login-intro-orb,
   .login-intro-card { animation: none; }
   .login-intro-copy { animation: none; }
-  .login-ambient { animation: none; }
+  .login-orbit { animation: none; }
 }
 
 /* Cream glow used on the profile name banner */

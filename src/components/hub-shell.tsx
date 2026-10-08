@@ -7,6 +7,8 @@ import MobileBottomNav from "./mobile-bottom-nav";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
 import RealtimeNotifications from "./realtime-notifications";
+import SchoolNotice from "./school-notice";
+import { getSiteText } from "@/lib/site-content";
 
 /**
  * Shared application chrome for public and authenticated pages.
@@ -14,7 +16,7 @@ import RealtimeNotifications from "./realtime-notifications";
  * replace the site's navigation model or move the main content unexpectedly.
  */
 export default async function HubShell({ children }: { children: ReactNode }) {
-  const user = await getCurrentUser();
+  const [user, siteText] = await Promise.all([getCurrentUser(), getSiteText()]);
   let unreadNotifications = 0;
   if (user && isSupabaseConfigured()) {
     const db = await createServerClient();
@@ -25,6 +27,11 @@ export default async function HubShell({ children }: { children: ReactNode }) {
   return (
     <div className="theme-dark flex h-full flex-col overflow-hidden bg-content-bg">
       {user ? <RealtimeNotifications userId={user.id} /> : null}
+      <SchoolNotice
+        message={siteText.school_notice_text}
+        backgroundColor={siteText.school_notice_background}
+        textColor={siteText.school_notice_text_color}
+      />
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <a
           href="#main-content"
