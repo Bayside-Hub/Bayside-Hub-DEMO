@@ -44,6 +44,38 @@ export async function saveSiteText(_state: string, form: FormData) {
   return scheduled ? "Scheduled. Public text will change at the selected time." : "Saved. Public pages now use this text.";
 }
 
+export async function saveSchoolNotice(_state: string, form: FormData) {
+  const context = await siteEditor();
+  if (!context) return "You do not have permission to edit public content.";
+
+  const enabled = form.get("enabled") === "on" ? "true" : "false";
+  const text = String(form.get("text") ?? "").trim();
+  const background = String(form.get("background") ?? "").trim();
+  const textColor = String(form.get("text_color") ?? "").trim();
+  if (text.length > 4000) return "Notice text must be 4,000 characters or fewer.";
+  if (![background, textColor].every((color) => /^#[0-9a-f]{6}$/i.test(color))) {
+    return "Enter six-digit hex colors, such as #ff8500.";
+  }
+
+  const updatedAt = new Date().toISOString();
+  const rows = [
+    { key: "school_notice_enabled", body: enabled, updated_by: context.user.id, updated_at: updatedAt },
+    { key: "school_notice_text", body: text, updated_by: context.user.id, updated_at: updatedAt },
+    { key: "school_notice_background", body: background, updated_by: context.user.id, updated_at: updatedAt },
+    { key: "school_notice_text_color", body: textColor, updated_by: context.user.id, updated_at: updatedAt },
+  ];
+  const { error } = await context.db.from("site_content").upsert(rows);
+  if (error) return "Unable to save. Apply top_school_notice.sql and check your permissions.";
+
+  const keys = rows.map((row) => row.key);
+  await Promise.all([
+    context.db.from("site_content_scheduled").delete().in("key", keys),
+    context.db.from("site_content_drafts").delete().eq("user_id", context.user.id).in("key", keys),
+  ]);
+  revalidatePath("/", "layout");
+  return enabled === "true" ? "Saved. The notice is now visible." : "Saved. The notice is turned off, and its content is preserved.";
+}
+
 export async function restoreSiteTextVersion(_state: string, form: FormData) {
   const context = await siteEditor();
   if (!context) return "You do not have permission to edit public content.";
