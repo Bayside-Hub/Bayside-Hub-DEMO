@@ -86,6 +86,8 @@ checks and the existing release checklist are complete.
      view and restricts API execution of internal database functions
    - `supabase/club_communication.sql` — member-only Club chat, safe author
      display fields, RLS moderation rules, and Realtime publication
+   - `supabase/chat_safety_moderation.sql` — versioned chat-rule consent,
+     Advisor/Admin posting restrictions, restoration, and immutable moderation history
    - `supabase/opportunity_scholarships.sql` — enables Scholarship as an
      opportunity category on existing databases
    - `supabase/account_roles_and_review.sql` — Teacher defaults, scoped Advisor

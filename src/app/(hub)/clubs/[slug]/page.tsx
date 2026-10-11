@@ -232,7 +232,18 @@ export default async function ClubDetailPage({
       </section>
 
       {communication.available && club.id ? (
-        <ClubChat clubId={club.id} slug={club.slug} messages={communication.messages} currentUser={{ id: user!.id, name: user!.name, avatarUrl: user!.avatarUrl }} />
+        <ClubChat
+          clubId={club.id}
+          slug={club.slug}
+          messages={communication.messages}
+          currentUser={{ id: user!.id, name: user!.name, avatarUrl: user!.avatarUrl }}
+          moderationReady={communication.moderationReady}
+          agreed={communication.agreed}
+          restricted={communication.restricted}
+          restrictionReason={communication.restrictionReason}
+          canModerate={communication.canModerate}
+          moderationMembers={communication.moderationMembers}
+        />
       ) : user && club.id ? (
         <section className="mt-12 rounded-[18px] border border-dashed border-white/15 p-6 text-center">
           <h2 className="font-display text-xl font-semibold uppercase text-cream">Member chat</h2>

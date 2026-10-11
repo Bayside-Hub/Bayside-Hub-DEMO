@@ -74,6 +74,9 @@ export type Database = {
       club_media: TableDefinition<ClubMediaRow>;
       club_announcements: TableDefinition<ClubAnnouncementRow>;
       club_messages: TableDefinition<ClubMessageRow>;
+      club_chat_agreements: TableDefinition<ClubChatAgreementRow>;
+      club_chat_restrictions: TableDefinition<ClubChatRestrictionRow>;
+      club_chat_moderation_log: TableDefinition<ClubChatModerationLogRow>;
       club_attendance_sessions: TableDefinition<ClubAttendanceSessionRow>;
       club_attendance_records: TableDefinition<ClubAttendanceRecordRow>;
       club_share_links: TableDefinition<ClubShareLinkRow>;
@@ -167,6 +170,26 @@ export type Database = {
       get_club_chat_messages: {
         Args: { p_club_id: string; p_limit?: number };
         Returns: ClubChatMessage[];
+      };
+      get_club_chat_state: {
+        Args: { p_club_id: string; p_policy_version?: string };
+        Returns: ClubChatStateRow[];
+      };
+      get_club_chat_moderation_members: {
+        Args: { p_club_id: string };
+        Returns: ClubChatModerationMember[];
+      };
+      accept_club_chat_rules: {
+        Args: { p_club_id: string; p_policy_version?: string };
+        Returns: undefined;
+      };
+      can_post_club_chat: {
+        Args: { p_club_id: string; p_policy_version?: string };
+        Returns: boolean;
+      };
+      set_club_chat_restriction: {
+        Args: { p_club_id: string; p_profile_id: string; p_restricted: boolean; p_reason?: string | null };
+        Returns: undefined;
       };
       check_in_to_club: {
         Args: { p_code: string };
@@ -419,6 +442,50 @@ export type ClubMessageRow = {
   body: string;
   created_at: string;
   updated_at: string;
+};
+
+export type ClubChatAgreementRow = {
+  club_id: string;
+  profile_id: string;
+  policy_version: string;
+  accepted_at: string;
+};
+
+export type ClubChatRestrictionRow = {
+  club_id: string;
+  profile_id: string;
+  restricted: boolean;
+  reason: string | null;
+  restricted_by: string | null;
+  restricted_at: string | null;
+  restored_by: string | null;
+  restored_at: string | null;
+  updated_at: string;
+};
+
+export type ClubChatModerationLogRow = {
+  id: number;
+  club_id: string;
+  profile_id: string;
+  actor_id: string | null;
+  action: "restricted" | "restored";
+  reason: string | null;
+  created_at: string;
+};
+
+export type ClubChatStateRow = {
+  agreed: boolean;
+  restricted: boolean;
+  restriction_reason: string | null;
+  can_moderate: boolean;
+};
+
+export type ClubChatModerationMember = {
+  profile_id: string;
+  display_name: string;
+  restricted: boolean;
+  restriction_reason: string | null;
+  restricted_at: string | null;
 };
 
 export type ClubChatMessage = ClubMessageRow & {

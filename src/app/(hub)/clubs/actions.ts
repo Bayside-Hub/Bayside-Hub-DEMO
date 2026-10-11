@@ -6,8 +6,9 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getCurrentUser } from "@/lib/auth";
 import { clubCategories } from "@/lib/data";
 import { getClubBySlug } from "@/lib/clubs";
-import type { ClubChatMessage } from "@/lib/supabase/types";
+import type { ClubChatMessage, ClubChatModerationMember } from "@/lib/supabase/types";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { CLUB_CHAT_POLICY_VERSION, validChatModerationReason } from "@/lib/chat-policy";
 
 export type ActionState = { ok: boolean; message: string } | null;
 
@@ -233,22 +234,41 @@ export async function replyToMembershipDecision(formData: FormData): Promise<voi
 export type ClubCommunicationState = {
   available: boolean;
   messages: ClubChatMessage[];
+  moderationReady: boolean;
+  agreed: boolean;
+  restricted: boolean;
+  restrictionReason: string | null;
+  canModerate: boolean;
+  moderationMembers: ClubChatModerationMember[];
 };
 
 /** Load member-only chat through a safe RPC that never returns profile emails. */
 export async function getClubCommunication(clubId?: string): Promise<ClubCommunicationState> {
   const user = await getCurrentUser();
   if (!clubId || !user || !isSupabaseConfigured()) {
-    return { available: false, messages: [] };
+    return { available: false, messages: [], moderationReady: false, agreed: false, restricted: false, restrictionReason: null, canModerate: false, moderationMembers: [] };
   }
 
   const supabase = await createServerClient();
-  const { data, error } = await supabase.rpc("get_club_chat_messages", {
-    p_club_id: clubId,
-    p_limit: 200,
-  });
-  if (error) return { available: false, messages: [] };
-  return { available: true, messages: data ?? [] };
+  const [messageResult, stateResult] = await Promise.all([
+    supabase.rpc("get_club_chat_messages", { p_club_id: clubId, p_limit: 200 }),
+    supabase.rpc("get_club_chat_state", { p_club_id: clubId, p_policy_version: CLUB_CHAT_POLICY_VERSION }),
+  ]);
+  if (messageResult.error) return { available: false, messages: [], moderationReady: false, agreed: false, restricted: false, restrictionReason: null, canModerate: false, moderationMembers: [] };
+  const chatState = stateResult.data?.[0];
+  const memberResult = chatState?.can_moderate
+    ? await supabase.rpc("get_club_chat_moderation_members", { p_club_id: clubId })
+    : { data: [] as ClubChatModerationMember[], error: null };
+  return {
+    available: true,
+    messages: messageResult.data ?? [],
+    moderationReady: !stateResult.error && !memberResult.error,
+    agreed: chatState?.agreed === true,
+    restricted: chatState?.restricted === true,
+    restrictionReason: chatState?.restriction_reason ?? null,
+    canModerate: chatState?.can_moderate === true,
+    moderationMembers: memberResult.data ?? [],
+  };
 }
 
 export type ClubMessageActionState = {
@@ -275,6 +295,13 @@ export async function postClubMessage(
   }
 
   const supabase = await createServerClient();
+  const permission = await supabase.rpc("can_post_club_chat", { p_club_id: clubId, p_policy_version: CLUB_CHAT_POLICY_VERSION });
+  if (permission.error) return { ok: false, message: "Chat safety controls are not ready. Ask an Admin to apply chat_safety_moderation.sql." };
+  if (!permission.data) {
+    const state = await supabase.rpc("get_club_chat_state", { p_club_id: clubId, p_policy_version: CLUB_CHAT_POLICY_VERSION });
+    if (state.data?.[0]?.restricted) return { ok: false, message: "Your chat posting permission is paused. Contact the Club Advisor if you believe this is a mistake." };
+    return { ok: false, message: "Review and accept the Club chat rules before sending your first message." };
+  }
   const { error } = await supabase.from("club_messages").insert({
     club_id: clubId,
     author_id: user.id,
@@ -284,6 +311,43 @@ export async function postClubMessage(
 
   revalidatePath(`/clubs/${slug}`);
   return { ok: true, message: "Message sent." };
+}
+
+export async function acceptClubChatRules(formData: FormData) {
+  const user = await getCurrentUser();
+  const clubId = String(formData.get("club_id") ?? "").trim();
+  const slug = String(formData.get("slug") ?? "").trim();
+  const confirmed = formData.get("accept_rules") === "yes";
+  if (!user || !clubId || !slug || !confirmed || !isSupabaseConfigured()) return { ok: false, message: "Confirm that you will follow every chat rule." };
+  const supabase = await createServerClient();
+  const { error } = await supabase.rpc("accept_club_chat_rules", { p_club_id: clubId, p_policy_version: CLUB_CHAT_POLICY_VERSION });
+  if (error) return { ok: false, message: "The agreement could not be recorded. Ask an Admin to apply chat_safety_moderation.sql." };
+  revalidatePath(`/clubs/${slug}`);
+  return { ok: true, message: "Chat rules accepted. You can now take part in the conversation." };
+}
+
+export async function setClubChatRestriction(formData: FormData) {
+  const user = await getCurrentUser();
+  const clubId = String(formData.get("club_id") ?? "").trim();
+  const slug = String(formData.get("slug") ?? "").trim();
+  const profileId = String(formData.get("profile_id") ?? "").trim();
+  const restricted = formData.get("operation") === "restrict";
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!user || !clubId || !slug || !profileId || !isSupabaseConfigured()) return { ok: false, message: "Chat moderation is not available." };
+  if (restricted && !validChatModerationReason(reason)) return { ok: false, message: "Enter a specific reason between 3 and 500 characters." };
+  const supabase = await createServerClient();
+  const { error } = await supabase.rpc("set_club_chat_restriction", {
+    p_club_id: clubId,
+    p_profile_id: profileId,
+    p_restricted: restricted,
+    p_reason: reason || null,
+  });
+  if (error) {
+    if (["42501", "22023"].includes(error.code)) return { ok: false, message: error.code === "42501" ? "Only an Admin or this Club’s Advisor can change chat access." : "This member’s chat access cannot be changed with these details." };
+    return { ok: false, message: "Chat access was not changed. Apply chat_safety_moderation.sql and try again." };
+  }
+  revalidatePath(`/clubs/${slug}`);
+  return { ok: true, message: restricted ? "Chat posting permission paused and recorded." : "Chat posting permission restored and recorded." };
 }
 
 /** Messages are immutable; authors and Club managers may remove them. */
