@@ -3,6 +3,7 @@ import { requireStaff } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import CalendarManager from "./calendar-manager";
 import EventForm from "./event-form";
+import EventManager from "./event-manager";
 
 export default async function AdminEventsPage() {
   const user = await requireStaff();
@@ -14,13 +15,21 @@ export default async function AdminEventsPage() {
   ]);
   const calendars = calendarResult.data ?? [];
   const clubs = clubResult.data ?? [];
-  return <div className="mx-auto max-w-6xl px-6 py-8">
-    <PageHeader title="Events & calendars" subtitle="Create events and calendar layers, import dates, or mark holidays and cancelled Club meetings."/>
+  const eventCounts = (events ?? []).reduce<Record<string, number>>((counts, event) => {
+    if (event.calendar_id) counts[event.calendar_id] = (counts[event.calendar_id] ?? 0) + 1;
+    return counts;
+  }, {});
+
+  return <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+    <PageHeader title="Calendar control center" subtitle="Add an event in seconds, then search and edit everything from one page."/>
     {calendarResult.error ? <p role="alert" className="mt-6 rounded-card border border-orange/40 bg-card p-5 text-sm">Custom calendars require <code>announcement_calendar_enhancements.sql</code>.</p> : null}
-    {error ? <p role="alert" className="mt-6 rounded-card border border-orange/40 bg-card p-5">Events could not be loaded. Verify the core platform migration and Staff access.</p> : <div className="mt-7 grid gap-6 lg:grid-cols-[0.75fr_1.25fr]">
-      {user.role === "admin" && !calendarResult.error ? <CalendarManager calendars={calendars}/> : null}
-      <section className="rounded-card border border-line bg-card p-6"><h2 className="text-xl font-bold text-ink">New school event</h2><div className="mt-4"><EventForm calendars={calendars} clubs={clubs} canManageMeetingEffects={user.role === "admin"}/></div></section>
-      <section className="rounded-card border border-line bg-card p-6"><h2 className="text-xl font-bold text-ink">Calendar content</h2>{events?.length?<div className="mt-4 space-y-3">{events.map(event=><details key={event.id} className="rounded-control border border-line p-4"><summary className="cursor-pointer"><span className="font-bold text-ink">{event.title}</span><span className="ml-2 text-xs text-muted">{new Date(event.start_at).toLocaleString("en-US")} · {event.published?"published":"draft"}{event.meeting_effect === "all" ? " · No Club meetings" : event.meeting_effect === "club" ? ` · ${clubs.find(club => club.id === event.affected_club_id)?.name ?? "Club"} cancelled` : ""}{event.club_id?" · Club managed":""}{event.calendar_id ? ` · ${calendars.find(item=>item.id===event.calendar_id)?.name ?? "Custom calendar"}` : ""}</span></summary><div className="mt-4"><EventForm event={event} calendars={calendars} clubs={clubs} canManageMeetingEffects={user.role === "admin"}/>{event.club_id?<p className="mt-3 text-xs text-muted">This Club event may be edited here by Staff or in its assigned Club workspace.</p>:null}</div></details>)}</div>:<p className="mt-4 text-sm text-muted">No events yet.</p>}</section>
+    {error ? <p role="alert" className="mt-6 rounded-card border border-orange/40 bg-card p-5">Events could not be loaded. Verify the core platform migration and Staff access.</p> : <div className="mt-7 grid gap-6">
+      <section className="rounded-card border border-line bg-card p-5 sm:p-6">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-2"><div><h2 className="text-xl font-bold text-ink">Quick add</h2><p className="mt-1 text-sm text-muted">Only the name and start time are required.</p></div><span className="rounded-full bg-content-bg px-3 py-1 text-xs font-semibold text-muted">New events are public by default</span></div>
+        <EventForm calendars={calendars} clubs={clubs} canManageMeetingEffects={user.role === "admin"}/>
+      </section>
+      <EventManager events={events ?? []} calendars={calendars} clubs={clubs} canManageMeetingEffects={user.role === "admin"} now={new Date().toISOString()}/>
+      {user.role === "admin" && !calendarResult.error ? <CalendarManager calendars={calendars} eventCounts={eventCounts}/> : null}
     </div>}
   </div>;
 }

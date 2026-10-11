@@ -392,7 +392,8 @@ const eventTypes = ["school", "club", "sports", "festival", "spirit_week", "othe
 
 function eventInput(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
+  const descriptionInput = String(formData.get("description") ?? "").trim();
+  const description = descriptionInput || title;
   const eventType = String(formData.get("event_type") ?? "school");
   const startAt = parseOptionalIsoDateTime(String(formData.get("start_at") ?? ""));
   const endAt = parseOptionalIsoDateTime(String(formData.get("end_at") ?? ""));
@@ -428,6 +429,20 @@ export async function setCalendarActive(_prev: ActionState, formData: FormData):
   if (error || !id) return invalid();
   revalidatePath("/admin/events"); revalidatePath("/announcements");
   return { ok: true, message: "Calendar visibility updated." };
+}
+
+export async function deleteCalendar(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await getCurrentUser();
+  const id = String(formData.get("id") ?? "");
+  if (!user || user.role !== "admin") return { ok: false, message: "Admins only." };
+  if (!id || formData.get("confirm") !== "delete") return { ok: false, message: "Confirm deletion first." };
+  const db = await createServerClient();
+  const { count } = await db.from("events").select("id", { count: "exact", head: true }).eq("calendar_id", id);
+  if ((count ?? 0) > 0) return { ok: false, message: "Move or delete this calendar’s events before deleting the calendar." };
+  const { data, error } = await db.from("calendar_sources").delete().eq("id", id).select("id").maybeSingle();
+  if (error || !data) return { ok: false, message: "Calendar could not be deleted." };
+  revalidatePath("/admin/events"); revalidatePath("/announcements");
+  return { ok: true, message: "Empty calendar deleted." };
 }
 
 export async function importCalendarCsv(_prev: ActionState, formData: FormData): Promise<ActionState> {
