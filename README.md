@@ -119,6 +119,8 @@ checks and the existing release checklist are complete.
      richer field validation, CSV import, sorting, filtering, and duplication
    - `supabase/club_media_library.sql` — private-by-default Club media library,
      cover/gallery placement, Club post images, and reviewed school announcement images
+   - `supabase/club_media_processing.sql` — cropped WebP variants, image dimensions,
+     permission evidence, and database-enforced public alt-text requirements
    - `supabase/club_officer_avatars.sql` — self-managed board portraits with
      Club-scoped Storage policies for the public Meet the board section
    - `supabase/home_dashboard.sql` — one-query signed-in dashboard summary with
@@ -313,8 +315,10 @@ tested at both UI and action/API boundaries, and retention rules are school-appr
 
 ### Media and accessibility
 
-- [ ] Add Supabase Storage upload, crop, optimization, and deletion flows for club logos and event covers.
-- [ ] Require useful alt text for meaningful media and mark decorative media explicitly.
+- [x] Add preview, crop, WebP optimization, multi-size delivery, and deletion flows for Club media.
+- [x] Require useful alt text and a recorded sharing-permission basis for public Club media.
+- [ ] Extend the processed-image pipeline to Club logos and event covers.
+- [ ] Mark decorative media explicitly and enforce equivalent metadata outside Club media.
 - [ ] Complete WCAG AA contrast testing for all theme tokens and interaction states.
 - [ ] Add automated accessibility scans plus manual keyboard and screen-reader test scripts.
 - [ ] Add reduced-motion behavior and focus trapping for every future dialog or drawer.

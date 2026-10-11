@@ -6,7 +6,6 @@ import {
   deleteClubImage,
   removeClubOfficer,
   removeClubAdvisor,
-  uploadClubImage,
   updateClubPublication,
   updateClubImagePlacement,
   uploadOwnBoardAvatar,
@@ -14,6 +13,8 @@ import {
 } from "../actions";
 import type { ClubAdvisorRow, ClubAuditLogRow, ClubMediaRow, ClubOfficerRow, Role } from "@/lib/supabase/types";
 import AttendancePanel from "./attendance-panel";
+import ClubImageUploader from "./club-image-uploader";
+import { clubMediaPermissionOptions } from "@/lib/club-media";
 
 const input = "h-10 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink";
 
@@ -78,17 +79,13 @@ export default function ClubGovernancePanel({
 
       <section id="media" className="card-gradient scroll-mt-28 rounded-[18px] p-6">
         <h2 className="font-display text-xl font-bold uppercase text-cream">Media library</h2>
-        <p className="mt-2 text-sm text-cream/65">New photos are private by default. Choose Gallery or Club cover only for photos approved for public sharing.</p>
-        <ActionFeedbackForm action={uploadClubImage} className="mt-4 grid gap-3">
-          <input type="hidden" name="club_id" value={clubId} />
-          <label className="text-sm font-semibold text-cream">Choose a photo<input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" required className="mt-2 block w-full rounded-control border border-line bg-black/15 p-2 text-sm text-cream file:mr-3 file:rounded-full file:border-0 file:bg-cream file:px-4 file:py-2 file:font-bold file:text-navy" /></label>
-          <input name="title" maxLength={120} placeholder="Photo title (optional)" className={input} />
-          <input name="alt_text" required maxLength={240} placeholder="Describe the photo for screen-reader users" className={input} />
-          <label className="text-sm text-cream">Initial placement<select name="visibility" defaultValue="private" className={`${input} mt-1`}><option value="private">Private library</option><option value="gallery">Public gallery</option></select></label>
-          <label className="flex items-center gap-2 text-sm text-cream"><input type="checkbox" name="is_cover" /> Set as Club cover</label>
-          <button className="h-10 rounded-full bg-cream px-5 font-bold text-black">Upload photo</button>
-        </ActionFeedbackForm>
-        {media.length ? <ul className="mt-5 space-y-3">{media.map((item) => <li key={item.id} className="rounded-control border border-line p-3 text-sm"><div><p className="font-semibold text-cream">{item.title ?? "Club photo"}</p><p className="line-clamp-1 text-cream/60">{item.alt_text}</p></div><ActionFeedbackForm action={updateClubImagePlacement} className="mt-3 flex flex-wrap items-end gap-2"><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="media_id" value={item.id} /><label className="text-xs text-cream/70">Placement<select name="visibility" defaultValue={item.visibility} className={`${input} mt-1`}><option value="private">Private</option><option value="gallery">Gallery</option></select></label><label className="flex h-10 items-center gap-2 text-xs text-cream"><input type="checkbox" name="is_cover" defaultChecked={item.is_cover} /> Cover</label><button className="h-10 rounded-full bg-cream px-4 text-xs font-bold text-navy">Save</button></ActionFeedbackForm><ActionFeedbackForm action={deleteClubImage} className="mt-2"><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="media_id" value={item.id} /><button className="text-xs font-semibold text-orange">Delete</button></ActionFeedbackForm></li>)}</ul> : <p className="mt-4 text-sm text-cream/60">No photos uploaded yet.</p>}
+        <p className="mt-2 text-sm text-cream/65">Crop once, then Hatchx creates three compressed sizes automatically. Public images require useful alternative text and a confirmed sharing-permission record.</p>
+        <ClubImageUploader clubId={clubId} />
+        {media.length ? <ul className="mt-6 space-y-4">{media.map((item) => {
+          const previewPath = item.thumbnail_path ?? item.storage_path;
+          const previewUrl = new URL(`/storage/v1/object/public/club-media/${previewPath}`, process.env.NEXT_PUBLIC_SUPABASE_URL).toString();
+          return <li key={item.id} className="rounded-xl border border-line p-4 text-sm"><div className="flex gap-3"><Image src={previewUrl} alt="" width={96} height={72} className="h-20 w-24 shrink-0 rounded-lg object-cover" /><div className="min-w-0"><p className="font-semibold text-cream">{item.title ?? "Club photo"}</p><p className="mt-1 line-clamp-2 text-xs text-cream/60">{item.alt_text || "Alternative text needs review"}</p><p className="mt-1 text-[11px] text-cream/45">{item.medium_path ? "3 optimized sizes" : "Legacy single-size image"} · {item.permission_basis?.replaceAll("_", " ") ?? "permission not recorded"}</p></div></div><ActionFeedbackForm action={updateClubImagePlacement} className="mt-4 grid gap-3 border-t border-line pt-4"><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="media_id" value={item.id} /><input name="title" maxLength={120} defaultValue={item.title ?? ""} placeholder="Photo title (optional)" className={input} /><input name="alt_text" required minLength={10} maxLength={240} defaultValue={item.alt_text ?? ""} placeholder="Meaningful alternative text" className={input} /><label className="text-xs text-cream/70">Permission record<select name="permission_basis" required defaultValue={item.permission_basis && item.permission_basis !== "legacy_review_required" ? item.permission_basis : ""} className={`${input} mt-1`}><option value="" disabled>Choose permission</option>{clubMediaPermissionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label><textarea name="permission_note" maxLength={500} rows={2} defaultValue={item.permission_note ?? ""} placeholder="Permission note (optional)" className={`${input} h-auto py-2`} /><div className="flex flex-wrap items-end gap-2"><label className="text-xs text-cream/70">Placement<select name="visibility" defaultValue={item.visibility} className={`${input} mt-1`}><option value="private">Private</option><option value="gallery">Gallery</option></select></label><label className="flex h-10 items-center gap-2 text-xs text-cream"><input type="checkbox" name="is_cover" defaultChecked={item.is_cover} /> Cover</label></div><label className="flex items-start gap-2 text-xs leading-5 text-cream/70"><input type="checkbox" name="permission_confirmed" required className="mt-1" /> Confirm permission and accessibility details are accurate</label><button className="h-10 rounded-full bg-cream px-4 text-xs font-bold text-navy">Save image details</button></ActionFeedbackForm><ActionFeedbackForm action={deleteClubImage} className="mt-3"><input type="hidden" name="club_id" value={clubId} /><input type="hidden" name="media_id" value={item.id} /><button className="text-xs font-semibold text-orange">Delete all image sizes</button></ActionFeedbackForm></li>;
+        })}</ul> : <p className="mt-4 text-sm text-cream/60">No photos uploaded yet.</p>}
       </section>
 
       <div className="lg:col-span-2"><AttendancePanel clubId={clubId} /></div>

@@ -10,11 +10,15 @@ import { MAX_IMAGE_UPLOAD_BYTES } from "@/lib/upload-limits";
 import { parseClubShareLinkInput } from "@/lib/club-share-link";
 import { attendanceExpiresAt, isAttendanceStartAllowed, isTemporaryAttendanceDuration } from "@/lib/attendance-session";
 import { parseClubProfileInput } from "@/lib/club-profile-input";
+import { isClubMediaPermission, isMeaningfulAltText } from "@/lib/club-media";
 
 const denied = { ok: false, message: "You no longer have permission for this club. Refresh or contact your advisor." };
 const invalid = { ok: false, message: "Check the required fields, lengths and dates, then try again." };
 const failed = { ok: false, message: "Nothing was saved. Check your permissions and database setup, then try again." };
 const saved = { ok: true, message: "Saved successfully." };
+function missingMediaProcessingSchema(error: { code?: string; message?: string } | null) {
+  return Boolean(error && (["42703", "PGRST204"].includes(error.code ?? "") || /medium_path|permission_basis|thumbnail_path/i.test(error.message ?? "")));
+}
 
 /** Publication is a staff decision; club editors retain ordinary content access. */
 export async function updateClubPublication(formData: FormData) {
@@ -508,43 +512,82 @@ export async function removeClubLink(formData: FormData) {
 export async function uploadClubImage(formData: FormData) {
   const clubId = String(formData.get("club_id") ?? "");
   const context = await managerContext(clubId);
-  const image = formData.get("image");
+  const image = formData.get("image_large");
+  const medium = formData.get("image_medium");
+  const thumbnail = formData.get("image_thumbnail");
   const title = String(formData.get("title") ?? "").trim();
   const altText = String(formData.get("alt_text") ?? "").trim();
+  const permissionBasis = String(formData.get("permission_basis") ?? "");
+  const permissionNote = String(formData.get("permission_note") ?? "").trim();
+  const imageWidth = Number(formData.get("image_width"));
+  const imageHeight = Number(formData.get("image_height"));
   const visibility = formData.get("visibility") === "gallery" ? "gallery" : "private";
   const isCover = formData.get("is_cover") === "on";
   if (!context) return denied;
-  if (!(image instanceof File) || !altText || altText.length > 240 || title.length > 120) return invalid;
-  if (image.size <= 0 || image.size > MAX_IMAGE_UPLOAD_BYTES || !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(image.type)) return { ok: false, message: "Choose a JPG, PNG, WebP or GIF image up to 4 MB." };
-  const extension = ({ "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" } as Record<string, string>)[image.type];
-  const storagePath = `${clubId}/${crypto.randomUUID()}.${extension}`;
-  const { error: uploadError } = await context.supabase.storage.from("club-media").upload(storagePath, image, { contentType: image.type, upsert: false });
-  if (uploadError) return { ok: false, message: "Image upload failed. Check the club-media bucket, its policies and your access." };
-  const { data: insertedMedia, error: rowError } = await context.supabase.from("club_media").insert({
+  if (![image, medium, thumbnail].every((file) => file instanceof File && file.type === "image/webp" && file.size > 0 && file.size <= MAX_IMAGE_UPLOAD_BYTES)) return { ok: false, message: "Prepare all three optimized WebP sizes before uploading." };
+  if ((image as File).size + (medium as File).size + (thumbnail as File).size > MAX_IMAGE_UPLOAD_BYTES) return { ok: false, message: "The optimized image set is still too large. Crop closer or choose a smaller source." };
+  if (!isMeaningfulAltText(altText) || title.length > 120 || permissionNote.length > 500 || !isClubMediaPermission(permissionBasis) || formData.get("permission_confirmed") !== "on") return { ok: false, message: "Add meaningful alternative text and confirm a valid sharing-permission record." };
+  if (!Number.isInteger(imageWidth) || !Number.isInteger(imageHeight) || imageWidth < 1 || imageHeight < 1 || imageWidth > 12000 || imageHeight > 12000) return invalid;
+  const id = crypto.randomUUID();
+  const storagePath = `${clubId}/${id}-large.webp`;
+  const mediumPath = `${clubId}/${id}-medium.webp`;
+  const thumbnailPath = `${clubId}/${id}-thumbnail.webp`;
+  const files = [{ path: storagePath, file: image as File }, { path: mediumPath, file: medium as File }, { path: thumbnailPath, file: thumbnail as File }];
+  const uploaded: string[] = [];
+  for (const item of files) {
+    const { error } = await context.supabase.storage.from("club-media").upload(item.path, item.file, { contentType: "image/webp", cacheControl: "31536000", upsert: false });
+    if (error) {
+      if (uploaded.length) await context.supabase.storage.from("club-media").remove(uploaded);
+      return { ok: false, message: "Image upload failed. Apply club_media_processing.sql and check Storage access." };
+    }
+    uploaded.push(item.path);
+  }
+  let { data: insertedMedia, error: rowError } = await context.supabase.from("club_media").insert({
     club_id: clubId,
     media_type: "image",
     storage_path: storagePath,
+    medium_path: mediumPath,
+    thumbnail_path: thumbnailPath,
+    image_width: imageWidth,
+    image_height: imageHeight,
+    file_size: (image as File).size,
     title: title || null,
     alt_text: altText,
     uploaded_by: context.user.id,
     visibility,
     is_cover: false,
+    permission_basis: permissionBasis,
+    permission_note: permissionNote || null,
+    permission_confirmed_by: context.user.id,
+    permission_confirmed_at: new Date().toISOString(),
   }).select("id").maybeSingle();
+  let compatibilityUpload = false;
+  if (missingMediaProcessingSchema(rowError)) {
+    await context.supabase.storage.from("club-media").remove([mediumPath, thumbnailPath]);
+    uploaded.splice(0, uploaded.length, storagePath);
+    ({ data: insertedMedia, error: rowError } = await context.supabase.from("club_media").insert({ club_id: clubId, media_type: "image", storage_path: storagePath, title: title || null, alt_text: altText, uploaded_by: context.user.id, visibility, is_cover: false }).select("id").maybeSingle());
+    compatibilityUpload = !rowError;
+  }
   // Storage and Postgres are separate systems; roll back the object when its
   // metadata row fails so an inaccessible orphan file is not retained.
   if (rowError) {
-    const { error: cleanupError } = await context.supabase.storage.from("club-media").remove([storagePath]);
-    return { ok: false, message: cleanupError ? "Photo metadata failed, and file cleanup failed. Contact Support before retrying." : "Photo metadata could not be saved. The uploaded file was removed." };
+    const { error: cleanupError } = await context.supabase.storage.from("club-media").remove(uploaded);
+    return { ok: false, message: cleanupError ? "Photo metadata failed, and file cleanup failed. Contact Support before retrying." : "Photo metadata could not be saved. Apply club_media_processing.sql; uploaded files were removed." };
   }
   if (isCover && insertedMedia) {
-    const { error: clearCoverError } = await context.supabase.from("club_media").update({ is_cover: false }).eq("club_id", clubId).neq("id", insertedMedia.id);
+    const { data: previousCover } = await context.supabase.from("club_media").select("id").eq("club_id", clubId).eq("is_cover", true).neq("id", insertedMedia.id).maybeSingle();
+    const { error: clearCoverError } = await context.supabase.from("club_media").update({ is_cover: false }).eq("club_id", clubId).eq("is_cover", true).neq("id", insertedMedia.id);
     const { error: setCoverError } = clearCoverError
       ? { error: clearCoverError }
       : await context.supabase.from("club_media").update({ is_cover: true }).eq("id", insertedMedia.id).eq("club_id", clubId);
-    if (setCoverError) return { ok: false, message: "Photo uploaded, but its cover placement could not be saved. You can retry from the media library." };
+    if (setCoverError) {
+      if (previousCover) await context.supabase.from("club_media").update({ is_cover: true }).eq("id", previousCover.id).eq("club_id", clubId);
+      return { ok: false, message: "Photo uploaded, but its cover placement could not be saved. The previous cover was preserved." };
+    }
   }
   revalidatePath(`/clubs/manage/${clubId}`);
   revalidatePath("/clubs", "layout");
+  if (compatibilityUpload) return { ok: true, message: "Photo uploaded in compatibility mode. Apply club_media_processing.sql to retain all sizes and permission records." };
   return { ok: true, message: isCover ? "Photo uploaded and set as the Club cover." : visibility === "gallery" ? "Photo uploaded to the public gallery." : "Photo uploaded privately to the media library." };
 }
 
@@ -555,12 +598,29 @@ export async function updateClubImagePlacement(formData: FormData) {
   if (!context || !mediaId) return denied;
   const visibility = formData.get("visibility") === "gallery" ? "gallery" : "private";
   const isCover = formData.get("is_cover") === "on";
-  if (isCover) await context.supabase.from("club_media").update({ is_cover: false }).eq("club_id", clubId).neq("id", mediaId);
-  const { data, error } = await context.supabase.from("club_media").update({ visibility, is_cover: isCover }).eq("id", mediaId).eq("club_id", clubId).select("id").maybeSingle();
-  if (error || !data) return failed;
+  const title = String(formData.get("title") ?? "").trim();
+  const altText = String(formData.get("alt_text") ?? "").trim();
+  const permissionBasis = String(formData.get("permission_basis") ?? "");
+  const permissionNote = String(formData.get("permission_note") ?? "").trim();
+  if (!isMeaningfulAltText(altText) || title.length > 120 || permissionNote.length > 500 || !isClubMediaPermission(permissionBasis) || formData.get("permission_confirmed") !== "on") return { ok: false, message: "Add meaningful alternative text and confirm a valid sharing-permission record." };
+  const { data: previousCover } = isCover ? await context.supabase.from("club_media").select("id").eq("club_id", clubId).eq("is_cover", true).neq("id", mediaId).maybeSingle() : { data: null };
+  if (isCover) {
+    const { error } = await context.supabase.from("club_media").update({ is_cover: false }).eq("club_id", clubId).eq("is_cover", true).neq("id", mediaId);
+    if (error) return failed;
+  }
+  let { data, error } = await context.supabase.from("club_media").update({ title: title || null, alt_text: altText, permission_basis: permissionBasis, permission_note: permissionNote || null, permission_confirmed_by: context.user.id, permission_confirmed_at: new Date().toISOString(), visibility, is_cover: isCover }).eq("id", mediaId).eq("club_id", clubId).select("id").maybeSingle();
+  let compatibilityUpdate = false;
+  if (missingMediaProcessingSchema(error)) {
+    ({ data, error } = await context.supabase.from("club_media").update({ title: title || null, alt_text: altText, visibility, is_cover: isCover }).eq("id", mediaId).eq("club_id", clubId).select("id").maybeSingle());
+    compatibilityUpdate = !error;
+  }
+  if (error || !data) {
+    if (previousCover) await context.supabase.from("club_media").update({ is_cover: true }).eq("id", previousCover.id).eq("club_id", clubId);
+    return failed;
+  }
   revalidatePath(`/clubs/manage/${clubId}`);
   revalidatePath("/clubs", "layout");
-  return { ok: true, message: "Photo placement updated." };
+  return { ok: true, message: compatibilityUpdate ? "Photo details saved in compatibility mode. Apply club_media_processing.sql to retain permission records." : "Photo details and permission record updated." };
 }
 
 export async function deleteClubImage(formData: FormData) {
@@ -574,11 +634,17 @@ export async function deleteClubImage(formData: FormData) {
     context.supabase.from("school_announcement_submissions").select("id", { count: "exact", head: true }).eq("media_id", mediaId),
   ]);
   if ((clubPostUses ?? 0) + (schoolPostUses ?? 0) + (submissionUses ?? 0) > 0) return { ok: false, message: "This photo is used by an announcement. Remove it from the announcement before deleting it." };
-  const { data: media } = await context.supabase.from("club_media").select("storage_path").eq("id", mediaId).eq("club_id", clubId).maybeSingle();
-  if (!media) return { ok: false, message: "Photo not found or no longer accessible." };
+  let { data: media, error: mediaError } = await context.supabase.from("club_media").select("storage_path,medium_path,thumbnail_path").eq("id", mediaId).eq("club_id", clubId).maybeSingle();
+  if (missingMediaProcessingSchema(mediaError)) {
+    const legacy = await context.supabase.from("club_media").select("storage_path").eq("id", mediaId).eq("club_id", clubId).maybeSingle();
+    media = legacy.data ? { ...legacy.data, medium_path: null, thumbnail_path: null } : null;
+    mediaError = legacy.error;
+  }
+  if (mediaError || !media) return { ok: false, message: "Photo not found or no longer accessible." };
   const { error: rowError } = await context.supabase.from("club_media").delete().eq("id", mediaId).eq("club_id", clubId);
   if (rowError) return { ok: false, message: rowError.code === "23503" ? "This photo is used by an announcement. Remove it from the announcement before deleting it." : "The media library entry could not be removed. Refresh and try again." };
-  const { error } = await context.supabase.storage.from("club-media").remove([media.storage_path]);
+  const paths = [media.storage_path, media.medium_path, media.thumbnail_path].filter((path): path is string => Boolean(path));
+  const { error } = await context.supabase.storage.from("club-media").remove(paths);
   if (error) return { ok: false, message: "The library entry was removed, but the stored file needs administrator cleanup." };
   revalidatePath(`/clubs/manage/${clubId}`);
   revalidatePath("/clubs", "layout");

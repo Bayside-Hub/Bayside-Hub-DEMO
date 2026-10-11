@@ -389,6 +389,15 @@ export type ClubMediaRow = {
   created_at: string;
   visibility: "private" | "gallery";
   is_cover: boolean;
+  medium_path: string | null;
+  thumbnail_path: string | null;
+  image_width: number | null;
+  image_height: number | null;
+  file_size: number | null;
+  permission_basis: "no_people" | "school_approved" | "participant_consent" | "guardian_consent" | "legacy_review_required" | null;
+  permission_note: string | null;
+  permission_confirmed_by: string | null;
+  permission_confirmed_at: string | null;
 };
 
 export type ClubAnnouncementRow = {

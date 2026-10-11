@@ -78,13 +78,13 @@ function mapDatabaseClub(
       title: announcement.title,
       body: announcement.body,
       date: announcement.created_at,
-      image: media.find((item) => item.id === announcement.media_id)?.storage_path,
+      image: media.find((item) => item.id === announcement.media_id)?.medium_path ?? media.find((item) => item.id === announcement.media_id)?.storage_path,
       imageAlt: media.find((item) => item.id === announcement.media_id)?.alt_text ?? undefined,
     })),
     media: media.filter((item) => item.visibility !== "private").map((item) => ({
       id: item.id,
       type: item.media_type,
-      path: item.storage_path,
+      path: item.medium_path ?? item.storage_path,
       title: item.title ?? undefined,
       alt: item.alt_text ?? undefined,
     })),
@@ -156,6 +156,8 @@ export const getAllClubs = cache(async (limit?: number): Promise<Club[]> => {
         .map((item) => ({
           ...item,
           storage_path: supabase.storage.from("club-media").getPublicUrl(item.storage_path).data.publicUrl,
+          medium_path: item.medium_path ? supabase.storage.from("club-media").getPublicUrl(item.medium_path).data.publicUrl : null,
+          thumbnail_path: item.thumbnail_path ? supabase.storage.from("club-media").getPublicUrl(item.thumbnail_path).data.publicUrl : null,
         })),
       (linkResult.data ?? []).filter((item) => item.club_id === row.id),
     ));
