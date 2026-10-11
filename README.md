@@ -200,9 +200,33 @@ Security, library, trip, building-permit, or parental-consent approvals.
 | `npm run lint`   | ESLint                           |
 | `npm run typecheck` | TypeScript validation          |
 | `npm test`       | Unit tests                        |
+| `npm run test:e2e` | Isolated Playwright browser tests |
+| `npm run test:e2e:ui` | Interactive Playwright runner |
+| `npm run test:e2e:visual` | Login screenshot comparison |
+| `npm run test:e2e:update` | Approve new screenshot baselines |
+| `npm run test:e2e:live` | Opt-in isolated test-account role checks |
 
-Pull requests and pushes to `main` run all five checks automatically through
+Pull requests and pushes to `main` run the quality and isolated browser checks through
 `.github/workflows/ci.yml`.
+
+### Browser end-to-end tests
+
+The default Playwright suite starts Hatchx on port `3100` with a non-production
+Supabase address. Authentication requests are intercepted inside the browser,
+so the registration tests verify the exact OSIS, grade, and normalized invite
+code payload without creating accounts or changing database records. Desktop
+Chromium and a Pixel 7 viewport both run in CI. Traces, screenshots, and video
+are retained on failure and uploaded as a CI artifact.
+
+Run `npx playwright install chromium` once on a development machine, then use
+`npm run test:e2e`. Visual baselines are intentionally separate so operating
+system font rendering does not make the main CI gate unstable. The first visual
+run creates a platform-specific baseline; later runs compare against it. Update
+that baseline only after reviewing the generated diff.
+
+Tests marked `@live` are skipped by default. Run them only against an isolated
+Supabase test project with disposable accounts. Set `HATCHX_E2E_BASE_URL`,
+`HATCHX_E2E_LIVE=1`, and the `HATCHX_E2E_*` credentials shown in `.env.example`.
 
 ## Project structure
 
