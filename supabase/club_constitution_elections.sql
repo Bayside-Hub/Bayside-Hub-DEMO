@@ -1,5 +1,5 @@
 -- Constitution versioning and Club officer election planning.
--- Safe to apply to both new and existing Bayside Hub databases.
+-- Safe to apply to both new and existing Hatchx databases.
 begin;
 
 create table if not exists public.club_constitution_versions (

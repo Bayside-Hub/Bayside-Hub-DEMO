@@ -13,7 +13,7 @@ export default function LoginPage() {
       <div className="login-orbit login-orbit-one pointer-events-none absolute" aria-hidden />
       <div className="login-orbit login-orbit-two pointer-events-none absolute" aria-hidden />
       <nav className="relative z-10 mx-auto flex w-full max-w-[1800px] items-center justify-between text-[#f7f8f0]">
-        <Link href="/" aria-label="Bayside Hub home" className="flex items-center gap-3 text-sm font-bold tracking-wide"><LogoMark className="h-12 w-12" variant="dark" /><span className="login-nav-wordmark">BAYSIDE HUB</span></Link>
+        <Link href="/" aria-label="Hatchx home" className="flex items-center gap-3 text-sm font-bold tracking-wide"><LogoMark className="h-12 w-12" variant="dark" /><span className="login-nav-wordmark">HATCHX</span></Link>
         <Link href="/support#technical-support" className="rounded-full border border-white/30 px-5 py-2 text-xs font-semibold hover:bg-white/10">NEED HELP?</Link>
       </nav>
       <main className="relative z-10 mx-auto grid min-h-[calc(100svh-88px)] w-full max-w-[1500px] items-center gap-8 py-7 lg:grid-cols-[minmax(0,1fr)_minmax(410px,530px)] lg:gap-12 lg:py-10">

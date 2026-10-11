@@ -1,4 +1,4 @@
--- Bayside Hub release security hardening.
+-- Hatchx release security hardening.
 -- Apply after club_governance.sql. This migration is idempotent.
 
 -- The legacy directory view bypassed the caller's RLS context. The application

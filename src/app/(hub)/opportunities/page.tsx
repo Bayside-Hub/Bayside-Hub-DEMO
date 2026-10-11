@@ -44,7 +44,7 @@ export default function OpportunitiesPage() {
           </div>
         </section>
 
-        <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium text-ink"><span>OPPORTUNITIES</span><span className="h-px flex-1 bg-ink" /><span className="text-muted">BAYSIDE HUB</span></footer>
+        <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium text-ink"><span>OPPORTUNITIES</span><span className="h-px flex-1 bg-ink" /><span className="text-muted">HATCHX</span></footer>
       </div>
     </div>
   );

@@ -27,7 +27,7 @@ export default function Topbar({ user, unreadNotifications = 0 }: { user: Sessio
       <div className="flex min-w-0 items-center gap-3">
         <Link
           href="/"
-          aria-label="Bayside Hub home"
+          aria-label="Hatchx home"
           className="flex h-9 w-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-cream/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-powder lg:hidden"
         >
           <LogoMark className="h-8 w-8" />

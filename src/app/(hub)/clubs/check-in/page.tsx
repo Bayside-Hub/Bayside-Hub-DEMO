@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import CheckInForm from "./check-in-form";
 
-export const metadata = { title: "Club check-in", description: "Quick attendance check-in for Bayside Hub Clubs." };
+export const metadata = { title: "Club check-in", description: "Quick attendance check-in for Hatchx Clubs." };
 export const dynamic = "force-dynamic";
 
 export default async function ClubCheckInPage({ searchParams }: { searchParams: Promise<{ code?: string }> }) {

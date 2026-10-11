@@ -32,7 +32,7 @@ export default async function OpportunityCategoryPage({ config, query }: { confi
           </form>
           {opportunities.length ? <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{opportunities.map((opportunity) => <OpportunityResultCard key={opportunity.id} opportunity={opportunity} />)}</div> : <div className="mt-6 rounded-[10px] border border-dashed border-[#2a2829]/25 bg-[#f0ebe5]/60 px-6 py-12 text-center"><p className="font-semibold">{query ? "No matching opportunities" : `No active ${config.label.toLocaleLowerCase()} are posted yet.`}</p><p className="mt-2 text-sm text-[#6f6a6b]">{query ? "Try a broader search." : "Check back soon or ask your guidance counselor for current options."}</p></div>}
         </section>
-        <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium text-ink"><span>{config.label.toUpperCase()}</span><span className="h-px flex-1 bg-ink" /><span className="text-muted">BAYSIDE HUB</span></footer>
+        <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium text-ink"><span>{config.label.toUpperCase()}</span><span className="h-px flex-1 bg-ink" /><span className="text-muted">HATCHX</span></footer>
       </div>
     </div>
   );

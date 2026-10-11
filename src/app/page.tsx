@@ -79,7 +79,7 @@ export default async function Home() {
         </div>
         <div className="relative mx-auto flex max-w-7xl flex-col items-start px-6 pb-24 pt-20 sm:pt-28">
           <p className="font-display text-3xl font-bold tracking-wide text-cream sm:text-5xl lg:text-[61px] lg:leading-[75px]">
-            Welcome to Bayside Hub
+            Welcome to Hatchx
           </p>
           <h1 className="mt-4 font-display text-5xl font-bold uppercase leading-[1.05] tracking-wide text-cream sm:text-7xl lg:text-[96px] xl:text-[105px] xl:leading-[131px]">
             {text.data.home_title}

@@ -21,7 +21,7 @@ export default function DashboardNow({ firstName }: { firstName: string }) {
   return <>
     <div>
       <h1 className="mt-2 font-display text-3xl font-bold text-ink sm:text-4xl">{snapshot?.greeting ?? "Welcome"}, {firstName}.</h1>
-      <p className="mt-2 text-sm text-muted">Here is the latest from your Bayside Hub.</p>
+      <p className="mt-2 text-sm text-muted">Here is the latest from your Hatchx.</p>
     </div>
     <div aria-live="polite" className="mt-4 max-w-sm rounded-control border border-line bg-content-bg/85 px-4 py-3 shadow-sm">
       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-powder">Right now</p>

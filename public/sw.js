@@ -1,4 +1,4 @@
-const CACHE = "bayside-hub-assets-v3";
+const CACHE = "hatchx-assets-v4";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
@@ -30,12 +30,12 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("push", (event) => {
   let payload = {};
-  try { payload = event.data?.json() ?? {}; } catch { payload = { title: "Bayside Hub", body: event.data?.text() ?? "You have a new notification." }; }
-  event.waitUntil(self.registration.showNotification(payload.title || "Bayside Hub", {
+  try { payload = event.data?.json() ?? {}; } catch { payload = { title: "Hatchx", body: event.data?.text() ?? "You have a new notification." }; }
+  event.waitUntil(self.registration.showNotification(payload.title || "Hatchx", {
     body: payload.body || "You have a new notification.",
     icon: "/brand-logo-light.png",
     badge: "/icon.png",
-    tag: payload.id || "bayside-notification",
+    tag: payload.id || "hatchx-notification",
     requireInteraction: payload.kind === "emergency_announcement",
     data: { url: payload.href || "/notifications" },
   }));

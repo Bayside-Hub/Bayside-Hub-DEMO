@@ -1,4 +1,4 @@
--- Query indexes for the production access patterns used by Bayside Hub.
+-- Query indexes for the production access patterns used by Hatchx.
 -- Safe to run repeatedly after core_platform.sql.
 
 create index if not exists events_published_start_idx

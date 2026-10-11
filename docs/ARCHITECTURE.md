@@ -1,4 +1,4 @@
-# Bayside Hub architecture
+# Hatchx architecture
 
 This document explains the responsibility of each part of the application. Keep
 implementation details in code comments only when a future maintainer needs to

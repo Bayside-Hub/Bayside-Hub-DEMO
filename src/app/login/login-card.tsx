@@ -6,7 +6,7 @@ import EmailAccount from "./email-account";
 import { LogoMark } from "@/components/icons";
 
 function LoginBrand() {
-  return <div className="login-brand flex items-center gap-3"><LogoMark className="h-11 w-11 sm:h-12 sm:w-12" variant="light" /><p className="text-2xl font-bold text-[#4285f4] sm:text-3xl">Bayside Hub</p></div>;
+  return <div className="login-brand flex items-center gap-3"><LogoMark className="h-11 w-11 sm:h-12 sm:w-12" variant="light" /><p className="text-2xl font-bold text-[#4285f4] sm:text-3xl">Hatchx</p></div>;
 }
 
 export function LoginCardSkeleton() {
@@ -31,7 +31,7 @@ export default function LoginCard() {
       <LoginBrand />
       <p className="login-welcome mt-3 text-xs font-bold uppercase tracking-[0.2em] text-[#5269bd]">Bayside starts here</p>
       <h1 className="mt-2 text-4xl font-bold tracking-[-0.04em] text-black sm:text-5xl">Welcome</h1>
-      <p className="login-description mt-3 text-sm leading-6 text-[#5f6368]">Sign in with your school email, or create your Bayside Hub account.</p>
+      <p className="login-description mt-3 text-sm leading-6 text-[#5f6368]">Sign in with your school email, or create your Hatchx account.</p>
 
       {error === "auth" && (
         <p className="mt-4 rounded-light bg-orange/10 px-3 py-2 text-xs font-medium text-orange">

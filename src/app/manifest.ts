@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Bayside Hub",
-    short_name: "Bayside Hub",
+    name: "Hatchx",
+    short_name: "Hatchx",
     description: "Bayside High School clubs, activities, events, and opportunities.",
     start_url: "/",
     display: "standalone",

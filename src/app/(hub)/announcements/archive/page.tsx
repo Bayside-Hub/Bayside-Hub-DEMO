@@ -10,7 +10,7 @@ export default async function AnnouncementsArchivePage({ searchParams }: { searc
       <header className="page-title-card mb-8">
         <Link href="/announcements" className="rounded-full border border-line px-3 py-1 text-xs font-medium text-muted hover:border-powder hover:text-powder">← Back</Link>
         <h1 className="mt-4 font-display text-4xl font-bold uppercase tracking-tight text-ink sm:text-5xl">Announcement Archive</h1>
-        <p className="mt-2 max-w-3xl text-base leading-7 text-muted">Announcements archived by Bayside Hub administrators, newest first.</p>
+        <p className="mt-2 max-w-3xl text-base leading-7 text-muted">Announcements archived by Hatchx administrators, newest first.</p>
       </header>
       <form className="mb-6 flex flex-wrap items-end gap-3 rounded-card border border-line bg-card p-4">
         <label className="grid gap-1 text-xs font-semibold text-muted">From<input type="date" name="from" defaultValue={from} className="h-10 rounded-control border border-line bg-content-bg px-3 text-sm text-ink" /></label>

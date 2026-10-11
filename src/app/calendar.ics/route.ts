@@ -19,7 +19,7 @@ export async function GET() {
   const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
   const entries = events.filter((event) => event.dateISO).map((event) => [
     "BEGIN:VEVENT",
-    `UID:${escapeIcs(`${event.id}@bayside-hub`)}`,
+    `UID:${escapeIcs(`${event.id}@hatchx`)}`,
     `DTSTAMP:${stamp}`,
     `DTSTART;VALUE=DATE:${dateValue(event.dateISO!)}`,
     `DTEND;VALUE=DATE:${dateValue(dayAfter(event.dateEndISO ?? event.dateISO!))}`,
@@ -31,10 +31,10 @@ export async function GET() {
   const calendar = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Bayside Hub//School Calendar//EN",
+    "PRODID:-//Hatchx//School Calendar//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    "X-WR-CALNAME:Bayside Hub",
+    "X-WR-CALNAME:Hatchx",
     "X-WR-CALDESC:Bayside High School clubs, activities, sports, and events",
     ...entries,
     "END:VCALENDAR",
@@ -44,7 +44,7 @@ export async function GET() {
   return new Response(calendar, {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
-      "Content-Disposition": 'attachment; filename="bayside-hub-calendar.ics"',
+      "Content-Disposition": 'attachment; filename="hatchx-calendar.ics"',
       "Cache-Control": "public, max-age=300",
     },
   });

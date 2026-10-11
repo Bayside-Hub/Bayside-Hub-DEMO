@@ -4,19 +4,19 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { recordServerError } from "@/lib/server-error-reporting";
 
 export const siteTextDefaults = {
-  site_name: "Bayside Hub",
+  site_name: "Hatchx",
   home_title: "Anchored in Excellence",
   home_intro: "Discover activities, opportunities, and clubs, all in one place. Browse around to start exploring!",
   home_cta_label: "Explore",
-  about_intro: "Bayside Hub is Bayside High School's one-stop platform for activities, clubs, events, and opportunities.",
-  about_heading: "Anchored in Excellence",
-  about_body: "Bayside Hub is Bayside High School's one-stop platform for activities, clubs, events, and opportunities — built by students, for students. We keep every announcement, meeting, and deadline in one place so you never miss out.",
-  about_card_1_title: "Everything in one place",
-  about_card_1_body: "Announcements, club listings, calendars, and opportunities — a single source of truth for school life.",
-  about_card_2_title: "Built by students",
-  about_card_2_body: "Developed and maintained by the Bayside student dev team, guided by advisors and the S.O. office.",
-  about_card_3_title: "Open to every Baysider",
-  about_card_3_body: "Every Baysider can browse, join clubs, and find opportunities with their NYC school account.",
+  about_intro: "Hatchx brings the people, possibilities, and momentum of Bayside High School into one student-built platform.",
+  about_heading: "Opportunity was everywhere. Access was not.",
+  about_body: "Clubs had energy. Events had potential. Students wanted to participate. But the path between them was fragmented across flyers, links, announcements, and conversations. Hatchx was created to close that gap—turning scattered information into a clear invitation to take part.",
+  about_card_1_title: "Student first",
+  about_card_1_body: "Every decision begins with a simple question: does this make school life easier to navigate?",
+  about_card_2_title: "Open by design",
+  about_card_2_body: "Opportunity should be visible. Clear information helps more students find where they belong.",
+  about_card_3_title: "Built to last",
+  about_card_3_body: "Hatchx turns student energy into systems future classes can continue, improve, and trust.",
   support_heading: "We are here to help!",
   support_intro: "Comments, concerns, and issues are welcome.",
   support_response_time: "Average response time: within two school days.",
@@ -57,7 +57,7 @@ export const siteContentSections: Array<{
   { title: "About page", description: "About-page introduction, story, and value cards.", fields: [
     { key: "about_intro", label: "Page introduction", help: "Shown below the About Us page title.", rows: 3 },
     { key: "about_heading", label: "Story heading", help: "Heading inside the main About card." },
-    { key: "about_body", label: "Story", help: "Main public description of Bayside Hub.", rows: 5 },
+    { key: "about_body", label: "Story", help: "Main public description of Hatchx.", rows: 5 },
     { key: "about_card_1_title", label: "Card 1 title", help: "First value-card heading." },
     { key: "about_card_1_body", label: "Card 1 body", help: "First value-card description.", rows: 3 },
     { key: "about_card_2_title", label: "Card 2 title", help: "Second value-card heading." },
@@ -92,6 +92,23 @@ export const getSiteText = cache(async () => {
   if (scheduledError) await recordServerError("site-content-scheduled", scheduledError);
   for (const item of scheduled ?? []) {
     if (Object.hasOwn(result, item.key)) result[item.key as keyof typeof result] = item.body;
+  }
+  // Keep the public rebrand and new About story consistent before the one-time data migration runs.
+  const oldBrand = "Bayside" + " Hub";
+  if (result.site_name === oldBrand) result.site_name = "Hatchx";
+  const legacyAbout = {
+    about_intro: [`${oldBrand} is Bayside High School's one-stop platform for activities, clubs, events, and opportunities.`, `Hatchx is Bayside High School's one-stop platform for activities, clubs, events, and opportunities.`],
+    about_heading: ["Anchored in Excellence"],
+    about_body: [`${oldBrand} is Bayside High School's one-stop platform for activities, clubs, events, and opportunities — built by students, for students. We keep every announcement, meeting, and deadline in one place so you never miss out.`, `Hatchx is Bayside High School's one-stop platform for activities, clubs, events, and opportunities — built by students, for students. We keep every announcement, meeting, and deadline in one place so you never miss out.`],
+    about_card_1_title: ["Everything in one place"],
+    about_card_1_body: ["Announcements, club listings, calendars, and opportunities — a single source of truth for school life."],
+    about_card_2_title: ["Built by students"],
+    about_card_2_body: ["Developed and maintained by the Bayside student dev team, guided by advisors and the S.O. office."],
+    about_card_3_title: ["Open to every Baysider"],
+    about_card_3_body: ["Every Baysider can browse, join clubs, and find opportunities with their NYC school account."],
+  } as const;
+  for (const key of Object.keys(legacyAbout) as Array<keyof typeof legacyAbout>) {
+    if ((legacyAbout[key] as readonly string[]).includes(result[key])) result[key] = siteTextDefaults[key];
   }
   return result;
 });

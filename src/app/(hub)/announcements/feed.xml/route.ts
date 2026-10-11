@@ -12,6 +12,6 @@ export async function GET() {
     const date = new Date(item.date);
     return `<item><title>${xml(item.title)}</title><link>${xml(link)}</link><guid isPermaLink="true">${xml(link)}</guid><description>${xml(item.excerpt)}</description><category>${xml(item.tag)}</category>${Number.isNaN(date.getTime()) ? "" : `<pubDate>${date.toUTCString()}</pubDate>`}</item>`;
   }).join("");
-  const body = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Bayside Hub Announcements</title><link>${xml(`${origin}/announcements`)}</link><description>School notices, Club news, events, and opportunities from Bayside Hub.</description><language>en-us</language>${items}</channel></rss>`;
+  const body = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Hatchx Announcements</title><link>${xml(`${origin}/announcements`)}</link><description>School notices, Club news, events, and opportunities from Hatchx.</description><language>en-us</language>${items}</channel></rss>`;
   return new Response(body, { headers: { "Content-Type": "application/rss+xml; charset=utf-8", "Cache-Control": "public, max-age=300, stale-while-revalidate=3600" } });
 }

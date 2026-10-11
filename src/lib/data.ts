@@ -413,7 +413,7 @@ export const supportTopics = [
   {
     id: "tech",
     title: "Technical Support",
-    description: "Get help with Bayside Hub accounts, school email, and club pages.",
+    description: "Get help with Hatchx accounts, school email, and club pages.",
   },
 ];
 

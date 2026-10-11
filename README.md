@@ -1,4 +1,4 @@
-# Bayside Hub
+# Hatchx
 
 Bayside High School's one-stop platform for announcements, clubs, sports, events,
 calendar, and opportunities — built with Next.js, Tailwind CSS, and Supabase.
@@ -184,7 +184,7 @@ The platform implements these workflow aids from the BHS Club Manual:
 - public photo galleries with required alt text;
 - append-only club change history for authorized review.
 
-The source manual remains the controlling school policy. Bayside Hub checklists
+The source manual remains the controlling school policy. Hatchx checklists
 record progress but do not replace COSA, Principal, Treasurer, Custodian, Dean,
 Security, library, trip, building-permit, or parental-consent approvals.
 

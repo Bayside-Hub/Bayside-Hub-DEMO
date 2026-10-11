@@ -71,7 +71,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
 
         {user ? <section id="my-requests" className="mt-8 scroll-mt-24 rounded-[20px] bg-[#dcd0be]/95 p-5 text-[#2a2829] sm:p-8"><h2 className="text-2xl font-bold">My requests</h2>{requests?.length ? <ul className="mt-4 space-y-3">{requests.map((request) => <li key={request.id}><Link href={`/support/${request.id}`} className="flex flex-wrap items-center justify-between gap-3 rounded-[10px] bg-[#f0ebe5] px-5 py-4 transition hover:ring-2 hover:ring-[#97b4de]"><div><p className="font-semibold">{request.subject}</p><p className="mt-1 text-xs text-[#6f6a6b]">{request.request_type.replaceAll("_", " ")} · Open conversation →</p></div><span className="rounded-full bg-[#263a99] px-3 py-1 text-xs font-bold uppercase text-[#f0ebe5]">{request.status.replaceAll("_", " ")}</span></Link></li>)}</ul> : <p className="mt-4 text-sm text-[#6f6a6b]">You have no support requests yet.</p>}</section> : null}
 
-        <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium text-ink"><span>SUPPORT</span><span className="h-px flex-1 bg-line" /><span className="text-muted">BAYSIDE HUB</span></footer>
+        <footer className="mt-12 flex items-center gap-5 pb-2 text-[10px] font-medium text-ink"><span>SUPPORT</span><span className="h-px flex-1 bg-line" /><span className="text-muted">HATCHX</span></footer>
       </div>
     </div>
   );

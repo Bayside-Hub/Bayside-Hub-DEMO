@@ -17,11 +17,11 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: { default: "Bayside Hub", template: "%s | Bayside Hub" },
+  title: { default: "Hatchx", template: "%s | Hatchx" },
   description:
-    "Bayside Hub — your one-stop home for announcements, clubs, events, and opportunities at Bayside High School.",
+    "Hatchx — your one-stop home for announcements, clubs, events, and opportunities at Bayside High School.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Bayside Hub", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "Hatchx", statusBarStyle: "black-translucent" },
   icons: {
     icon: [
       { url: "/brand-logo-light.png", type: "image/png", media: "(prefers-color-scheme: light)" },
