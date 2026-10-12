@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound, permanentRedirect } from "next/navigation";
 import { PrimaryButton } from "@/components/cards";
-import { getAllClubs, getClubBySlug } from "@/lib/clubs";
+import { getClubBySlug } from "@/lib/clubs";
 import { getCurrentUser } from "@/lib/auth";
 import {
   getClubInterestInfo,
@@ -53,8 +53,8 @@ export default async function ClubDetailPage({
   const club = await getClubBySlug(slug);
   if (!club) notFound();
   const canonicalSlug = slugify(club.name);
-  const canonicalNameMatches = (await getAllClubs()).filter(item => slugify(item.name) === canonicalSlug);
-  if (slug !== canonicalSlug && canonicalNameMatches.length === 1) {
+  const canonicalClub = slug === canonicalSlug ? club : await getClubBySlug(canonicalSlug);
+  if (slug !== canonicalSlug && club.id && canonicalClub?.id === club.id) {
     permanentRedirect(`/clubs/${canonicalSlug}${rawUpdatesPage ? `?updatesPage=${encodeURIComponent(rawUpdatesPage)}` : ""}`);
   }
   const advisors = club.advisors ?? [];
