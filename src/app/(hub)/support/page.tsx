@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { supportTopics } from "@/lib/data";
 import { getCurrentUser } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
@@ -21,16 +20,19 @@ function searchable(value: string, query: string) {
 
 export default async function SupportPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const text = await getSiteText();
-  const faqs = text.support_faqs.split("\n").map(line => { const [question, ...answer] = line.split("||"); return { question: question?.trim(), answer: answer.join("||").trim() }; }).filter(faq => faq.question && faq.answer);
+  const defaultFaqs = text.support_faqs.split("\n").map(line => { const [question, ...answer] = line.split("||"); return { question: question?.trim(), answer: answer.join("||").trim() }; }).filter(faq => faq.question && faq.answer);
   const { q = "" } = await searchParams;
   const query = q.trim();
   const user = await getCurrentUser();
   const userId = user?.id;
-  const supabase = user && isSupabaseConfigured() ? await createServerClient() : null;
-  const { data: requests } = supabase ? await supabase.from("support_requests").select("id, request_type, subject, status, created_at").eq("submitted_by", userId!).order("created_at", { ascending: false }).limit(10) : { data: null };
+  const supabase = isSupabaseConfigured() ? await createServerClient() : null;
+  const [{ data: requests }, { data: publishedFaqs }] = await Promise.all([
+    user && supabase ? supabase.from("support_requests").select("id, request_type, subject, status, created_at").eq("submitted_by", userId!).order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: null }),
+    supabase ? supabase.from("support_faqs").select("id,question,answer").eq("published", true).order("sort_order").order("updated_at", { ascending: false }) : Promise.resolve({ data: null }),
+  ]);
+  const faqs = [...(publishedFaqs ?? []), ...defaultFaqs.filter(item => !(publishedFaqs ?? []).some(published => published.question.toLocaleLowerCase() === item.question.toLocaleLowerCase()))];
   const visibleCards = query ? serviceCards.filter((card) => searchable(`${card.title} ${card.category} ${card.schedule} ${card.keywords}`, query)) : serviceCards;
   const visibleFaqs = query ? faqs.filter((faq) => searchable(`${faq.question} ${faq.answer}`, query)) : faqs;
-  const visibleTopics = query ? supportTopics.filter((topic) => searchable(`${topic.title} ${topic.description}`, query)) : supportTopics;
 
   return (
     <div className="support-backdrop relative min-h-full overflow-hidden bg-black px-5 py-8 text-ink sm:px-8 lg:px-12">
@@ -46,21 +48,18 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
           {query ? <Link href="/support" className="mt-3 text-xs font-semibold text-[#97b4de] hover:underline">Clear search</Link> : null}
         </header>
 
-        <div className="grid gap-5 xl:grid-cols-[1.7fr_1fr]">
+        <div>
           <section aria-labelledby="support-services-title">
             <h2 id="support-services-title" className="sr-only">Support services</h2>
             {visibleCards.length ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{visibleCards.map((card) => <article key={card.title} className="rounded-[12px] bg-[#dcd0be] p-[18px] text-[#2a2829]"><span className={`block size-12 rounded-[14px] ${card.color}`} aria-hidden /><h3 className="mt-3 text-base font-bold">{card.title}</h3><p className="mt-1 text-xs font-semibold text-[#263a99]">{card.category}</p><p className="mt-2 text-[11px] font-medium">{card.schedule}</p></article>)}</div> : <p className="rounded-[12px] bg-[#dcd0be] p-8 text-center text-[#2a2829]">No support service matched “{query}”.</p>}
           </section>
 
-          <section className="rounded-[14px] bg-[#dcd0be] p-[22px] text-[#2a2829]" aria-labelledby="faq-title">
-            <h2 id="faq-title" className="text-xl font-bold uppercase">Frequently asked questions</h2>
-            <div className="mt-4 space-y-3">{visibleFaqs.length ? visibleFaqs.map((faq, index) => <details key={faq.question} className="group rounded-[10px] bg-[#f0ebe5] p-4"><summary className="flex cursor-pointer list-none items-center gap-3 text-sm font-bold [&::-webkit-details-marker]:hidden"><span className="text-xs text-[#263a99]">Q{index + 1}</span><span className="flex-1">{faq.question}</span><span className="text-xl text-[#263a99] transition-transform group-open:rotate-45" aria-hidden>+</span></summary><p className="mt-3 pl-8 text-sm leading-6 text-[#263a99]">{faq.answer}</p></details>) : <p className="text-sm text-[#6f6a6b]">No FAQ matched this search.</p>}</div>
-          </section>
         </div>
 
-        <section id="technical-support" className="mt-8 scroll-mt-24 rounded-[20px] bg-[#dcd0be]/95 p-5 text-[#2a2829] sm:p-8">
-          <h2 className="text-2xl font-bold">Support guides</h2>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">{visibleTopics.map((topic) => <details key={topic.id} className="group rounded-[10px] bg-[#f0ebe5] p-5"><summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold [&::-webkit-details-marker]:hidden">{topic.title}<span className="text-[#263a99] transition-transform group-open:rotate-45" aria-hidden>+</span></summary><p className="mt-3 text-sm leading-6 text-[#6f6a6b]">{topic.description}</p></details>)}</div>
+        <section id="frequently-asked-questions" className="mt-8 scroll-mt-24 rounded-[20px] bg-[#dcd0be]/95 p-5 text-[#2a2829] sm:p-8" aria-labelledby="faq-title">
+          <h2 id="faq-title" className="text-2xl font-bold">Frequently asked questions</h2>
+          <p className="mt-2 text-sm text-[#6f6a6b]">Answers to common questions, reviewed by the Hatchx support team.</p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">{visibleFaqs.length ? visibleFaqs.map((faq, index) => <details key={`${faq.question}-${index}`} className="group rounded-[10px] bg-[#f0ebe5] p-5"><summary className="flex cursor-pointer list-none items-center gap-3 font-semibold [&::-webkit-details-marker]:hidden"><span className="text-xs font-bold text-[#263a99]">Q{index + 1}</span><span className="flex-1">{faq.question}</span><span className="text-xl text-[#263a99] transition-transform group-open:rotate-45" aria-hidden>+</span></summary><p className="mt-3 pl-8 text-sm leading-6 text-[#6f6a6b]">{faq.answer}</p></details>) : <p className="text-sm text-[#6f6a6b]">No FAQ matched this search.</p>}</div>
         </section>
 
         <section id="request-support" className="mt-8 scroll-mt-24 rounded-[20px] bg-[#dcd0be]/95 p-5 text-[#2a2829] sm:p-8">

@@ -89,6 +89,7 @@ export type Database = {
       opportunities: TableDefinition<OpportunityRow>;
       support_requests: TableDefinition<SupportRequestRow>;
       support_request_updates: TableDefinition<SupportRequestUpdateRow>;
+      support_faqs: TableDefinition<SupportFaqRow>;
       club_audit_log: TableDefinition<ClubAuditLogRow>;
       club_compliance: TableDefinition<ClubComplianceRow>;
       club_finance_transactions: TableDefinition<ClubFinanceTransactionRow>;
@@ -623,6 +624,19 @@ export type SupportRequestUpdateRow = {
   body: string;
   internal: boolean;
   created_at: string;
+};
+
+export type SupportFaqRow = {
+  id: string;
+  source_request_id: string | null;
+  question: string;
+  answer: string;
+  published: boolean;
+  sort_order: number;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ClubAuditLogRow = {
