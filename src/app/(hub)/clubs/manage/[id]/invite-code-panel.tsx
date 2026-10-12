@@ -16,7 +16,7 @@ export default async function InviteCodePanel({ clubId }: { clubId: string }) {
   return <section id="invite-codes" className="scroll-mt-28 rounded-[20px] border border-line bg-card p-5 shadow-sm" aria-labelledby="invite-code-title">
     <p className="text-xs font-bold uppercase tracking-[0.16em] text-powder">Registration</p>
     <h2 id="invite-code-title" className="mt-1 text-xl font-bold text-ink">Club invite codes</h2>
-    <p className="mt-2 text-sm leading-6 text-muted">Give a code to new students. They can enter several codes while creating an account and join each Club automatically.</p>
+    <p className="mt-2 text-sm leading-6 text-muted">Create a short 6-character code for new students. They can enter several codes while creating an account and join each Club automatically.</p>
     {result.error ? <p role="alert" className="mt-4 rounded-control border border-orange/40 bg-content-bg p-3 text-sm text-muted">Apply <code>student_registration_invites.sql</code> to enable registration invites.</p> : <>
       <ActionFeedbackForm action={createClubInviteCode} className="mt-4 grid gap-3">
         <input type="hidden" name="club_id" value={clubId} />

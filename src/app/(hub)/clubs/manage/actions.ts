@@ -11,6 +11,7 @@ import { parseClubShareLinkInput } from "@/lib/club-share-link";
 import { attendanceExpiresAt, isAttendanceStartAllowed, isTemporaryAttendanceDuration } from "@/lib/attendance-session";
 import { parseClubProfileInput } from "@/lib/club-profile-input";
 import { isClubMediaPermission, isMeaningfulAltText } from "@/lib/club-media";
+import { generateClubInviteCode } from "@/lib/club-invite-code";
 
 const denied = { ok: false, message: "You no longer have permission for this club. Refresh or contact your advisor." };
 const invalid = { ok: false, message: "Check the required fields, lengths and dates, then try again." };
@@ -200,12 +201,6 @@ export async function revokeClubShareLink(formData: FormData) {
   return { ok: true, message: "QR link revoked. Existing printed codes will no longer open the Club." };
 }
 
-function randomInviteCode() {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const bytes = crypto.getRandomValues(new Uint8Array(10));
-  return `BH-${Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("")}`;
-}
-
 export async function createClubInviteCode(formData: FormData) {
   const clubId = String(formData.get("club_id") ?? "");
   const context = await managerContext(clubId);
@@ -217,7 +212,7 @@ export async function createClubInviteCode(formData: FormData) {
   const expiresAt = expiresValue ? new Date(expiresValue) : null;
   if (label.length < 3 || label.length > 100 || (maxUses !== null && (!Number.isInteger(maxUses) || maxUses < 1 || maxUses > 1000)) || (expiresAt && (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() < Date.now() + 5 * 60_000))) return invalid;
   for (let attempt = 0; attempt < 4; attempt += 1) {
-    const { error } = await context.supabase.from("club_invite_codes").insert({ club_id: clubId, code: randomInviteCode(), label, expires_at: expiresAt?.toISOString() ?? null, max_uses: maxUses, created_by: context.user.id });
+    const { error } = await context.supabase.from("club_invite_codes").insert({ club_id: clubId, code: generateClubInviteCode(), label, expires_at: expiresAt?.toISOString() ?? null, max_uses: maxUses, created_by: context.user.id });
     if (!error) { revalidatePath(`/clubs/manage/${clubId}`); return { ok: true, message: "Registration invite code created." }; }
     if (["42P01", "PGRST205"].includes(error.code)) return { ok: false, message: "Apply student_registration_invites.sql before creating invite codes." };
     if (error.code !== "23505") return failed;
