@@ -117,6 +117,8 @@ export type Database = {
       dashboard_preferences: TableDefinition<{ user_id: string; card_order: string[]; hidden_cards: string[]; updated_at: string }>;
       club_import_batches: TableDefinition<ClubImportBatchRow>;
       club_import_rows: TableDefinition<ClubImportRow>;
+      pending_club_advisors: TableDefinition<PendingClubAdvisorRow>;
+      club_import_related_records: TableDefinition<ClubImportRelatedRecordRow>;
     };
     Views: {
       approved_clubs: {
@@ -727,3 +729,5 @@ export type PushSubscriptionRow = { id: string; user_id: string; endpoint: strin
 export type PushDeliveryClaim = { delivery_id: number; notification_id: string; subscription_id: string; endpoint: string; p256dh: string; auth: string; title: string; body: string; href: string | null; kind: string };
 export type ClubImportBatchRow = { id: string; created_by: string; file_name: string; status: "preview" | "applied" | "rolled_back" | "failed"; total_rows: number; valid_rows: number; error_rows: number; created_at: string; applied_at: string | null; rolled_back_at: string | null };
 export type ClubImportRow = { id: number; batch_id: string; row_number: number; payload: Record<string,string>; errors: string[]; before_state: Record<string,unknown> | null; club_id: string | null; action: "insert" | "update" | null };
+export type PendingClubAdvisorRow = { id: string; club_id: string; email: string; display_name: string; created_by: string; claimed_profile_id: string | null; claimed_at: string | null; created_at: string };
+export type ClubImportRelatedRecordRow = { id: number; batch_id: string; import_row_id: number; entity_type: "meeting" | "advisor" | "pending_advisor"; entity_id: string; created_at: string };

@@ -13,7 +13,7 @@
     "finance_ledger_staff_only.sql", "club_custom_tables.sql", "club_custom_tables_enhancements.sql",
     "teacher_club_application_workflow.sql",
     "admin_club_authority.sql", "club_officer_avatars.sql", "school_operations.sql", "public_club_constitutions.sql",
-    "workflow_completion.sql", "home_dashboard.sql", "realtime_notifications_dashboard.sql", "request_notifications.sql",
+    "workflow_completion.sql", "club_csv_advisor_import.sql", "home_dashboard.sql", "realtime_notifications_dashboard.sql", "request_notifications.sql",
     "club_profile_tags_club101.sql", "support_conversations.sql", "support_faqs.sql", "url_safe_club_slugs.sql"
   ],
   "existingProjectOnly": ["production_compatibility.sql"],
