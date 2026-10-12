@@ -11,7 +11,7 @@ export default async function ClubTablesPage({ params }: { params: Promise<{ id:
   const user = await getCurrentUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(`/clubs/manage/${id}/tables`)}`);
   const db = await createServerClient();
-  const access = await db.rpc("can_manage_club", { p_club_id: id });
+  const access = await db.rpc("can_manage_club_forms", { p_club_id: id });
   if (!access.data) redirect("/clubs/manage");
   const [club, tables] = await Promise.all([
     db.from("clubs").select("id,name").eq("id", id).maybeSingle(),

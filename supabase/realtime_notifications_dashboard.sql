@@ -86,12 +86,18 @@ grant execute on function public.claim_push_deliveries(integer) to service_role;
 
 create table if not exists public.dashboard_preferences(
   user_id uuid primary key references public.profiles(id) on delete cascade,
-  card_order text[] not null default array['meeting','period','attendance','registrations','deadlines','notifications'],
+  card_order text[] not null default array['meeting','attendance','registrations','deadlines','notifications'],
   hidden_cards text[] not null default '{}',
   updated_at timestamptz not null default now(),
-  check(card_order <@ array['meeting','period','attendance','registrations','deadlines','notifications']::text[]),
-  check(hidden_cards <@ array['meeting','period','attendance','registrations','deadlines','notifications']::text[])
+  check(card_order <@ array['meeting','attendance','registrations','deadlines','notifications']::text[]),
+  check(hidden_cards <@ array['meeting','attendance','registrations','deadlines','notifications']::text[])
 );
+alter table public.dashboard_preferences
+  alter column card_order set default array['meeting','attendance','registrations','deadlines','notifications'];
+update public.dashboard_preferences
+set card_order=array_remove(card_order,'period'),
+    hidden_cards=array_remove(hidden_cards,'period')
+where 'period'=any(card_order) or 'period'=any(hidden_cards);
 alter table public.dashboard_preferences enable row level security;
 drop policy if exists "Users manage own dashboard preferences" on public.dashboard_preferences;
 create policy "Users manage own dashboard preferences" on public.dashboard_preferences for all
@@ -152,7 +158,7 @@ returns jsonb language sql stable security definer set search_path=public as $$
       order by starts_at limit 1
     ) nm),
     'preferences',coalesce((select jsonb_build_object('card_order',card_order,'hidden_cards',hidden_cards) from public.dashboard_preferences where user_id=auth.uid()),
-      jsonb_build_object('card_order',array['meeting','period','attendance','registrations','deadlines','notifications'],'hidden_cards','{}'::text[]))
+      jsonb_build_object('card_order',array['meeting','attendance','registrations','deadlines','notifications'],'hidden_cards','{}'::text[]))
   ) end;
 $$;
 revoke all on function public.get_home_dashboard() from public,anon;

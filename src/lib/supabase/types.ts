@@ -1,3 +1,4 @@
+/** Advisor/Staff remain in the union only while older databases roll forward. */
 export type Role = "student" | "teacher" | "advisor" | "staff" | "admin";
 
 export type Profile = {
@@ -29,6 +30,7 @@ export type Database = {
       account_role_audit: TableDefinition<{ id: string; actor_id: string | null; profile_id: string | null; previous_role: string | null; new_role: string | null; club_id: string | null; created_at: string }>;
       custom_roles: TableDefinition<{ id: string; name: string; permissions: string[]; created_at: string }>;
       custom_role_assignments: TableDefinition<{ id: string; role_id: string; profile_id: string; club_id: string | null; created_at: string }>;
+      teacher_permissions: TableDefinition<{ profile_id: string; permission: string; granted_by: string; created_at: string }>;
       site_content: TableDefinition<{ key: string; body: string; updated_by: string | null; updated_at: string }>;
       site_content_drafts: TableDefinition<{ user_id: string; key: string; body: string; updated_at: string }>;
       site_content_scheduled: TableDefinition<{ key: string; body: string; publish_at: string; updated_by: string | null; updated_at: string }>;
@@ -105,6 +107,7 @@ export type Database = {
       club_reimbursement_attachments: TableDefinition<ClubReimbursementAttachmentRow>;
       club_custom_tables: TableDefinition<ClubCustomTableRow>;
       club_custom_table_rows: TableDefinition<ClubCustomTableDataRow>;
+      club_custom_form_links: TableDefinition<{ id: string; table_id: string; token_hash: string; expires_at: string | null; active: boolean; created_by: string; created_at: string }>;
       facility_permits: TableDefinition<FacilityPermitRow>;
       event_approval_requests: TableDefinition<EventApprovalRow>;
       event_registrations: TableDefinition<EventRegistrationRow>;
@@ -152,7 +155,14 @@ export type Database = {
       claim_club_invitation_emails: { Args: { p_limit?: number }; Returns: ClubInvitationEmailOutboxRow[] };
       get_managed_club_ids: { Args: Record<string, never>; Returns: string[] };
       has_custom_permission: { Args: { p_permission: string; p_club_id?: string | null }; Returns: boolean };
+      has_teacher_permission: { Args: { p_permission: string }; Returns: boolean };
+      has_any_teacher_permission: { Args: Record<string, never>; Returns: boolean };
+      set_teacher_permissions: { Args: { p_profile_id: string; p_permissions: string[] }; Returns: undefined };
+      set_teacher_clubs: { Args: { p_profile_id: string; p_club_ids: string[] }; Returns: undefined };
       can_manage_club: { Args: { p_club_id: string }; Returns: boolean };
+      can_manage_club_forms: { Args: { p_club_id: string }; Returns: boolean };
+      get_public_custom_form: { Args: { p_token: string }; Returns: unknown };
+      submit_public_custom_form: { Args: { p_token: string; p_data: Record<string, string | number | boolean> }; Returns: string };
       can_govern_club: { Args: { p_club_id: string }; Returns: boolean };
       resolve_club_share_link: { Args: { p_id: string }; Returns: { club_id: string }[] };
       assign_account_role: { Args: { p_user_id: string; p_role: string; p_club_id?: string | null }; Returns: undefined };
@@ -722,7 +732,7 @@ export type ClubReimbursementRow = { id: string; club_id: string; school_year: s
 export type ClubReimbursementAttachmentRow = { id: string; reimbursement_id: string; storage_path: string; file_name: string; mime_type: "application/pdf" | "image/jpeg" | "image/png" | "image/webp"; file_size: number; uploaded_by: string; created_at: string };
 export type ClubCustomColumn = { key: string; label: string; type: "text" | "long_text" | "number" | "date" | "checkbox" | "email" | "url" | "select"; required: boolean; options?: string[] };
 export type ClubCustomTableRow = { id: string; club_id: string; name: string; description: string | null; columns: ClubCustomColumn[]; created_by: string; created_at: string; updated_at: string };
-export type ClubCustomTableDataRow = { id: string; table_id: string; data: Record<string, string | number | boolean>; created_by: string; created_at: string; updated_by: string | null; updated_at: string };
+export type ClubCustomTableDataRow = { id: string; table_id: string; data: Record<string, string | number | boolean>; created_by: string | null; created_at: string; updated_by: string | null; updated_at: string };
 export type FacilityPermitRow = { id: string; club_id: string | null; event_id: string | null; title: string; event_date: string; start_time: string | null; end_time: string | null; room: string | null; needs_security: boolean; needs_library: boolean; needs_av: boolean; room_status: string; security_status: string; library_status: string; av_status: string; overall_status: "pending" | "approved" | "rejected"; submitted_by: string; review_note: string | null; created_at: string };
 export type EventApprovalRow = { id: string; club_id: string | null; title: string; description: string; start_at: string; end_at: string | null; location: string | null; capacity: number | null; status: "pending" | "approved" | "rejected"; submitted_by: string; reviewed_by: string | null; review_note: string | null; created_at: string };
 export type EventRegistrationRow = { id: string; approval_id: string; profile_id: string; status: "pending" | "approved" | "waitlisted" | "rejected" | "cancelled"; reviewed_by: string | null; review_note: string | null; created_at: string };

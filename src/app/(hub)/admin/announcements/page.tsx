@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui";
-import { requireStaff } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
 import AnnouncementForm from "./announcement-form";
 import Pagination from "@/components/pagination";
 import DeleteAnnouncementButton from "./delete-announcement-button";
+import { requirePermission } from "@/lib/permissions";
 
 const PAGE_SIZE = 20;
 async function requestTime() { return Date.now(); }
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminAnnouncementsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  const user = await requireStaff();
+  const user = await requirePermission("announcements.manage", "/admin/announcements");
   const { page: pageParam } = await searchParams;
   const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;

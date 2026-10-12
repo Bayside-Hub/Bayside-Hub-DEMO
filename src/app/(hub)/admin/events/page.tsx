@@ -1,12 +1,12 @@
 import { PageHeader } from "@/components/ui";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/permissions";
 import { createServerClient } from "@/lib/supabase/server";
 import CalendarManager from "./calendar-manager";
 import EventForm from "./event-form";
 import EventManager from "./event-manager";
 
 export default async function AdminEventsPage() {
-  const user = await requireStaff();
+  const user = await requirePermission("events.manage", "/admin/events");
   const db = await createServerClient();
   const [{ data: events, error }, calendarResult, clubResult] = await Promise.all([
     db.from("events").select("*").order("start_at", { ascending: false }).limit(150),

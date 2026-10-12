@@ -6,16 +6,47 @@ import { parseCsv } from "@/lib/csv";
 import { parseOptionalDateOnly } from "@/lib/input-validation";
 import { createServerClient } from "@/lib/supabase/server";
 import type { ClubCustomColumn } from "@/lib/supabase/types";
+import { createHash, randomBytes } from "node:crypto";
 
 const denied = { ok: false, message: "Current Club management access is required." };
 const columnTypes = new Set<ClubCustomColumn["type"]>(["text","long_text","number","date","checkbox","email","url","select"]);
+
+function customTableError(error: { code?: string | null; message?: string | null } | null, operation: "create" | "update") {
+  if (!error) return `Table could not be ${operation === "create" ? "created" : "updated"}.`;
+  if (error.code === "23505") return "This Club already has a table with that name.";
+  if (["42P01", "PGRST205"].includes(error.code ?? "")) return "Custom forms are not installed in the database. Apply supabase/club_custom_tables.sql.";
+  if (["42703", "PGRST204"].includes(error.code ?? "")) return "The Custom forms schema is out of date. Reapply club_custom_tables.sql, then club_custom_tables_enhancements.sql.";
+  if (error.code === "42501") return "Your account can open this Club but cannot save forms. Ask an Admin to verify the Club assignment and Custom forms policies.";
+  if (error.code === "23514") return "One or more question types are not supported by the current database schema. Apply supabase/club_custom_tables_enhancements.sql and try again.";
+  return `Table could not be ${operation === "create" ? "created" : "updated"} (database code ${error.code ?? "unknown"}).`;
+}
 
 async function context(clubId: string) {
   const user = await getCurrentUser();
   if (!user || !clubId) return null;
   const db = await createServerClient();
-  const access = await db.rpc("can_manage_club", { p_club_id: clubId });
+  const access = await db.rpc("can_manage_club_forms", { p_club_id: clubId });
   return access.data ? { user, db } : null;
+}
+
+export async function createCustomFormLink(form: FormData) {
+  const clubId=String(form.get("club_id")??""); const tableId=String(form.get("table_id")??""); const current=await context(clubId); if(!current)return denied;
+  const expiresValue=String(form.get("expires_at")??""); const expiresAt=expiresValue?new Date(expiresValue):null;
+  if(!tableId||(expiresAt&&!Number.isFinite(expiresAt.getTime()))||(expiresAt&&expiresAt.getTime()<=Date.now()))return {ok:false,message:"Choose a future expiration time or leave it blank."};
+  const table=await tableFor(current,clubId,tableId); if(!table.data)return {ok:false,message:"Form was not found."};
+  const token=randomBytes(24).toString("base64url"); const tokenHash=createHash("sha256").update(token).digest("hex");
+  const result=await current.db.from("club_custom_form_links").insert({table_id:tableId,token_hash:tokenHash,expires_at:expiresAt?.toISOString()??null,active:true,created_by:current.user.id});
+  if(result.error)return {ok:false,message:"Share link could not be created. Apply club_custom_forms_sharing.sql first."};
+  revalidatePath(`/clubs/manage/${clubId}/tables/${tableId}`);
+  return {ok:true,message:"Share link created.",url:`/forms/${token}`};
+}
+
+export async function revokeCustomFormLink(form: FormData) {
+  const clubId=String(form.get("club_id")??""); const tableId=String(form.get("table_id")??""); const current=await context(clubId); if(!current)return denied;
+  const id=String(form.get("link_id")??""); if(!id)return {ok:false,message:"Link was not found."};
+  const result=await current.db.from("club_custom_form_links").update({active:false}).eq("id",id).eq("table_id",tableId).select("id").maybeSingle();
+  if(result.error||!result.data)return {ok:false,message:"Link could not be revoked."};
+  revalidatePath(`/clubs/manage/${clubId}/tables/${tableId}`); return {ok:true,message:"Share link revoked."};
 }
 
 function tableColumns(form: FormData) {
@@ -64,7 +95,7 @@ export async function createCustomTable(form: FormData) {
   const name = String(form.get("name") ?? "").trim(); const description = String(form.get("description") ?? "").trim(); const columns = tableColumns(form);
   if (name.length < 2 || name.length > 80 || description.length > 500 || !columns) return { ok: false, message: "Check the table name and column settings. Select fields need unique options." };
   const row = await current.db.from("club_custom_tables").insert({ club_id: clubId, name, description: description || null, columns, created_by: current.user.id }).select("id").maybeSingle();
-  if (row.error || !row.data) return { ok: false, message: row.error?.code === "23505" ? "This Club already has a table with that name." : "Table could not be created. Apply the custom table migrations first." };
+  if (row.error || !row.data) return { ok: false, message: customTableError(row.error, "create") };
   revalidatePath(`/clubs/manage/${clubId}/tables`); return { ok: true, message: "Custom table created." };
 }
 
@@ -73,7 +104,7 @@ export async function updateCustomTable(form: FormData) {
   const name=String(form.get("name")??"").trim(); const description=String(form.get("description")??"").trim(); const columns=tableColumns(form);
   if(!tableId||name.length<2||name.length>80||description.length>500||!columns)return {ok:false,message:"Check the table and column settings."};
   const result=await current.db.from("club_custom_tables").update({name,description:description||null,columns}).eq("id",tableId).eq("club_id",clubId).select("id").maybeSingle();
-  if(result.error||!result.data)return {ok:false,message:result.error?.code==="23505"?"This Club already has a table with that name.":"Table settings could not be updated. Apply club_custom_tables_enhancements.sql first."};
+  if(result.error||!result.data)return {ok:false,message:customTableError(result.error,"update")};
   revalidatePath(`/clubs/manage/${clubId}/tables`); revalidatePath(`/clubs/manage/${clubId}/tables/${tableId}`); return {ok:true,message:"Table settings updated."};
 }
 

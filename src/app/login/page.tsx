@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import LoginCard, { LoginCardSkeleton } from "./login-card";
 import { LogoMark } from "@/components/icons";
 
@@ -9,16 +10,19 @@ export const metadata: Metadata = { title: "Sign In" };
 export default function LoginPage() {
   return (
     <div className="login-page login-gradient relative z-50 min-h-screen min-h-dvh w-full overflow-hidden px-4 py-4 sm:px-7 sm:py-6 lg:px-10">
-      <div className="login-grid pointer-events-none absolute inset-0" aria-hidden />
-      <div className="login-orbit login-orbit-one pointer-events-none absolute" aria-hidden />
-      <div className="login-orbit login-orbit-two pointer-events-none absolute" aria-hidden />
+      <div className="login-figma-stage pointer-events-none absolute inset-0" aria-hidden>
+        <div className="login-figma-orb">
+          <Image src="/login/orb-shine.svg" alt="" width={450} height={450} priority className="login-figma-shine" />
+          <Image src="/login/orb-core.svg" alt="" width={450} height={450} priority className="login-figma-core" />
+        </div>
+        <Image src="/login/orb-reflection.svg" alt="" width={250} height={250} priority className="login-figma-reflection" />
+      </div>
       <nav className="relative z-10 mx-auto flex w-full max-w-[1800px] items-center justify-between text-[#f7f8f0]">
         <Link href="/" aria-label="Hatchx home" className="flex items-center gap-3 text-sm font-bold tracking-wide"><LogoMark className="h-12 w-12" variant="dark" /><span className="login-nav-wordmark">HATCHX</span></Link>
         <Link href="/support#technical-support" className="rounded-full border border-white/30 px-5 py-2 text-xs font-semibold hover:bg-white/10">NEED HELP?</Link>
       </nav>
       <main className="relative z-10 mx-auto grid min-h-[calc(100svh-88px)] w-full max-w-[1500px] items-center gap-8 py-7 lg:grid-cols-[minmax(0,1fr)_minmax(410px,530px)] lg:gap-12 lg:py-10">
         <section className="login-intro-copy relative hidden max-w-2xl text-[#f7f8f0] lg:block">
-          <div className="login-intro-orb pointer-events-none absolute -left-20 top-1/2 z-0 size-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full" aria-hidden />
           <div className="relative z-10">
             <p className="text-xs font-bold tracking-[0.3em] text-[#b9d9ff]">ONE SCHOOL · ONE HUB</p>
             <h1 className="mt-5 text-[clamp(3.2rem,6vw,5.8rem)] font-bold leading-[0.9] tracking-[-0.06em]">Find your place<br />at Bayside.</h1>

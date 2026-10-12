@@ -1,16 +1,12 @@
-import { getCurrentUser } from "@/lib/auth";
 import { getSiteText, siteContentSections } from "@/lib/site-content";
 import { createServerClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { requirePermission } from "@/lib/permissions";
 import SiteTextForm from "./form";
 import NoticeSettingsForm from "./notice-settings-form";
 
 export default async function SiteEditorPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login?next=/manage/site");
+  const user = await requirePermission("site.manage", "/manage/site");
   const db = await createServerClient();
-  const { data: allowed } = await db.rpc("has_custom_permission", { p_permission: "site.manage" });
-  if (!["staff", "admin"].includes(user.role) && !allowed) return <p className="p-8">An administrator must grant you public content editing permission.</p>;
   const [{ data: cmsMarker, error }, { data: drafts }, { data: schedules }, { data: versions }] = await Promise.all([
     db.from("site_content").select("key").eq("key", "site_name").maybeSingle(),
     db.from("site_content_drafts").select("*").eq("user_id", user.id),

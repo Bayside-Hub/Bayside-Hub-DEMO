@@ -12,7 +12,7 @@ export type StudentDashboard = {
   preferences: { cardOrder: DashboardCardId[]; hiddenCards: DashboardCardId[] };
 };
 
-export const dashboardCardIds = ["meeting", "period", "attendance", "registrations", "deadlines", "notifications"] as const;
+export const dashboardCardIds = ["meeting", "attendance", "registrations", "deadlines", "notifications"] as const;
 export type DashboardCardId = typeof dashboardCardIds[number];
 
 type DashboardPayload = {

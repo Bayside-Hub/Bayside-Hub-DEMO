@@ -16,8 +16,9 @@ import {
   AdminIcon,
 } from "./icons";
 import type { Role } from "@/lib/supabase/types";
+import type { TeacherPermission } from "@/lib/permissions";
 
-export type SubItem = { href: string; label: string; roles?: Role[] };
+export type SubItem = { href: string; label: string; roles?: Role[]; permission?: TeacherPermission };
 
 export type NavItem = {
   href: string;
@@ -82,16 +83,16 @@ export const adminNavItems: NavItem[] = [
     icon: AdminIcon,
     adminOnly: true,
     sub: [
-      { href: "/admin", label: "Admin Home" },
+      { href: "/admin", label: "Admin Home", roles: ["admin"] },
       { href: "/admin/review", label: "Announcement Review", roles: ["admin"] },
-      { href: "/admin/announcements", label: "Post Announcement" },
-      { href: "/admin/clubs", label: "Manage Clubs" },
-      { href: "/admin/support", label: "Support Requests" },
-      { href: "/admin/opportunities", label: "Manage Opportunities" },
-      { href: "/admin/events", label: "Manage Events" },
+      { href: "/admin/announcements", label: "Post Announcement", permission: "announcements.manage" },
+      { href: "/admin/clubs", label: "Manage Clubs", roles: ["admin"] },
+      { href: "/admin/support", label: "Support Requests", permission: "support.manage" },
+      { href: "/admin/opportunities", label: "Manage Opportunities", permission: "opportunities.manage" },
+      { href: "/admin/events", label: "Manage Events", permission: "events.manage" },
       { href: "/admin/users", label: "Manage Users", roles: ["admin"] },
       { href: "/admin/audit", label: "Management Audit", roles: ["admin"] },
-      { href: "/manage/site", label: "Public Content", roles: ["staff", "admin"] },
+      { href: "/manage/site", label: "Public Content", permission: "site.manage" },
     ],
   },
 ];
@@ -124,7 +125,11 @@ function RailIcon({ name }: { name: string }) {
 }
 
 /** Native popovers live in the browser top layer, above content stacking contexts. */
-function RailItem({ item, pathname, role }: { item: NavItem; pathname: string; role: Role }) {
+function canOpenSubItem(item: SubItem, role: Role, permissions: TeacherPermission[]) {
+  return (!item.roles || item.roles.includes(role)) && (!item.permission || ["staff", "admin"].includes(role) || permissions.includes(item.permission));
+}
+
+function RailItem({ item, pathname, role, permissions }: { item: NavItem; pathname: string; role: Role; permissions: TeacherPermission[] }) {
   const panel = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const [expanded, setExpanded] = useState(false);
@@ -169,7 +174,7 @@ function RailItem({ item, pathname, role }: { item: NavItem; pathname: string; r
           if (isOpen) position();
         }}>
         <p className="px-3 pb-2 pt-1 text-xs font-medium tracking-wide text-muted">{item.label}</p>
-        {item.sub.filter(sub => !sub.roles || sub.roles.includes(role)).map(sub => (
+        {item.sub.filter(sub => canOpenSubItem(sub, role, permissions)).map(sub => (
           <Link key={sub.href} href={sub.href} aria-current={isSubItemActive(pathname, sub.href) ? "page" : undefined}
             onClick={() => panel.current?.hidePopover()}
             className="rail-sub-link">{sub.label}</Link>
@@ -179,13 +184,13 @@ function RailItem({ item, pathname, role }: { item: NavItem; pathname: string; r
   );
 }
 
-export default function Sidebar({ role = "student" }: { role?: Role; name?: string }) {
+export default function Sidebar({ role = "student", permissions = [] }: { role?: Role; name?: string; permissions?: TeacherPermission[] }) {
   const pathname = usePathname();
   const groups = [
     { label: "General", items: mainNavItems.filter(item => !["/support", "/about"].includes(item.href)) },
     { label: "Myspace", items: [
       { href: "/clubs/manage", label: "Manage My Clubs", icon: ClubsIcon },
-      ...(["staff", "admin"].includes(role) ? adminNavItems : []),
+      ...(["teacher", "admin"].includes(role) ? adminNavItems : []),
     ] },
     { label: "Support", items: mainNavItems.filter(item => ["/support", "/about"].includes(item.href)) },
   ];
@@ -198,7 +203,7 @@ export default function Sidebar({ role = "student" }: { role?: Role; name?: stri
         {groups.map(group => (
           <section key={group.label} aria-label={group.label} className="rail-group">
             <h2>{group.label}</h2>
-            {group.items.map(item => <RailItem key={item.href} item={item} pathname={pathname} role={role} />)}
+            {group.items.map(item => <RailItem key={item.href} item={item} pathname={pathname} role={role} permissions={permissions} />)}
           </section>
         ))}
       </nav>

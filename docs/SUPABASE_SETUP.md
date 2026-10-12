@@ -45,10 +45,13 @@ select role, count(*) from public.profiles group by role;
 16. `supabase/finance_permissions_and_reimbursements.sql`：金额、预算和募款记录仅限 Staff/Admin 修改；Advisor 与董事会成员只读，并可提交带私人附件的报销工单。
 17. `supabase/club_custom_tables.sql`：Club 管理者自定义表格、在线录入数据、按 Club 隔离并导出 CSV。
 18. `supabase/club_custom_tables_enhancements.sql`：表结构与数据编辑、更多字段类型、CSV 导入和更新权限。
-19. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
+19. `supabase/club_custom_forms_sharing.sql`：Custom forms 匿名分享链接、无需登录提交，以及仅限当前 Club 董事会和该 Club Advisor 查看回答和修改设置的权限隔离。
+20. `supabase/teacher_club_application_workflow.sql`：仅 Teacher 提交新 Club，Admin 批准后自动发布并把提交老师设为 Advisor。
+20. `supabase/teacher_permissions.sql`：把旧 Staff/Advisor 账号角色合并为 Teacher，并允许 Admin 按老师授予公告、Opportunities、活动、Support 或公共内容权限。Club Advisor 仍是独立的 Club 分配关系。
 20. `supabase/club_officer_avatars.sql`：董事会成员上传自己的公开头像，按本人和 Club 限制 Storage 写入权限。
 21. `supabase/home_dashboard.sql`：一次查询返回登录首页统计，并识别董事会、Advisor、自定义角色、Staff 和 Admin 的实际 Club 管理权限。
 22. `supabase/realtime_notifications_dashboard.sql`：Realtime/PWA Push 通知、筛选分页与批量删除，以及跨设备 Dashboard 卡片排序和隐藏偏好。
+23. `supabase/club_csv_advisor_import.sql`：管理员 CSV 批量导入 Club、会议与 Advisor；尚未注册的 Advisor 会在同邮箱注册后自动获得对应 Club 权限。
 23. `supabase/club_profile_tags_club101.sql`：Club 详细介绍、最多三个搜索标签、每周时间投入，以及 Club 101 匹配数据。
 24. `supabase/club_media_processing.sql`：图片裁剪后多尺寸 WebP、尺寸/文件大小元数据、公开图片替代文字，以及照片分享许可记录。
 25. 可选 `supabase/demo_clubs.sql`：创建两个标记 `[DEMO]` 的草稿社团；重复执行不会覆盖内容。

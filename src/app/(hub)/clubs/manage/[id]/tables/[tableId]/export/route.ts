@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const user = await getCurrentUser();
   if (!user) return new Response("Sign in required", { status: 401 });
   const db = await createServerClient();
-  const access = await db.rpc("can_manage_club", { p_club_id: id });
+  const access = await db.rpc("can_manage_club_forms", { p_club_id: id });
   if (!access.data) return new Response("Not authorized", { status: 403 });
   const table = await db.from("club_custom_tables").select("*").eq("id", tableId).eq("club_id", id).maybeSingle();
   if (!table.data) return new Response("Table not found", { status: 404 });

@@ -6,6 +6,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import SupportStatusForm from "../../admin/support/status-form";
 import FaqPublisher from "../../admin/support/faq-publisher";
 import SupportReplyForm from "./reply-form";
+import { hasPermission } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export default async function SupportRequestPage({ params }: { params: Promise<{
     user.role === "admin" ? db.from("support_faqs").select("id,question,answer,published").eq("source_request_id", id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
   if (!request) notFound();
-  const isStaff = ["staff", "admin"].includes(user.role);
+  const isStaff = await hasPermission("support.manage");
   return <div className="mx-auto w-full max-w-4xl px-5 py-8 sm:px-6 lg:py-12">
     <Link href={isStaff ? "/admin/support" : "/support#my-requests"} className="text-sm font-bold text-powder">← Back to support</Link>
     <header className="mt-5 rounded-[22px] border border-line bg-card p-6 shadow-sm sm:p-8"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-powder">{request.request_type.replaceAll("_", " ")}</p><h1 className="mt-2 text-3xl font-bold text-ink">{request.subject}</h1><p className="mt-2 text-sm text-muted">Opened {new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(request.created_at))}</p></div><span className="rounded-full bg-navy px-4 py-2 text-xs font-bold uppercase text-cream">{request.status.replaceAll("_", " ")}</span></div><p className="mt-6 whitespace-pre-wrap text-sm leading-7 text-ink">{request.details}</p>{isStaff ? <div className="mt-5 border-t border-line pt-5"><SupportStatusForm id={request.id} status={request.status} /></div> : null}</header>

@@ -9,6 +9,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import RealtimeNotifications from "./realtime-notifications";
 import SchoolNotice from "./school-notice";
 import { getSiteText } from "@/lib/site-content";
+import type { TeacherPermission } from "@/lib/permissions";
 
 /**
  * Shared application chrome for public and authenticated pages.
@@ -18,10 +19,15 @@ import { getSiteText } from "@/lib/site-content";
 export default async function HubShell({ children }: { children: ReactNode }) {
   const [user, siteText] = await Promise.all([getCurrentUser(), getSiteText()]);
   let unreadNotifications = 0;
+  let teacherPermissions: TeacherPermission[] = [];
   if (user && isSupabaseConfigured()) {
     const db = await createServerClient();
-    const result = await db.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null).is("deleted_at", null);
-    unreadNotifications = result.count ?? 0;
+    const [notificationResult, permissionResult] = await Promise.all([
+      db.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null).is("deleted_at", null),
+      user.role === "teacher" ? db.from("teacher_permissions").select("permission").eq("profile_id", user.id) : Promise.resolve({ data: [] }),
+    ]);
+    unreadNotifications = notificationResult.count ?? 0;
+    teacherPermissions = (permissionResult.data ?? []).map((row) => row.permission).filter((permission): permission is TeacherPermission => ["announcements.manage", "opportunities.manage", "events.manage", "support.manage", "site.manage"].includes(permission));
   }
 
   return (
@@ -41,7 +47,7 @@ export default async function HubShell({ children }: { children: ReactNode }) {
           Skip to content
         </a>
         <div className="hidden lg:block">
-          <Sidebar role={user?.role ?? "student"} name={user?.name} />
+          <Sidebar role={user?.role ?? "student"} name={user?.name} permissions={teacherPermissions} />
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar user={user} unreadNotifications={unreadNotifications} />
@@ -51,7 +57,7 @@ export default async function HubShell({ children }: { children: ReactNode }) {
           </main>
         </div>
       </div>
-      <MobileBottomNav user={user} />
+      <MobileBottomNav user={user} permissions={teacherPermissions} />
     </div>
   );
 }

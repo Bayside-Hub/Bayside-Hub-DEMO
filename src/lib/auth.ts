@@ -22,11 +22,11 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
     .eq("id", user.id)
     .maybeSingle();
 
-  // A missing or malformed profile never gains elevated access.
-  const role: Role =
-    profile && ["student", "teacher", "advisor", "staff", "admin"].includes(profile.role)
-      ? profile.role
-      : "student";
+  // Preserve legacy Staff/Advisor values until the database migration changes
+  // them. Permission helpers understand both schemas during a rolling deploy.
+  const role: Role = profile && ["student", "teacher", "advisor", "staff", "admin"].includes(profile.role)
+    ? profile.role
+    : "student";
 
   return {
     id: user.id,

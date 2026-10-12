@@ -5,9 +5,10 @@ import Pagination from "@/components/pagination";
 import { getCurrentUser } from "@/lib/auth";
 import { createServerClient } from "@/lib/supabase/server";
 import type { ClubCustomColumn, ClubCustomTableDataRow } from "@/lib/supabase/types";
-import { deleteCustomTableRow, duplicateCustomTable, importCustomTableCsv, updateCustomTableRow } from "../actions";
+import { deleteCustomTableRow, duplicateCustomTable, importCustomTableCsv, revokeCustomFormLink, updateCustomTableRow } from "../actions";
 import TableBuilder from "../table-builder";
 import ResponseForm from "./response-form";
+import ShareLinkForm from "./share-link-form";
 
 const input = "h-11 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink outline-none focus:border-navy focus:ring-2 focus:ring-navy/10";
 const PAGE_SIZE = 25;
@@ -51,12 +52,13 @@ export default async function CustomTablePage({ params, searchParams }: {
   if (!user) redirect(`/login?next=${encodeURIComponent(`/clubs/manage/${id}/tables/${tableId}`)}`);
 
   const db = await createServerClient();
-  const access = await db.rpc("can_manage_club", { p_club_id: id });
+  const access = await db.rpc("can_manage_club_forms", { p_club_id: id });
   if (!access.data) redirect("/clubs/manage");
-  const [club, table, rows] = await Promise.all([
+  const [club, table, rows, links] = await Promise.all([
     db.from("clubs").select("id,name").eq("id", id).maybeSingle(),
     db.from("club_custom_tables").select("*").eq("id", tableId).eq("club_id", id).maybeSingle(),
     db.from("club_custom_table_rows").select("*").eq("table_id", tableId).order("created_at", { ascending: false }).limit(1000),
+    db.from("club_custom_form_links").select("id,expires_at,active,created_at").eq("table_id",tableId).order("created_at",{ascending:false}),
   ]);
   if (!club.data || !table.data) notFound();
 
@@ -112,6 +114,7 @@ export default async function CustomTablePage({ params, searchParams }: {
       </div> : null}
 
       {view === "settings" ? <div className="mx-auto max-w-4xl space-y-6">
+        <section className="rounded-card border border-line bg-card p-6 shadow-sm"><h2 className="text-xl font-bold">Public sharing</h2><p className="mt-2 text-sm text-muted">Create an unguessable link that anyone can use without signing in. Only current Club board members and this Club&apos;s Advisors can see responses or change this form.</p><ShareLinkForm clubId={id} tableId={tableId}/>{links.error?<p className="mt-3 text-sm text-orange">Apply club_custom_forms_sharing.sql to enable public links.</p>:<div className="mt-4 space-y-2">{links.data?.map(link=><div key={link.id} className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-line p-3 text-xs"><span>{link.active?"Active":"Revoked"}{link.expires_at?` · expires ${new Date(link.expires_at).toLocaleString("en-US")}`:" · no expiration"}</span>{link.active?<ActionFeedbackForm action={revokeCustomFormLink}><input type="hidden" name="club_id" value={id}/><input type="hidden" name="table_id" value={tableId}/><input type="hidden" name="link_id" value={link.id}/><button className="font-bold text-orange">Revoke</button></ActionFeedbackForm>:null}</div>)}</div>}</section>
         <div><p className="text-xs font-bold uppercase tracking-widest text-powder">Form builder</p><h2 className="mt-1 text-2xl font-bold">Questions &amp; settings</h2><p className="mt-2 text-sm text-muted">Add, duplicate and reorder questions. Changes apply to future entries and response editing.</p></div>
         <TableBuilder clubId={id} table={table.data} />
         <section className="rounded-card border border-line bg-card p-6 shadow-sm"><h2 className="text-xl font-bold">Make a copy</h2><p className="mt-2 text-sm text-muted">Create a blank form with the same questions and validation settings.</p><ActionFeedbackForm action={duplicateCustomTable} className="mt-4 flex flex-col gap-3 sm:flex-row"><input type="hidden" name="club_id" value={id} /><input type="hidden" name="table_id" value={tableId} /><input name="name" required minLength={2} maxLength={80} defaultValue={`${table.data.name} copy`} className={input} /><button className="h-11 shrink-0 rounded-full border border-line px-5 text-sm font-bold hover:bg-content-bg">Create copy</button></ActionFeedbackForm></section>

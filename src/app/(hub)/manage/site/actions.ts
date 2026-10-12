@@ -1,5 +1,6 @@
 "use server";
 import { getCurrentUser } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { createServerClient } from "@/lib/supabase/server";
 import { siteTextDefaults } from "@/lib/site-content";
 import { revalidatePath } from "next/cache";
@@ -8,8 +9,7 @@ async function siteEditor() {
   const user = await getCurrentUser();
   if (!user) return null;
   const db = await createServerClient();
-  const { data: allowed } = await db.rpc("has_custom_permission", { p_permission: "site.manage" });
-  return ["staff", "admin"].includes(user.role) || allowed ? { user, db } : null;
+  return await hasPermission("site.manage") ? { user, db } : null;
 }
 
 export async function saveSiteDraft(key: string, body: string) {

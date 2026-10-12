@@ -26,7 +26,7 @@ test("dashboard payload keeps scoped management access", () => {
     recentAttendance: [],
     registeredEvents: [],
     upcomingDeadlines: [],
-    preferences: { cardOrder: ["notifications", "meeting", "period", "attendance", "registrations", "deadlines"], hiddenCards: ["period"] },
+    preferences: { cardOrder: ["notifications", "meeting", "attendance", "registrations", "deadlines"], hiddenCards: [] },
   });
 });
 
@@ -43,6 +43,6 @@ test("dashboard payload rejects invalid roots and sanitizes malformed fields", (
     recentAttendance: [],
     registeredEvents: [],
     upcomingDeadlines: [],
-    preferences: { cardOrder: ["meeting", "period", "attendance", "registrations", "deadlines", "notifications"], hiddenCards: [] },
+    preferences: { cardOrder: ["meeting", "attendance", "registrations", "deadlines", "notifications"], hiddenCards: [] },
   });
 });

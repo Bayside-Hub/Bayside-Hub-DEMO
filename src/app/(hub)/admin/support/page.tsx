@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/ui";
 import Pagination from "@/components/pagination";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
 import SupportStatusForm from "./status-form";
@@ -14,7 +14,7 @@ export default async function AdminSupportPage({
 }: {
   searchParams: Promise<{ status?: string; page?: string }>;
 }) {
-  await requireStaff();
+  await requirePermission("support.manage", "/admin/support");
   const params = await searchParams;
   const requestedStatus = params.status as (typeof statuses)[number] | undefined;
   const status: (typeof statuses)[number] = requestedStatus && statuses.includes(requestedStatus) ? requestedStatus : "open";

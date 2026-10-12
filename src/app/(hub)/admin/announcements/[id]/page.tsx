@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/permissions";
 import { createServerClient } from "@/lib/supabase/server";
 import EditAnnouncementForm from "./edit-form";
 
 export default async function EditAnnouncementPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireStaff();
   const { id } = await params;
+  const user = await requirePermission("announcements.manage", `/admin/announcements/${id}`);
   const supabase = await createServerClient();
   const [{ data: initial, error: announcementError }, { data: draft }, { data: versions }, { data: clubs }] = await Promise.all([
     supabase.from("announcements").select("id, title, tag, body, publish_at, priority, pinned_until, expires_at, audience_type, audience_grades, audience_club_ids, notify_in_app, notify_email").eq("id", id).maybeSingle(),

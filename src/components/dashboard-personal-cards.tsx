@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { getCurrentBellPeriod } from "@/lib/bell-schedule";
+import { useState } from "react";
 import type { DashboardCardId, StudentDashboard } from "@/lib/student-dashboard-data";
 
 const labels: Record<DashboardCardId, string> = {
   meeting: "Next Club meeting",
-  period: "Current period",
   attendance: "Recent check-ins",
   registrations: "Registered events",
   deadlines: "Upcoming deadlines",
@@ -27,14 +25,6 @@ export default function DashboardPersonalCards({ dashboard }: { dashboard: Stude
   const [hidden, setHidden] = useState<DashboardCardId[]>(dashboard.preferences.hiddenCards);
   const [customizing, setCustomizing] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [period, setPeriod] = useState<ReturnType<typeof getCurrentBellPeriod>>(null);
-
-  useEffect(() => {
-    const update = () => setPeriod(getCurrentBellPeriod(new Date()));
-    update();
-    const timer = window.setInterval(update, 30_000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   function move(id: DashboardCardId, direction: -1 | 1) {
     setOrder((current) => {
@@ -66,9 +56,6 @@ export default function DashboardPersonalCards({ dashboard }: { dashboard: Stude
   const cards: Record<DashboardCardId, React.ReactNode> = {
     meeting: <InfoCard title={labels.meeting} href={dashboard.nextMeeting ? `/clubs/${dashboard.nextMeeting.clubSlug}` : "/profile#clubs"} action="Club details">
       {dashboard.nextMeeting ? <><strong className="block text-lg text-ink">{dashboard.nextMeeting.clubName}</strong><p className="mt-1 text-sm text-muted">{dateTime(dashboard.nextMeeting.startsAt)}{dashboard.nextMeeting.location ? ` · ${dashboard.nextMeeting.location}` : ""}</p></> : <p className="text-sm text-muted">No upcoming Club meeting found.</p>}
-    </InfoCard>,
-    period: <InfoCard title={labels.period} href="/announcements?view=schedule" action="Bell schedule">
-      {period ? <><strong className="block text-3xl text-ink">Period {period.period}</strong><p className="mt-1 text-sm text-muted">{period.start}–{period.end} · Bathrooms {period.bathroom}</p></> : <p className="text-sm text-muted">No class period is currently in session.</p>}
     </InfoCard>,
     attendance: <InfoCard title={labels.attendance} href="/profile#attendance" action="History">
       {dashboard.recentAttendance.length ? <ul className="space-y-2">{dashboard.recentAttendance.map((item) => <li key={item.id} className="text-sm"><Link href={`/clubs/${item.clubSlug}`} className="font-semibold text-ink">{item.sessionLabel}</Link><span className="block text-xs text-muted">{item.clubName} · {dateTime(item.checkedInAt)}</span></li>)}</ul> : <p className="text-sm text-muted">No recent check-ins.</p>}

@@ -20,7 +20,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
   const configured = isSupabaseConfigured();
 
   const supabase = configured ? await createServerClient() : null;
-  const { data: clubs } = supabase ? await supabase.from("clubs").select("id, name").order("name") : { data: [] };
+  const { data: clubs } = supabase ? await supabase.from("clubs").select("id,name").order("name") : { data: [] };
   let { data: rows, count, error: usersError } = supabase
     ? await supabase
         .from("profiles")
@@ -34,6 +34,13 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
     count = fallback.count;
     usersError = fallback.error;
   }
+  const profileIds = rows?.map(row => row.id) ?? [];
+  const { data: permissionRows } = supabase && profileIds.length
+    ? await supabase.from("teacher_permissions").select("profile_id,permission").in("profile_id", profileIds)
+    : { data: [] };
+  const { data: advisorRows } = supabase && profileIds.length
+    ? await supabase.from("club_advisors").select("profile_id,club_id").in("profile_id", profileIds)
+    : { data: [] };
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
@@ -76,7 +83,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                       )}
                     </p>
                   </div>
-                  <UserRoleForm id={row.id} role={row.role} gradeLevel={row.grade_level} clubs={clubs ?? []} />
+                  <UserRoleForm id={row.id} role={(["staff", "advisor"].includes(row.role) ? "teacher" : row.role) as "student" | "teacher" | "admin"} gradeLevel={row.grade_level} permissions={permissionRows?.filter(item => item.profile_id === row.id).map(item => item.permission) ?? []} clubs={clubs ?? []} assignedClubIds={advisorRows?.filter(item => item.profile_id === row.id).map(item => item.club_id) ?? []} />
                 </li>
               ))}
             </ul>

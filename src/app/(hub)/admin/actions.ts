@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { announcementTags, parseOptionalIsoDateTime } from "@/lib/input-validation";
 import { parseCsv } from "@/lib/csv";
 import { normalizeAnnouncementAudience } from "@/lib/announcement-audience";
+import { hasPermission, teacherPermissions } from "@/lib/permissions";
 
 export type ActionState = { ok: boolean; message: string } | null;
 
@@ -32,7 +33,7 @@ function audienceFromForm(formData: FormData) {
 
 export async function saveAnnouncementDraft(input: { key: string; title: string; tag: string; body: string; publishAt: string; priority: string; pinnedUntil: string; expiresAt: string; audienceType: string; audienceGrades: number[]; audienceClubIds: string[]; notifyInApp: boolean; notifyEmail: boolean }) {
   const user = await getCurrentUser();
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("announcements.manage"))) return { ok: false, message: "Announcement permission required." };
   if (input.key !== "new" && !/^[0-9a-f-]{36}$/i.test(input.key)) return { ok: false, message: "Invalid draft." };
   const title = input.title.trim();
   const body = input.body.trim();
@@ -67,8 +68,8 @@ export async function createAnnouncement(
   const notifyInApp = formData.get("notify_in_app") === "on";
   const notifyEmail = notifyInApp && formData.get("notify_email") === "on";
 
-  if (!user || !["staff", "admin"].includes(user.role)) {
-    return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("announcements.manage"))) {
+    return { ok: false, message: "Announcement permission required." };
   }
   if (!isSupabaseConfigured()) {
     return {
@@ -116,7 +117,7 @@ export async function deleteAnnouncement(_prev: ActionState, formData: FormData)
   const user = await getCurrentUser();
   const id = String(formData.get("id") ?? "");
 
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("announcements.manage"))) return { ok: false, message: "Announcement permission required." };
   if (!isSupabaseConfigured() || !id) return invalid();
 
   const supabase = await createServerClient();
@@ -132,7 +133,7 @@ export async function deleteAnnouncement(_prev: ActionState, formData: FormData)
 export async function archiveAnnouncement(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await getCurrentUser();
   const id = String(formData.get("id") ?? "");
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("announcements.manage"))) return { ok: false, message: "Announcement permission required." };
   if (!isSupabaseConfigured() || !id) return invalid();
 
   const supabase = await createServerClient();
@@ -157,7 +158,7 @@ export async function archiveAnnouncement(_prev: ActionState, formData: FormData
 export async function restoreAnnouncement(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await getCurrentUser();
   const id = String(formData.get("id") ?? "");
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("announcements.manage"))) return { ok: false, message: "Announcement permission required." };
   if (!isSupabaseConfigured() || !id) return invalid();
   const supabase = await createServerClient();
   const { error } = await supabase.from("announcements").update({ published: true, archived_at: null, updated_by: user.id, version_note: "Restored" }).eq("id", id);
@@ -183,7 +184,7 @@ export async function updateAnnouncement(_prev: ActionState, formData: FormData)
   const audience = audienceFromForm(formData);
   const notifyInApp = formData.get("notify_in_app") === "on";
   const notifyEmail = notifyInApp && formData.get("notify_email") === "on";
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("announcements.manage"))) return { ok: false, message: "Announcement permission required." };
   if (!isSupabaseConfigured() || !id || !audience || title.length < 3 || title.length > 120 || body.length < 3 || body.length > 10000 || !versionNote || versionNote.length > 240 || publishAt === undefined || pinnedUntil === undefined || expiresAt === undefined || !["normal","important","urgent","emergency"].includes(priority) || Boolean(expiresAt && publishAt && expiresAt <= publishAt)) return invalid();
   if (!announcementTags.includes(tag as (typeof announcementTags)[number])) return invalid();
   const supabase = await createServerClient();
@@ -200,7 +201,7 @@ export async function updateAnnouncement(_prev: ActionState, formData: FormData)
 
 export async function restoreAnnouncementVersion(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await getCurrentUser();
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("announcements.manage"))) return { ok: false, message: "Announcement permission required." };
   if (formData.get("confirm") !== "yes") return { ok: false, message: "Confirm restoration first." };
   const id = String(formData.get("id") ?? "");
   const versionId = String(formData.get("version_id") ?? "");
@@ -255,16 +256,13 @@ export async function updateUserRole(_prev: ActionState, formData: FormData): Pr
 
   if (!user || user.role !== "admin") return { ok: false, message: "Admins only." };
   if (!isSupabaseConfigured() || !id) return invalid();
-  if (!["student", "teacher", "advisor", "staff", "admin"].includes(role)) return invalid();
+  if (!["student", "teacher", "admin"].includes(role)) return invalid();
   if (gradeLevel !== null && ![9, 10, 11, 12].includes(gradeLevel)) return { ok: false, message: "Choose a valid grade." };
-  const clubId = String(formData.get("club_id") ?? "");
-  if (role === "advisor" && !clubId) return { ok: false, message: "Choose the club this advisor will manage." };
-
   const supabase = await createServerClient();
   const { error } = await supabase.rpc("assign_account_role", {
     p_user_id: id,
     p_role: role,
-    p_club_id: role === "advisor" ? clubId : null,
+    p_club_id: null,
   });
 
   if (error) return invalid();
@@ -276,11 +274,38 @@ export async function updateUserRole(_prev: ActionState, formData: FormData): Pr
   return { ok: true, message: "Role updated." };
 }
 
+export async function setTeacherPermissions(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "admin") return { ok: false, message: "Admins only." };
+  const id = String(formData.get("id") ?? "");
+  const permissions = formData.getAll("permissions").map(String);
+  if (!id || permissions.some(value => !teacherPermissions.includes(value as (typeof teacherPermissions)[number]))) return invalid();
+  const db = await createServerClient();
+  const { error } = await db.rpc("set_teacher_permissions", { p_profile_id: id, p_permissions: permissions });
+  if (error) return { ok: false, message: "Permissions could not be saved. Apply teacher_permissions.sql first." };
+  revalidatePath("/admin/users");
+  return { ok: true, message: "Teacher permissions updated." };
+}
+
+export async function setTeacherClubs(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "admin") return { ok: false, message: "Admins only." };
+  const id = String(formData.get("id") ?? "");
+  const clubIds = [...new Set(formData.getAll("club_ids").map(String).filter(Boolean))];
+  if (!id || clubIds.some(value => !/^[0-9a-f-]{36}$/i.test(value))) return invalid();
+  const db = await createServerClient();
+  const { error } = await db.rpc("set_teacher_clubs", { p_profile_id: id, p_club_ids: clubIds });
+  if (error) return { ok: false, message: "Club assignments could not be saved. Apply teacher_permissions.sql first." };
+  revalidatePath("/admin/users");
+  revalidatePath("/clubs/manage");
+  return { ok: true, message: clubIds.length ? clubIds.length + " Club assignment" + (clubIds.length === 1 ? "" : "s") + " saved." : "All Club assignments removed." };
+}
+
 export async function setSupportRequestStatus(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await getCurrentUser();
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "");
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("support.manage"))) return { ok: false, message: "Support permission required." };
   if (!isSupabaseConfigured() || !id || !["open", "in_review", "resolved", "closed"].includes(status)) return invalid();
   const supabase = await createServerClient();
   const { error } = await supabase.from("support_requests").update({
@@ -299,7 +324,7 @@ const opportunityStatuses = ["draft", "in_review", "published", "expired", "arch
 
 export async function createOpportunity(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await getCurrentUser();
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("opportunities.manage"))) return { ok: false, message: "Opportunities permission required." };
   if (!isSupabaseConfigured()) return invalid();
   const title = String(formData.get("title") ?? "").trim();
   const category = String(formData.get("category") ?? "");
@@ -338,7 +363,7 @@ export async function setOpportunityStatus(_prev: ActionState, formData: FormDat
   const user = await getCurrentUser();
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "");
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("opportunities.manage"))) return { ok: false, message: "Opportunities permission required." };
   if (!id || !isSupabaseConfigured() || !opportunityStatuses.includes(status as (typeof opportunityStatuses)[number])) return invalid();
   const supabase = await createServerClient();
   const { error } = await supabase.from("opportunities").update({ status: status as (typeof opportunityStatuses)[number], updated_at: new Date().toISOString() }).eq("id", id);
@@ -367,7 +392,7 @@ export async function updateOpportunity(_prev: ActionState, formData: FormData):
   const user = await getCurrentUser();
   const id = String(formData.get("id") ?? "");
   const input = opportunityInput(formData);
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("opportunities.manage"))) return { ok: false, message: "Opportunities permission required." };
   if (!id || !input || !isSupabaseConfigured()) return { ok: false, message: "Check the opportunity fields and HTTPS link." };
   const db = await createServerClient();
   const { error } = await db.from("opportunities").update({ ...input, updated_at: new Date().toISOString() }).eq("id", id);
@@ -379,7 +404,7 @@ export async function updateOpportunity(_prev: ActionState, formData: FormData):
 export async function deleteOpportunity(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await getCurrentUser();
   const id = String(formData.get("id") ?? "");
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("opportunities.manage"))) return { ok: false, message: "Opportunities permission required." };
   if (!id || formData.get("confirm") !== "delete" || !isSupabaseConfigured()) return { ok: false, message: "Confirm deletion first." };
   const db = await createServerClient();
   const { error } = await db.from("opportunities").delete().eq("id", id);
@@ -477,7 +502,7 @@ export async function saveEvent(_prev: ActionState, formData: FormData): Promise
   const user = await getCurrentUser();
   const id = String(formData.get("id") ?? "");
   const input = eventInput(formData);
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("events.manage"))) return { ok: false, message: "Events permission required." };
   if (input?.meeting_effect !== "none" && user.role !== "admin") return { ok: false, message: "Only administrators can cancel Club meetings." };
   if (!input || !isSupabaseConfigured()) return { ok: false, message: "Check the title, dates, and field lengths." };
   const db = await createServerClient();
@@ -492,7 +517,7 @@ export async function saveEvent(_prev: ActionState, formData: FormData): Promise
 export async function deleteEvent(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await getCurrentUser();
   const id = String(formData.get("id") ?? "");
-  if (!user || !["staff", "admin"].includes(user.role)) return { ok: false, message: "Staff only." };
+  if (!user || !(await hasPermission("events.manage"))) return { ok: false, message: "Events permission required." };
   if (!id || formData.get("confirm") !== "delete" || !isSupabaseConfigured()) return { ok: false, message: "Confirm deletion first." };
   const db = await createServerClient();
   const { data, error } = await db.from("events").delete().eq("id", id).is("club_id", null).select("id").maybeSingle();

@@ -54,6 +54,6 @@ export const getStudentDashboard = cache(async (): Promise<StudentDashboard | nu
     recentAttendance: [],
     registeredEvents: [],
     upcomingDeadlines: [],
-    preferences: { cardOrder: ["meeting", "period", "attendance", "registrations", "deadlines", "notifications"], hiddenCards: [] },
+    preferences: { cardOrder: ["meeting", "attendance", "registrations", "deadlines", "notifications"], hiddenCards: [] },
   };
 });
