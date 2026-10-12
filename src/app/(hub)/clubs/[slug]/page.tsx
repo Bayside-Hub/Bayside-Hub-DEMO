@@ -1,8 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { PrimaryButton } from "@/components/cards";
-import { getClubBySlug } from "@/lib/clubs";
+import { getAllClubs, getClubBySlug } from "@/lib/clubs";
 import { getCurrentUser } from "@/lib/auth";
 import {
   getClubInterestInfo,
@@ -17,6 +17,7 @@ import type { Metadata } from "next";
 import ClubChat from "./club-chat";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
+import { slugify } from "@/lib/data";
 
 // Membership controls and private chat depend on the request's auth cookies.
 // Never reuse a build-time guest version of a Club page for signed-in users.
@@ -51,6 +52,11 @@ export default async function ClubDetailPage({
   const { updatesPage: rawUpdatesPage } = await searchParams;
   const club = await getClubBySlug(slug);
   if (!club) notFound();
+  const canonicalSlug = slugify(club.name);
+  const canonicalNameMatches = (await getAllClubs()).filter(item => slugify(item.name) === canonicalSlug);
+  if (slug !== canonicalSlug && canonicalNameMatches.length === 1) {
+    permanentRedirect(`/clubs/${canonicalSlug}${rawUpdatesPage ? `?updatesPage=${encodeURIComponent(rawUpdatesPage)}` : ""}`);
+  }
   const advisors = club.advisors ?? [];
   const user = await getCurrentUser();
   const isApprovedCharter = club.officers.length === 0;
@@ -103,7 +109,7 @@ export default async function ClubDetailPage({
           {user ? (
             <PrimaryButton href="/calendar" className="w-full bg-[#97b4de]">Meeting dates →</PrimaryButton>
           ) : (
-            <PrimaryButton href={`/login?next=${encodeURIComponent(`/clubs/${club.slug}`)}`} className="w-full bg-[#97b4de]">Sign in to Join</PrimaryButton>
+            <PrimaryButton href={`/login?next=${encodeURIComponent(`/clubs/${canonicalSlug}`)}`} className="w-full bg-[#97b4de]">Sign in to Join</PrimaryButton>
           )}
           {membership.available && user && club.id && (["active", "pending"].includes(membership.status ?? "") || (club.recruitingStatus ?? "recruiting") === "recruiting") && (
             <form action={membership.status === "active" || membership.status === "pending" ? leaveClub : requestClubMembership} className="mt-3">
@@ -220,9 +226,9 @@ export default async function ClubDetailPage({
             ))}
             {announcementPageCount > 1 ? (
               <nav aria-label="Club announcement pages" className="flex items-center justify-between gap-3 pt-2">
-                {announcementPage > 1 ? <Link href={`/clubs/${club.slug}?updatesPage=${announcementPage - 1}#club-stream-title`} className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-cream hover:bg-white/5">← Newer</Link> : <span />}
+                {announcementPage > 1 ? <Link href={`/clubs/${canonicalSlug}?updatesPage=${announcementPage - 1}#club-stream-title`} className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-cream hover:bg-white/5">← Newer</Link> : <span />}
                 <span className="text-xs font-semibold text-cream/55">Page {announcementPage} of {announcementPageCount}</span>
-                {announcementPage < announcementPageCount ? <Link href={`/clubs/${club.slug}?updatesPage=${announcementPage + 1}#club-stream-title`} className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-cream hover:bg-white/5">Older →</Link> : <span />}
+                {announcementPage < announcementPageCount ? <Link href={`/clubs/${canonicalSlug}?updatesPage=${announcementPage + 1}#club-stream-title`} className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-cream hover:bg-white/5">Older →</Link> : <span />}
               </nav>
             ) : null}
           </div>

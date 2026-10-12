@@ -180,9 +180,13 @@ export const getAllClubs = cache(async (limit?: number): Promise<Club[]> => {
 /** Look up a single club by slug across static + approved applications. */
 export async function getClubBySlug(slug: string): Promise<Club | null> {
   const all = await getAllClubs();
+  const legacyNameSlug = slug.replace(/-[0-9a-f]{8}$/i, "");
   return (
     all.find((club) => club.slug === slug) ??
     all.find((club) => slugify(club.name) === slug) ??
+    (legacyNameSlug !== slug
+      ? all.find((club) => slugify(club.name) === legacyNameSlug)
+      : undefined) ??
     null
   );
 }

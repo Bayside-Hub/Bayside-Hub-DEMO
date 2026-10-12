@@ -462,7 +462,10 @@ begin
       slug, name, short_description, interest_tags, is_stem,
       is_community_service, contact_email, created_by
     ) values (
-      base_slug || '-' || left(new.id::text, 8), new.club_name, new.description,
+      case when exists (select 1 from public.clubs where slug = base_slug)
+        then base_slug || '-' || left(new.id::text, 8)
+        else base_slug
+      end, new.club_name, new.description,
       array[new.category], new.category = 'STEM', new.category = 'Community Service',
       new.contact_email, new.submitted_by
     ) on conflict (slug) do nothing;
