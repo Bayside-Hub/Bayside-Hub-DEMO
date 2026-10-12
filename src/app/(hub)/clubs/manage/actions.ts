@@ -635,6 +635,7 @@ export async function uploadClubImage(formData: FormData) {
       : await context.supabase.from("club_media").update({ is_cover: true }).eq("id", insertedMedia.id).eq("club_id", clubId);
     if (setCoverError) {
       if (previousCover) await context.supabase.from("club_media").update({ is_cover: true }).eq("id", previousCover.id).eq("club_id", clubId);
+      revalidatePath(`/clubs/manage/${clubId}`);
       return { ok: false, message: "Photo uploaded, but its cover placement could not be saved. The previous cover was preserved." };
     }
   }
@@ -698,9 +699,9 @@ export async function deleteClubImage(formData: FormData) {
   if (rowError) return { ok: false, message: rowError.code === "23503" ? "This photo is used by an announcement. Remove it from the announcement before deleting it." : "The media library entry could not be removed. Refresh and try again." };
   const paths = [media.storage_path, media.medium_path, media.thumbnail_path].filter((path): path is string => Boolean(path));
   const { error } = await context.supabase.storage.from("club-media").remove(paths);
-  if (error) return { ok: false, message: "The library entry was removed, but the stored file needs administrator cleanup." };
   revalidatePath(`/clubs/manage/${clubId}`);
   revalidatePath("/clubs", "layout");
+  if (error) return { ok: false, message: "The library entry was removed, but the stored file needs administrator cleanup." };
   return { ok: true, message: "Photo removed from the gallery and storage." };
 }
 

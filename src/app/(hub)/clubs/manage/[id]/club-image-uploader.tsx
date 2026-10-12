@@ -27,15 +27,26 @@ export default function ClubImageUploader({ clubId }: { clubId: string }) {
   const largeRef = useRef<HTMLInputElement>(null);
   const mediumRef = useRef<HTMLInputElement>(null);
   const thumbnailRef = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => () => { if (sourceUrl) URL.revokeObjectURL(sourceUrl); }, [sourceUrl]);
+  useEffect(() => {
+    const canvas = previewRef.current;
+    if (!canvas || !sourceUrl) return;
+    let cancelled = false;
+    loadImage(sourceUrl).then((image) => {
+      if (cancelled) return;
+      drawCrop(canvas, image, ratios[ratio].value, zoom, positionX, positionY, 900);
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [sourceUrl, ratio, zoom, positionX, positionY]);
 
   function chooseSource(file?: File) {
     if (sourceUrl) URL.revokeObjectURL(sourceUrl);
     setPrepared(null); setResult(null);
     if (!file) { setSource(null); setSourceUrl(""); return; }
-    if (!file.type.startsWith("image/") || file.size > 20 * 1024 * 1024) {
-      setSource(null); setSourceUrl(""); setResult({ ok: false, message: "Choose a JPG, PNG, WebP, HEIC-compatible, or GIF image up to 20 MB." }); return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 20 * 1024 * 1024) {
+      setSource(null); setSourceUrl(""); setResult({ ok: false, message: "Choose a JPG, PNG, or WebP image up to 20 MB. Convert HEIC photos before uploading." }); return;
     }
     setSource(file); setSourceUrl(URL.createObjectURL(file));
   }
@@ -64,14 +75,15 @@ export default function ClubImageUploader({ clubId }: { clubId: string }) {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     if (!prepared) { setResult({ ok: false, message: "Prepare the cropped image before uploading." }); return; }
     setPending(true); setResult(null);
     try {
-      const form = new FormData(event.currentTarget);
+      const form = new FormData(formElement);
       form.set("image_width", String(prepared.large.width)); form.set("image_height", String(prepared.large.height));
       const response = await uploadClubImage(form);
       setResult(response);
-      if (response.ok) { event.currentTarget.reset(); setSource(null); setSourceUrl(""); setPrepared(null); setZoom(1); setPositionX(0); setPositionY(0); }
+      if (response.ok) { formElement.reset(); setSource(null); setSourceUrl(""); setPrepared(null); setRatio("landscape"); setZoom(1); setPositionX(0); setPositionY(0); }
     } catch { setResult({ ok: false, message: "Upload could not complete. Refresh before trying again." }); }
     finally { setPending(false); }
   }
@@ -81,9 +93,9 @@ export default function ClubImageUploader({ clubId }: { clubId: string }) {
     <input ref={largeRef} type="file" name="image_large" className="hidden" tabIndex={-1} />
     <input ref={mediumRef} type="file" name="image_medium" className="hidden" tabIndex={-1} />
     <input ref={thumbnailRef} type="file" name="image_thumbnail" className="hidden" tabIndex={-1} />
-    <label className="text-sm font-semibold text-cream">Choose a photo<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif" required onChange={(event) => chooseSource(event.currentTarget.files?.[0])} className="mt-2 block w-full rounded-control border border-line bg-black/15 p-2 text-sm text-cream file:mr-3 file:rounded-full file:border-0 file:bg-cream file:px-4 file:py-2 file:font-bold file:text-navy" /></label>
+    <label className="text-sm font-semibold text-cream">Choose a photo<input type="file" accept="image/jpeg,image/png,image/webp" required onChange={(event) => chooseSource(event.currentTarget.files?.[0])} className="mt-2 block w-full rounded-control border border-line bg-black/15 p-2 text-sm text-cream file:mr-3 file:rounded-full file:border-0 file:bg-cream file:px-4 file:py-2 file:font-bold file:text-navy" /></label>
     {sourceUrl ? <div className="grid gap-4 rounded-xl border border-white/15 bg-black/15 p-4">
-      <div role="img" aria-label="Crop preview" className="relative mx-auto aspect-[4/3] w-full max-w-md overflow-hidden rounded-lg bg-black/30" style={{ aspectRatio: String(ratios[ratio].value) }}><div className="absolute inset-0 bg-cover bg-center transition-transform" style={{ backgroundImage: `url(${sourceUrl})`, backgroundPosition: `${50 + positionX / 2}% ${50 + positionY / 2}%`, transform: `scale(${zoom})` }} /></div>
+      <canvas ref={previewRef} role="img" aria-label="Exact crop preview" className="mx-auto h-auto w-full max-w-md rounded-lg bg-black/30" />
       <div className="grid gap-3 sm:grid-cols-2"><label className="text-xs font-semibold text-cream/75">Crop shape<select value={ratio} onChange={(event) => changed(setRatio, event.currentTarget.value as CropRatio)} className={`${field} mt-1`}>{Object.entries(ratios).map(([value, option]) => <option key={value} value={value}>{option.label}</option>)}</select></label><label className="text-xs font-semibold text-cream/75">Zoom · {zoom.toFixed(1)}×<input type="range" min="1" max="2" step="0.05" value={zoom} onChange={(event) => changed(setZoom, Number(event.currentTarget.value))} className="mt-3 w-full accent-[#fcf1dd]" /></label><label className="text-xs font-semibold text-cream/75">Move left/right<input type="range" min="-100" max="100" value={positionX} onChange={(event) => changed(setPositionX, Number(event.currentTarget.value))} className="mt-3 w-full accent-[#fcf1dd]" /></label><label className="text-xs font-semibold text-cream/75">Move up/down<input type="range" min="-100" max="100" value={positionY} onChange={(event) => changed(setPositionY, Number(event.currentTarget.value))} className="mt-3 w-full accent-[#fcf1dd]" /></label></div>
       <button type="button" onClick={prepare} disabled={processing} className="justify-self-start rounded-full border border-cream px-4 py-2 text-xs font-bold text-cream disabled:opacity-50">{processing ? "Optimizing…" : prepared ? "Rebuild image sizes" : "Prepare cropped image"}</button>
     </div> : null}
@@ -105,6 +117,13 @@ function loadImage(url: string) { return new Promise<HTMLImageElement>((resolve,
 function formatBytes(bytes: number) { return bytes < 1024 * 1024 ? `${Math.ceil(bytes / 1024)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`; }
 
 async function renderVariant(image: HTMLImageElement, aspect: number, zoom: number, x: number, y: number, maxDimension: number, name: string): Promise<GeneratedImage> {
+  const canvas = document.createElement("canvas");
+  const { width, height } = drawCrop(canvas, image, aspect, zoom, x, y, maxDimension);
+  const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Compression failed")), "image/webp", name === "thumbnail" ? .78 : .84));
+  return { file: new File([blob], `${name}.webp`, { type: "image/webp" }), width, height };
+}
+
+function drawCrop(canvas: HTMLCanvasElement, image: HTMLImageElement, aspect: number, zoom: number, x: number, y: number, maxDimension: number) {
   const sourceAspect = image.naturalWidth / image.naturalHeight;
   let cropWidth = sourceAspect > aspect ? image.naturalHeight * aspect : image.naturalWidth;
   let cropHeight = cropWidth / aspect;
@@ -114,11 +133,10 @@ async function renderVariant(image: HTMLImageElement, aspect: number, zoom: numb
   const scale = Math.min(1, maxDimension / Math.max(cropWidth, cropHeight));
   const width = Math.max(1, Math.round(cropWidth * scale));
   const height = Math.max(1, Math.round(cropHeight * scale));
-  const canvas = document.createElement("canvas"); canvas.width = width; canvas.height = height;
+  canvas.width = width; canvas.height = height;
   const context = canvas.getContext("2d", { alpha: false });
   if (!context) throw new Error("Canvas unavailable");
   context.imageSmoothingEnabled = true; context.imageSmoothingQuality = "high";
   context.drawImage(image, sourceX, sourceY, cropWidth, cropHeight, 0, 0, width, height);
-  const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Compression failed")), "image/webp", name === "thumbnail" ? .78 : .84));
-  return { file: new File([blob], `${name}.webp`, { type: "image/webp" }), width, height };
+  return { width, height };
 }
