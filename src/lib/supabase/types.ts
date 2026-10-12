@@ -342,6 +342,8 @@ export type ClubRow = {
   contact_email: string | null;
   join_policy: "instant" | "approval_required";
   recruiting_status: "recruiting" | "paused" | "closed";
+  profile_background_color: string;
+  profile_accent_color: string;
   status: "draft" | "published" | "archived";
   created_by: string | null;
   created_at: string;

@@ -29,6 +29,8 @@ export type Club = {
   announcements?: { id: string; title: string; body: string; date: string; image?: string; imageAlt?: string }[];
   media?: { id: string; type: "image" | "video" | "document"; path: string; title?: string; alt?: string }[];
   logo?: string;
+  profileBackgroundColor?: string;
+  profileAccentColor?: string;
 };
 
 export const clubCategories = [

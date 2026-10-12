@@ -11,6 +11,8 @@ import ClubGovernancePanel from "./club-governance-panel";
 import FairQrPanel from "./fair-qr-panel";
 import InviteCodePanel from "./invite-code-panel";
 import StudentInvitationPanel from "./student-invitation-panel";
+import ClubAppearanceForm from "./club-appearance-form";
+import { defaultClubAppearance } from "@/lib/club-appearance";
 
 const input = "h-11 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink outline-none focus:border-powder focus:ring-2 focus:ring-powder/20";
 const MEMBER_PAGE_SIZE = 25;
@@ -173,6 +175,7 @@ export default async function ManageClubPage({ params, searchParams }: { params:
 
           <section id="settings" className="scroll-mt-28 rounded-[20px] border border-line bg-card p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-powder">Settings</p><h2 className="mt-1 text-xl font-bold text-ink">Club profile</h2>
+            <div className="mt-5 border-b border-line pb-6"><h3 className="font-semibold text-ink">Public profile background</h3><p className="mt-1 text-xs leading-5 text-muted">Choose a theme or create a two-color background. Text contrast adjusts automatically.</p><ClubAppearanceForm clubId={club.id} background={club.profile_background_color ?? defaultClubAppearance.background} accent={club.profile_accent_color ?? defaultClubAppearance.accent} /></div>
             <ActionFeedbackForm action={updateManagedClub} className="mt-4 grid gap-3">
               <input type="hidden" name="club_id" value={club.id} /><input type="hidden" name="slug" value={club.slug} />
               <label className="text-sm font-medium text-ink">Card summary<textarea name="short_description" required minLength={10} maxLength={1000} defaultValue={club.short_description} rows={3} className={`${input} mt-1 h-auto py-2`} /><span className="mt-1 block text-xs font-normal text-muted">A quick introduction shown in search results and Club cards.</span></label>

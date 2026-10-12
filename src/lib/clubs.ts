@@ -89,6 +89,8 @@ function mapDatabaseClub(
       alt: item.alt_text ?? undefined,
     })),
     logo: cover?.storage_path,
+    profileBackgroundColor: row.profile_background_color,
+    profileAccentColor: row.profile_accent_color,
   };
 }
 

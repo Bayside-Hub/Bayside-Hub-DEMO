@@ -14,6 +14,7 @@ import { isClubMediaPermission, isMeaningfulAltText } from "@/lib/club-media";
 import { generateClubInviteCode } from "@/lib/club-invite-code";
 import { isStudentEmail } from "@/lib/student-registration";
 import { buildClubInvitationEmail, deliverClubInvitationEmail } from "@/lib/club-invitation-email";
+import { isHexColor } from "@/lib/club-appearance";
 
 const denied = { ok: false, message: "You no longer have permission for this club. Refresh or contact your advisor." };
 const invalid = { ok: false, message: "Check the required fields, lengths and dates, then try again." };
@@ -91,6 +92,20 @@ export async function updateManagedClub(formData: FormData) {
   revalidatePath("/clubs/quiz");
   revalidatePath("/search");
   return saved;
+}
+
+export async function updateClubAppearance(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context) return denied;
+  const background = String(formData.get("profile_background_color") ?? "").toLowerCase();
+  const accent = String(formData.get("profile_accent_color") ?? "").toLowerCase();
+  if (!isHexColor(background) || !isHexColor(accent)) return { ok: false, message: "Choose two valid colors." };
+  const { data, error } = await context.supabase.from("clubs").update({ profile_background_color: background, profile_accent_color: accent }).eq("id", clubId).select("slug").maybeSingle();
+  if (error || !data) return { ok: false, message: "Background could not be saved. Apply club_profile_appearance.sql first." };
+  revalidatePath(`/clubs/${data.slug}`);
+  revalidatePath(`/clubs/manage/${clubId}`);
+  return { ok: true, message: "Club profile background updated." };
 }
 
 export async function addClubMeeting(formData: FormData) {

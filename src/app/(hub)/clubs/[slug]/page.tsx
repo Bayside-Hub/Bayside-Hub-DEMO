@@ -18,6 +18,7 @@ import ClubChat from "./club-chat";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/data";
+import { defaultClubAppearance, foregroundForGradient } from "@/lib/club-appearance";
 
 // Membership controls and private chat depend on the request's auth cookies.
 // Never reuse a build-time guest version of a Club page for signed-in users.
@@ -75,6 +76,9 @@ export default async function ClubDetailPage({
   const commitmentLabel = club.commitment > 0
     ? `About ${club.commitment} hour${club.commitment === 1 ? "" : "s"}/week`
     : "Flexible commitment";
+  const profileBackground = club.profileBackgroundColor ?? defaultClubAppearance.background;
+  const profileAccent = club.profileAccentColor ?? defaultClubAppearance.accent;
+  const profileForeground = foregroundForGradient(profileBackground, profileAccent);
 
   return (
     <div className="club-detail-backdrop mx-auto min-h-full w-full max-w-[1920px] px-5 py-8 text-cream sm:px-8 lg:px-12">
@@ -86,7 +90,7 @@ export default async function ClubDetailPage({
         <span className="text-ink">{club.name}</span>
       </nav>
 
-      <section className="grid min-h-[360px] gap-8 overflow-hidden rounded-[22px] border border-[#97b4de] bg-[#f0ebe5]/95 p-6 text-[#2a2829] lg:grid-cols-[210px_minmax(0,1fr)_280px] lg:items-center lg:p-10">
+      <section className="grid min-h-[360px] gap-8 overflow-hidden rounded-[22px] border p-6 lg:grid-cols-[210px_minmax(0,1fr)_280px] lg:items-center lg:p-10" style={{ background: `linear-gradient(135deg, ${profileBackground}, ${profileAccent})`, borderColor: profileAccent, color: profileForeground }}>
         <div className="relative mx-auto flex size-[170px] flex-col items-center justify-center overflow-hidden rounded-full border border-[#2a2829] bg-[#97b4de]">{club.logo ? <Image src={club.logo} alt={`${club.name} cover`} fill sizes="170px" className="object-cover" /> : <><span className="text-6xl font-bold text-[#263a99]">{club.name[0]}</span><span className="mt-2 text-[10px] font-bold uppercase">{club.name}</span></>}</div>
         <div>
           <p className="text-sm">{club.category} · {club.meetingDate}</p>
