@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/clubs/key-club-cfd268af",
+        destination: "/clubs/key-club",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
