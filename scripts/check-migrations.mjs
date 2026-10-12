@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const directory = new URL("../supabase/", import.meta.url);
-const files = readdirSync(directory).filter(name => name.endsWith(".sql")).sort();
+const files = readdirSync(directory).filter(name => name.endsWith(".sql") && name !== "bootstrap.sql").sort();
 const failures = [];
 for (const file of files) {
   const sql = readFileSync(join(directory.pathname, file), "utf8");

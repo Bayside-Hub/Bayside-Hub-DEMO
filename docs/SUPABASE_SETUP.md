@@ -1,7 +1,8 @@
 # Supabase 手动配置与验收
 
-目标项目：`kabrxgbqwkfowguzdfxb`。正式域名：`https://bayside-hub-demo.vercel.app`。
-本轮只准备代码和 SQL，**没有执行远端迁移或添加生产 DEMO 数据**。
+本文件用于已有数据库的增量升级。全新 Supabase 项目请直接运行 `supabase/bootstrap.sql`，并阅读 `supabase/README.md`。
+
+项目编号与正式域名不写死在仓库中。请把 `<project-ref>` 和 `https://your-domain.example` 替换为新环境的真实值。SQL 本身不依赖网站域名。
 
 ## 1. 先检查，再执行
 

@@ -30,8 +30,8 @@
 
 ## 你需要操作的 Supabase 项目
 
-项目 `kabrxgbqwkfowguzdfxb` 尚未由本轮执行任何远端迁移。
-按 [SUPABASE_SETUP.md](SUPABASE_SETUP.md) 先检查前置表和函数，再依次运行四个新增 SQL 文件；DEMO 数据可选，默认草稿。
+仓库不再写死 Supabase 项目编号或网站域名，本轮也没有执行任何远端迁移。
+全新项目请按 [supabase/README.md](../supabase/README.md) 生成并运行一次性初始化脚本；已有项目请按 [SUPABASE_SETUP.md](SUPABASE_SETUP.md) 增量迁移。DEMO 数据可选，默认不安装。
 新后台依赖这些迁移。若 GitHub 推送自动触发 Vercel 部署，未迁移时部分新页面会提示数据库尚未就绪，社团管理权限列表也可能不可用。
 
 ## 仍未完成 / 上线前必须处理

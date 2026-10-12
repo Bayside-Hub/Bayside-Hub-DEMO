@@ -65,7 +65,13 @@ checks and the existing release checklist are complete.
    Set `ALLOWED_EMAIL_DOMAINS` to a comma-separated list containing the student
    and staff domains that may access the Hub.
 
-3. Apply the database migrations in the Supabase SQL Editor, in order:
+3. For a **brand-new Supabase project**, run `npm run db:bundle`, then execute
+   the generated `supabase/bootstrap.sql` once in the SQL Editor. Its dependency order is generated from
+   `supabase/migration-order.json`; see `supabase/README.md` for new-domain and
+   authentication settings.
+
+   The list below is retained for **incremental upgrades of an existing
+   database only**. Do not run the full historical list again on production:
 
    - `supabase/profiles.sql` — profiles table, role helper, triggers
    - `supabase/production_compatibility.sql` — only for an existing deployment
