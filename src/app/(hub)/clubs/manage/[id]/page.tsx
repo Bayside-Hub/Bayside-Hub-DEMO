@@ -10,6 +10,7 @@ import { addClubLink, addClubMeeting, publishClubAnnouncement, removeClubLink, r
 import ClubGovernancePanel from "./club-governance-panel";
 import FairQrPanel from "./fair-qr-panel";
 import InviteCodePanel from "./invite-code-panel";
+import StudentInvitationPanel from "./student-invitation-panel";
 
 const input = "h-11 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink outline-none focus:border-powder focus:ring-2 focus:ring-powder/20";
 const MEMBER_PAGE_SIZE = 25;
@@ -79,6 +80,7 @@ export default async function ManageClubPage({ params, searchParams }: { params:
     { href: "#attendance", label: "Attendance", icon: AttendanceIcon },
     { href: "#fair-qr", label: "Fair QR", icon: MediaIcon },
     { href: "#invite-codes", label: "Invite codes", icon: UserIcon },
+    { href: "#student-invitations", label: "Invite students", icon: UserIcon },
     { href: `/clubs/manage/${id}/finance`, label: "Finance", icon: GearIcon },
     { href: `/clubs/manage/${id}/tables`, label: "Tables", icon: CalendarIcon },
     { href: `/clubs/manage/${id}/operations`, label: "Constitution", icon: CalendarIcon },
@@ -154,6 +156,7 @@ export default async function ManageClubPage({ params, searchParams }: { params:
           </section>
 
           <ClubGovernancePanel clubId={club.id} clubStatus={club.status} userId={user.id} role={user.role} canGovern={canGovern} officers={officers ?? []} advisors={advisors ?? []} media={media ?? []} history={history ?? []} />
+          {canGovern ? <div className="mt-6"><StudentInvitationPanel clubId={club.id} /></div> : null}
         </main>
 
         <aside className="space-y-6">

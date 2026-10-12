@@ -12,6 +12,8 @@ import { attendanceExpiresAt, isAttendanceStartAllowed, isTemporaryAttendanceDur
 import { parseClubProfileInput } from "@/lib/club-profile-input";
 import { isClubMediaPermission, isMeaningfulAltText } from "@/lib/club-media";
 import { generateClubInviteCode } from "@/lib/club-invite-code";
+import { isStudentEmail } from "@/lib/student-registration";
+import { buildClubInvitationEmail, deliverClubInvitationEmail } from "@/lib/club-invitation-email";
 
 const denied = { ok: false, message: "You no longer have permission for this club. Refresh or contact your advisor." };
 const invalid = { ok: false, message: "Check the required fields, lengths and dates, then try again." };
@@ -229,6 +231,62 @@ export async function revokeClubInviteCode(formData: FormData) {
   if (error || !data) return failed;
   revalidatePath(`/clubs/manage/${clubId}`);
   return { ok: true, message: "Invite code revoked." };
+}
+
+export async function inviteStudentToClub(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context || !context.canGovern) return denied;
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const personalMessage = String(formData.get("personal_message") ?? "").trim();
+  if (!isStudentEmail(email) || personalMessage.length > 500) return { ok: false, message: "Enter a valid @nycstudents.net email and keep the message under 500 characters." };
+
+  const [{ data: club }, { data: links }, { data: meetings }] = await Promise.all([
+    context.supabase.from("clubs").select("id,slug,name,short_description").eq("id", clubId).maybeSingle(),
+    context.supabase.from("club_links").select("*").eq("club_id", clubId).order("sort_order"),
+    context.supabase.from("club_meetings").select("*").eq("club_id", clubId).order("day_of_week"),
+  ]);
+  if (!club) return failed;
+
+  const existing = await context.supabase.from("club_member_invitations").select("id").eq("club_id", clubId).eq("email", email).eq("status", "pending").maybeSingle();
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60_000).toISOString();
+  const invitation = existing.data
+    ? await context.supabase.from("club_member_invitations").update({ personal_message: personalMessage || null, expires_at: expiresAt, invited_by: context.user.id }).eq("id", existing.data.id).select("id").maybeSingle()
+    : await context.supabase.from("club_member_invitations").insert({ club_id: clubId, email, personal_message: personalMessage || null, invited_by: context.user.id, expires_at: expiresAt }).select("id").maybeSingle();
+  if (!invitation.data) return { ok: false, message: "Apply club_member_email_invitations.sql before sending student invitations." };
+
+  const profile = await context.supabase.from("profiles").select("id,role").eq("email", email).maybeSingle();
+  if (profile.data?.role === "student") {
+    await context.supabase.from("club_memberships").upsert({ club_id: clubId, profile_id: profile.data.id, status: "active", reviewed_at: new Date().toISOString() }, { onConflict: "club_id,profile_id" });
+    await context.supabase.from("club_member_invitations").update({ status: "accepted", claimed_profile_id: profile.data.id, claimed_at: new Date().toISOString() }).eq("id", invitation.data.id);
+  }
+
+  const origin = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+  const content = buildClubInvitationEmail({ clubName: club.name, description: club.short_description, clubUrl: `${origin}/login?next=${encodeURIComponent(`/clubs/${club.slug}`)}`, personalMessage, links: links ?? [], meetings: meetings ?? [] });
+  const queued = await context.supabase.from("club_invitation_email_outbox").insert({ invitation_id: invitation.data.id, to_email: email, subject: content.subject, html_body: content.html, text_body: content.text }).select("id,to_email,subject,html_body,text_body").maybeSingle();
+  if (!queued.data) return { ok: true, message: "The student invitation was saved, but the introduction email could not be queued." };
+  const delivery = await deliverClubInvitationEmail(queued.data);
+  if (delivery.ok) {
+    await context.supabase.from("club_invitation_email_outbox").update({ status: "sent", sent_at: new Date().toISOString(), provider_id: delivery.providerId, last_error: null }).eq("id", queued.data.id);
+  } else {
+    await context.supabase.from("club_invitation_email_outbox").update({ status: delivery.retryable ? "failed" : "cancelled", available_at: new Date(Date.now() + 10 * 60_000).toISOString(), last_error: delivery.error.slice(0, 500) }).eq("id", queued.data.id);
+  }
+  revalidatePath(`/clubs/manage/${clubId}`);
+  return delivery.ok
+    ? { ok: true, message: profile.data?.role === "student" ? "The student was added and the Club introduction email was sent." : "Invitation sent. The student will join automatically after registering with this email." }
+    : { ok: true, message: "Invitation saved and automatic joining is ready. Email delivery is queued and needs the Resend settings if they are not configured yet." };
+}
+
+export async function revokeStudentClubInvitation(formData: FormData) {
+  const clubId = String(formData.get("club_id") ?? "");
+  const invitationId = String(formData.get("invitation_id") ?? "");
+  const context = await managerContext(clubId);
+  if (!context || !context.canGovern || !invitationId) return denied;
+  const invitation = await context.supabase.from("club_member_invitations").update({ status: "revoked" }).eq("id", invitationId).eq("club_id", clubId).eq("status", "pending").select("id").maybeSingle();
+  if (!invitation.data) return { ok: false, message: "This invitation is no longer pending." };
+  await context.supabase.from("club_invitation_email_outbox").update({ status: "cancelled" }).eq("invitation_id", invitationId).in("status", ["pending", "failed"]);
+  revalidatePath(`/clubs/manage/${clubId}`);
+  return { ok: true, message: "Invitation revoked. The student will not be joined automatically." };
 }
 
 export async function publishClubAnnouncement(formData: FormData) {

@@ -82,6 +82,8 @@ export type Database = {
       club_share_links: TableDefinition<ClubShareLinkRow>;
       club_invite_codes: TableDefinition<ClubInviteCodeRow>;
       club_invite_redemptions: TableDefinition<{ id: string; invite_id: string; club_id: string; profile_id: string; redeemed_at: string }>;
+      club_member_invitations: TableDefinition<ClubMemberInvitationRow>;
+      club_invitation_email_outbox: TableDefinition<ClubInvitationEmailOutboxRow>;
       announcement_versions: TableDefinition<AnnouncementVersionRow>;
       announcement_drafts: TableDefinition<AnnouncementDraftRow>;
       calendar_sources: TableDefinition<CalendarSourceRow>;
@@ -147,6 +149,7 @@ export type Database = {
         Args: { p_limit?: number };
         Returns: PushDeliveryClaim[];
       };
+      claim_club_invitation_emails: { Args: { p_limit?: number }; Returns: ClubInvitationEmailOutboxRow[] };
       get_managed_club_ids: { Args: Record<string, never>; Returns: string[] };
       has_custom_permission: { Args: { p_permission: string; p_club_id?: string | null }; Returns: boolean };
       can_manage_club: { Args: { p_club_id: string }; Returns: boolean };
@@ -540,6 +543,9 @@ export type ClubInviteCodeRow = {
   created_by: string;
   created_at: string;
 };
+
+export type ClubMemberInvitationRow = { id: string; club_id: string; email: string; personal_message: string | null; status: "pending" | "accepted" | "revoked" | "expired"; invited_by: string; expires_at: string; claimed_profile_id: string | null; claimed_at: string | null; created_at: string };
+export type ClubInvitationEmailOutboxRow = { id: number; invitation_id: string; to_email: string; subject: string; html_body: string; text_body: string; status: "pending" | "sending" | "sent" | "failed" | "cancelled"; attempts: number; available_at: string; claimed_at: string | null; sent_at: string | null; provider_id: string | null; last_error: string | null; created_at: string };
 
 export type ClubAttendanceRecordDetail = {
   id: string;

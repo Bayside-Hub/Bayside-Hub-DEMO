@@ -8,7 +8,7 @@
     "club_attendance.sql", "attendance_scheduling.sql", "club_fair_qr_links.sql", "student_registration_invites.sql",
     "announcement_cms_workflow.sql", "announcement_calendar_enhancements.sql", "calendar_meeting_emergency.sql",
     "announcement_audience_notifications.sql", "security_observability.sql", "site_cms_workflow.sql",
-    "club_membership_lifecycle.sql", "club_social_links.sql", "club_media_library.sql", "club_media_processing.sql",
+    "club_membership_lifecycle.sql", "club_social_links.sql", "club_member_email_invitations.sql", "club_media_library.sql", "club_media_processing.sql",
     "club_constitution_elections.sql", "club_finance.sql", "finance_permissions_and_reimbursements.sql",
     "finance_ledger_staff_only.sql", "club_custom_tables.sql", "club_custom_tables_enhancements.sql",
     "teacher_club_application_workflow.sql",
