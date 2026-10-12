@@ -23,6 +23,13 @@ const saved = { ok: true, message: "Saved successfully." };
 function missingMediaProcessingSchema(error: { code?: string; message?: string } | null) {
   return Boolean(error && (["42703", "PGRST204"].includes(error.code ?? "") || /medium_path|permission_basis|thumbnail_path/i.test(error.message ?? "")));
 }
+function mediaUploadErrorMessage(error: { message?: string } | null) {
+  const message = error?.message ?? "";
+  if (/bucket.*not found|not found.*bucket/i.test(message)) return "Media storage is not configured. Apply club_governance.sql, then try again.";
+  if (/row-level security|unauthorized|permission/i.test(message)) return "Your Club media storage permission is missing. Apply the latest club_governance.sql policies, then sign in again.";
+  if (/payload|too large|maximum/i.test(message)) return "The optimized photo is still too large for storage. Crop closer or choose a smaller image.";
+  return "Image upload failed. Check the Club media Storage bucket and policies, then try again.";
+}
 
 /** Publication is a staff decision; club editors retain ordinary content access. */
 export async function updateClubPublication(formData: FormData) {
@@ -606,7 +613,7 @@ export async function uploadClubImage(formData: FormData) {
     const { error } = await context.supabase.storage.from("club-media").upload(item.path, item.file, { contentType: "image/webp", cacheControl: "31536000", upsert: false });
     if (error) {
       if (uploaded.length) await context.supabase.storage.from("club-media").remove(uploaded);
-      return { ok: false, message: "Image upload failed. Apply club_media_processing.sql and check Storage access." };
+      return { ok: false, message: mediaUploadErrorMessage(error) };
     }
     uploaded.push(item.path);
   }

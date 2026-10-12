@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { clubMediaPermissionOptions } from "@/lib/club-media";
 import { uploadClubImage } from "../actions";
 
 type CropRatio = "landscape" | "square" | "portrait";
 type GeneratedImage = { file: File; width: number; height: number };
+const safeUploadBytes = 3.5 * 1024 * 1024;
 const ratios: Record<CropRatio, { label: string; value: number }> = {
   landscape: { label: "Landscape 4:3", value: 4 / 3 },
   square: { label: "Square 1:1", value: 1 },
@@ -14,19 +16,17 @@ const ratios: Record<CropRatio, { label: string; value: number }> = {
 const field = "h-10 w-full rounded-control border border-line bg-content-bg px-3 text-sm text-ink";
 
 export default function ClubImageUploader({ clubId }: { clubId: string }) {
+  const router = useRouter();
   const [source, setSource] = useState<File | null>(null);
   const [sourceUrl, setSourceUrl] = useState("");
   const [ratio, setRatio] = useState<CropRatio>("landscape");
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(1.1);
   const [positionX, setPositionX] = useState(0);
   const [positionY, setPositionY] = useState(0);
   const [prepared, setPrepared] = useState<{ large: GeneratedImage; medium: GeneratedImage; thumbnail: GeneratedImage } | null>(null);
   const [processing, setProcessing] = useState(false);
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
-  const largeRef = useRef<HTMLInputElement>(null);
-  const mediumRef = useRef<HTMLInputElement>(null);
-  const thumbnailRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => () => { if (sourceUrl) URL.revokeObjectURL(sourceUrl); }, [sourceUrl]);
@@ -54,49 +54,48 @@ export default function ClubImageUploader({ clubId }: { clubId: string }) {
   function changed<T>(setter: (value: T) => void, value: T) { setter(value); setPrepared(null); }
 
   async function prepare() {
-    if (!sourceUrl || !source) return;
+    if (!sourceUrl || !source) return null;
     setProcessing(true); setResult(null);
     try {
       const image = await loadImage(sourceUrl);
-      const outputs = await Promise.all([
-        renderVariant(image, ratios[ratio].value, zoom, positionX, positionY, 1600, "large"),
-        renderVariant(image, ratios[ratio].value, zoom, positionX, positionY, 960, "medium"),
-        renderVariant(image, ratios[ratio].value, zoom, positionX, positionY, 480, "thumbnail"),
-      ]);
+      const outputs = await generateVariants(image, ratios[ratio].value, zoom, positionX, positionY);
       const next = { large: outputs[0], medium: outputs[1], thumbnail: outputs[2] };
-      assignFile(largeRef.current, next.large.file); assignFile(mediumRef.current, next.medium.file); assignFile(thumbnailRef.current, next.thumbnail.file);
       setPrepared(next);
       const total = outputs.reduce((sum, output) => sum + output.file.size, 0);
       setResult({ ok: true, message: `Ready: three optimized WebP sizes (${formatBytes(total)} total).` });
+      return next;
     } catch {
       setResult({ ok: false, message: "This image could not be processed. Try a JPG, PNG, or WebP file." });
+      return null;
     } finally { setProcessing(false); }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formElement = event.currentTarget;
-    if (!prepared) { setResult({ ok: false, message: "Prepare the cropped image before uploading." }); return; }
     setPending(true); setResult(null);
     try {
+      const images = prepared ?? await prepare();
+      if (!images) return;
       const form = new FormData(formElement);
-      form.set("image_width", String(prepared.large.width)); form.set("image_height", String(prepared.large.height));
+      form.set("image_large", images.large.file);
+      form.set("image_medium", images.medium.file);
+      form.set("image_thumbnail", images.thumbnail.file);
+      form.set("image_width", String(images.large.width)); form.set("image_height", String(images.large.height));
       const response = await uploadClubImage(form);
       setResult(response);
-      if (response.ok) { formElement.reset(); setSource(null); setSourceUrl(""); setPrepared(null); setRatio("landscape"); setZoom(1); setPositionX(0); setPositionY(0); }
+      if (response.ok) { formElement.reset(); setSource(null); setSourceUrl(""); setPrepared(null); setRatio("landscape"); setZoom(1.1); setPositionX(0); setPositionY(0); router.refresh(); }
     } catch { setResult({ ok: false, message: "Upload could not complete. Refresh before trying again." }); }
     finally { setPending(false); }
   }
 
   return <form onSubmit={submit} className="mt-4 grid gap-4" aria-busy={pending || processing}>
     <input type="hidden" name="club_id" value={clubId} />
-    <input ref={largeRef} type="file" name="image_large" className="hidden" tabIndex={-1} />
-    <input ref={mediumRef} type="file" name="image_medium" className="hidden" tabIndex={-1} />
-    <input ref={thumbnailRef} type="file" name="image_thumbnail" className="hidden" tabIndex={-1} />
     <label className="text-sm font-semibold text-cream">Choose a photo<input type="file" accept="image/jpeg,image/png,image/webp" required onChange={(event) => chooseSource(event.currentTarget.files?.[0])} className="mt-2 block w-full rounded-control border border-line bg-black/15 p-2 text-sm text-cream file:mr-3 file:rounded-full file:border-0 file:bg-cream file:px-4 file:py-2 file:font-bold file:text-navy" /></label>
     {sourceUrl ? <div className="grid gap-4 rounded-xl border border-white/15 bg-black/15 p-4">
       <canvas ref={previewRef} role="img" aria-label="Exact crop preview" className="mx-auto h-auto w-full max-w-md rounded-lg bg-black/30" />
-      <div className="grid gap-3 sm:grid-cols-2"><label className="text-xs font-semibold text-cream/75">Crop shape<select value={ratio} onChange={(event) => changed(setRatio, event.currentTarget.value as CropRatio)} className={`${field} mt-1`}>{Object.entries(ratios).map(([value, option]) => <option key={value} value={value}>{option.label}</option>)}</select></label><label className="text-xs font-semibold text-cream/75">Zoom · {zoom.toFixed(1)}×<input type="range" min="1" max="2" step="0.05" value={zoom} onChange={(event) => changed(setZoom, Number(event.currentTarget.value))} className="mt-3 w-full accent-[#fcf1dd]" /></label><label className="text-xs font-semibold text-cream/75">Move left/right<input type="range" min="-100" max="100" value={positionX} onChange={(event) => changed(setPositionX, Number(event.currentTarget.value))} className="mt-3 w-full accent-[#fcf1dd]" /></label><label className="text-xs font-semibold text-cream/75">Move up/down<input type="range" min="-100" max="100" value={positionY} onChange={(event) => changed(setPositionY, Number(event.currentTarget.value))} className="mt-3 w-full accent-[#fcf1dd]" /></label></div>
+      <div className="grid gap-3 sm:grid-cols-2"><label className="text-xs font-semibold text-cream/75">Crop shape<select value={ratio} onChange={(event) => changed(setRatio, event.currentTarget.value as CropRatio)} className={`${field} mt-1`}>{Object.entries(ratios).map(([value, option]) => <option key={value} value={value}>{option.label}</option>)}</select></label><label className="text-xs font-semibold text-cream/75">Zoom · {zoom.toFixed(2)}×<input type="range" min="1" max="3" step="0.05" value={zoom} onChange={(event) => changed(setZoom, Number(event.currentTarget.value))} className="mt-3 w-full accent-[#fcf1dd]" /></label><CropFocusControl axis="Horizontal" value={positionX} onChange={(value) => changed(setPositionX, value)} /><CropFocusControl axis="Vertical" value={positionY} onChange={(value) => changed(setPositionY, value)} /></div>
+      <p className="text-xs leading-5 text-cream/60">Use the focus buttons for exact left/center/right or top/middle/bottom placement. Increase zoom when you need more room to reposition the photo.</p>
       <button type="button" onClick={prepare} disabled={processing} className="justify-self-start rounded-full border border-cream px-4 py-2 text-xs font-bold text-cream disabled:opacity-50">{processing ? "Optimizing…" : prepared ? "Rebuild image sizes" : "Prepare cropped image"}</button>
     </div> : null}
     <input name="title" maxLength={120} placeholder="Photo title (optional)" className={field} />
@@ -107,20 +106,36 @@ export default function ClubImageUploader({ clubId }: { clubId: string }) {
     <label className="flex items-center gap-2 text-sm text-cream"><input type="checkbox" name="is_cover" /> Set as Club cover</label>
     <label className="flex items-start gap-2 rounded-control border border-white/10 p-3 text-xs leading-5 text-cream/75"><input type="checkbox" name="permission_confirmed" required className="mt-1" /> I confirm this permission record is accurate and the image may be stored for Club use.</label>
     <p className="text-xs leading-5 text-cream/55">The original source stays on this device. Hatchx uploads three cropped, compressed WebP versions for faster pages.</p>
-    <button disabled={pending || processing || !prepared} className="h-10 rounded-full bg-cream px-5 font-bold text-black disabled:opacity-50">{pending ? "Uploading…" : "Upload optimized photo"}</button>
+    <button disabled={pending || processing || !source} className="h-10 rounded-full bg-cream px-5 font-bold text-black disabled:opacity-50">{pending ? "Preparing and uploading…" : prepared ? "Upload optimized photo" : "Prepare and upload photo"}</button>
     {result ? <p role={result.ok ? "status" : "alert"} className={`text-sm ${result.ok ? "text-cream" : "text-orange"}`}>{result.message}</p> : null}
   </form>;
 }
 
-function assignFile(input: HTMLInputElement | null, file: File) { if (!input) return; const transfer = new DataTransfer(); transfer.items.add(file); input.files = transfer.files; }
 function loadImage(url: string) { return new Promise<HTMLImageElement>((resolve, reject) => { const image = new Image(); image.onload = () => resolve(image); image.onerror = reject; image.src = url; }); }
 function formatBytes(bytes: number) { return bytes < 1024 * 1024 ? `${Math.ceil(bytes / 1024)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`; }
 
-async function renderVariant(image: HTMLImageElement, aspect: number, zoom: number, x: number, y: number, maxDimension: number, name: string): Promise<GeneratedImage> {
+async function generateVariants(image: HTMLImageElement, aspect: number, zoom: number, x: number, y: number) {
+  for (const quality of [.84, .75, .66]) {
+    const outputs = await Promise.all([
+      renderVariant(image, aspect, zoom, x, y, 1600, "large", quality),
+      renderVariant(image, aspect, zoom, x, y, 960, "medium", quality),
+      renderVariant(image, aspect, zoom, x, y, 480, "thumbnail", Math.min(.78, quality)),
+    ]);
+    if (outputs.reduce((sum, output) => sum + output.file.size, 0) <= safeUploadBytes) return outputs;
+  }
+  throw new Error("Optimized files exceed the safe upload size");
+}
+
+async function renderVariant(image: HTMLImageElement, aspect: number, zoom: number, x: number, y: number, maxDimension: number, name: string, quality: number): Promise<GeneratedImage> {
   const canvas = document.createElement("canvas");
   const { width, height } = drawCrop(canvas, image, aspect, zoom, x, y, maxDimension);
-  const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Compression failed")), "image/webp", name === "thumbnail" ? .78 : .84));
+  const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Compression failed")), "image/webp", quality));
   return { file: new File([blob], `${name}.webp`, { type: "image/webp" }), width, height };
+}
+
+function CropFocusControl({ axis, value, onChange }: { axis: "Horizontal" | "Vertical"; value: number; onChange: (value: number) => void }) {
+  const labels = axis === "Horizontal" ? ["Left", "Center", "Right"] : ["Top", "Middle", "Bottom"];
+  return <fieldset className="grid gap-2"><legend className="text-xs font-semibold text-cream/75">{axis} focus · {value}</legend><input aria-label={`${axis} crop focus`} type="range" min="-100" max="100" value={value} onChange={(event) => onChange(Number(event.currentTarget.value))} className="w-full accent-[#fcf1dd]" /><div className="grid grid-cols-3 gap-1">{[-100, 0, 100].map((position, index) => <button key={position} type="button" onClick={() => onChange(position)} aria-pressed={value === position} className="rounded-full border border-white/20 px-2 py-1 text-[11px] font-semibold text-cream aria-pressed:bg-cream aria-pressed:text-navy">{labels[index]}</button>)}</div></fieldset>;
 }
 
 function drawCrop(canvas: HTMLCanvasElement, image: HTMLImageElement, aspect: number, zoom: number, x: number, y: number, maxDimension: number) {
